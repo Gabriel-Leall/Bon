@@ -1,51 +1,16 @@
 /**
- * Secure token store wrapper using tauri-plugin-store.
+ * Secure token store wrapper backed by the operating system credential store.
  *
- * Tokens are NEVER stored in SQLite or localStorage — only in the
- * encrypted/OS-managed store provided by tauri-plugin-store.
- *
- * NOTE: tauri-plugin-store must be added to Cargo.toml and package.json
- * before this module can be used.
+ * Legacy plugin-store entries are read once and removed only after their value
+ * has been persisted securely, so existing OAuth sessions do not break.
  */
 
 import type { Store } from '@tauri-apps/plugin-store'
+import { commands, unwrapResult } from '@/lib/tauri-bindings'
+import { logger } from '@/lib/logger'
 
-const TOKEN_STORE_FILE = 'auth.json'
+const LEGACY_TOKEN_STORE_FILE = 'auth.json'
 
-// Lazy-loaded store instance
-let _store: Store | null = null
-
-async function getStore(): Promise<Store> {
-  if (!_store) {
-    const { Store } = await import('@tauri-apps/plugin-store')
-    _store = await Store.load(TOKEN_STORE_FILE)
-  }
-  return _store
-}
-
-export async function saveToken(key: string, token: string): Promise<void> {
-  const store = await getStore()
-  await store.set(key, token)
-  await store.save()
-}
-
-export async function loadToken(key: string): Promise<string | null> {
-  try {
-    const store = await getStore()
-    const value = await store.get<string>(key)
-    return value ?? null
-  } catch {
-    return null
-  }
-}
-
-export async function deleteToken(key: string): Promise<void> {
-  const store = await getStore()
-  await store.delete(key)
-  await store.save()
-}
-
-// Token keys used by OAuth integrations
 export const TOKEN_KEYS = {
   GITHUB: 'github_token',
   SLACK: 'slack_token',
@@ -56,3 +21,62 @@ export const TOKEN_KEYS = {
   GOOGLE_STATE: 'google_oauth_state',
   GOOGLE_CODE_VERIFIER: 'google_oauth_code_verifier',
 } as const
+
+export type TokenKey = (typeof TOKEN_KEYS)[keyof typeof TOKEN_KEYS]
+
+let legacyStore: Store | null = null
+
+async function getLegacyStore(): Promise<Store> {
+  if (!legacyStore) {
+    const { Store } = await import('@tauri-apps/plugin-store')
+    legacyStore = await Store.load(LEGACY_TOKEN_STORE_FILE)
+  }
+  return legacyStore
+}
+
+async function removeLegacyToken(key: TokenKey): Promise<void> {
+  try {
+    const store = await getLegacyStore()
+    await store.delete(key)
+    await store.save()
+  } catch (error) {
+    logger.warn('Failed to remove legacy credential after secure migration', {
+      key,
+      error,
+    })
+  }
+}
+
+async function migrateLegacyToken(key: TokenKey): Promise<string | null> {
+  try {
+    const store = await getLegacyStore()
+    const value = await store.get<string>(key)
+    if (!value) return null
+
+    await saveToken(key, value)
+    await removeLegacyToken(key)
+    return value
+  } catch (error) {
+    logger.warn('Failed to migrate legacy credential', { key, error })
+    return null
+  }
+}
+
+export async function saveToken(key: TokenKey, token: string): Promise<void> {
+  unwrapResult(await commands.saveCredential(key, token))
+}
+
+export async function loadToken(key: TokenKey): Promise<string | null> {
+  try {
+    const value = unwrapResult(await commands.getCredential(key))
+    return value ?? (await migrateLegacyToken(key))
+  } catch (error) {
+    logger.warn('Failed to load secure credential', { key, error })
+    return null
+  }
+}
+
+export async function deleteToken(key: TokenKey): Promise<void> {
+  unwrapResult(await commands.deleteCredential(key))
+  await removeLegacyToken(key)
+}

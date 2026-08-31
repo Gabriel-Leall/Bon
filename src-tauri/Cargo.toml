@@ -60,9 +60,16 @@ tauri-plugin-updater = "2"
 tauri-plugin-window-state = "2"
 tauri-plugin-autostart = "2"
 
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "=3.6.3", default-features = false, features = ["windows-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "=3.6.3", default-features = false, features = ["sync-secret-service", "crypto-rust"] }
+
 # macOS-only: NSPanel for native panel behavior (fullscreen overlay, click-outside dismiss)
 [target.'cfg(target_os = "macos")'.dependencies]
 tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }
+keyring = { version = "=3.6.3", default-features = false, features = ["apple-native"] }
 
 # Optimize for smaller binary size in release builds
 [profile.release]

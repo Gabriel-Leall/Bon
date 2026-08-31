@@ -2,8 +2,8 @@ use tauri_specta::{collect_commands, Builder};
 
 pub fn generate_bindings() -> Builder<tauri::Wry> {
     use crate::commands::{
-        analytics, calendar, daily_plan, habits, kanban, notes, notifications, oauth, pomodoro,
-        preferences, product_usage, quick_pane, recovery, tasks,
+        analytics, calendar, credentials, daily_plan, habits, kanban, notes, notifications, oauth,
+        pomodoro, preferences, product_usage, quick_pane, recovery, tasks,
     };
 
     Builder::<tauri::Wry>::new().commands(collect_commands![
@@ -12,6 +12,10 @@ pub fn generate_bindings() -> Builder<tauri::Wry> {
         calendar::create_event,
         calendar::update_event,
         calendar::delete_event,
+        // Secure credentials
+        credentials::get_credential,
+        credentials::save_credential,
+        credentials::delete_credential,
         // Daily plan
         daily_plan::get_daily_plan,
         daily_plan::create_daily_plan,

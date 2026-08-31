@@ -222,16 +222,21 @@ vi.mock('@/lib/tauri-bindings', () => ({
 
 ## Available Commands
 
-| Command                    | Parameters                              | Returns                               | Description                   |
-| -------------------------- | --------------------------------------- | ------------------------------------- | ----------------------------- |
-| `greet`                    | `name: string`                          | `string`                              | Simple greeting               |
-| `loadPreferences`          | none                                    | `Result<AppPreferences, string>`      | Load preferences              |
-| `savePreferences`          | `preferences: AppPreferences`           | `Result<null, string>`                | Save preferences              |
-| `sendNativeNotification`   | `title: string, body: string \| null`   | `Result<null, string>`                | System notification           |
-| `saveEmergencyData`        | `filename: string, data: JsonValue`     | `Result<null, string>`                | Save recovery data            |
-| `loadEmergencyData`        | `filename: string`                      | `Result<JsonValue, string>`           | Load recovery data            |
-| `cleanupOldRecoveryFiles`  | none                                    | `Result<number, string>`              | Cleanup old files             |
-| `startGoogleOauthLoopback` | `clientId, scope, state, codeChallenge` | `Result<OAuthLoopbackResult, string>` | Google desktop OAuth callback |
+| Command                    | Parameters                              | Returns                                | Description                    |
+| -------------------------- | --------------------------------------- | -------------------------------------- | ------------------------------ |
+| `greet`                    | `name: string`                          | `string`                               | Simple greeting                |
+| `loadPreferences`          | none                                    | `Result<AppPreferences, string>`       | Load preferences               |
+| `savePreferences`          | `preferences: AppPreferences`           | `Result<null, string>`                 | Save preferences               |
+| `sendNativeNotification`   | `title: string, body: string \| null`   | `Result<null, string>`                 | System notification            |
+| `saveEmergencyData`        | `filename: string, data: JsonValue`     | `Result<null, string>`                 | Save recovery data             |
+| `loadEmergencyData`        | `filename: string`                      | `Result<JsonValue, string>`            | Load recovery data             |
+| `cleanupOldRecoveryFiles`  | none                                    | `Result<number, string>`               | Cleanup old files              |
+| `startGoogleOauthLoopback` | `clientId, scope, state, codeChallenge` | `Result<OAuthLoopbackResult, string>`  | Google desktop OAuth callback  |
+| `getCredential`            | `key: string`                           | `Result<string \| null, string>`       | Read secure OAuth credential   |
+| `saveCredential`           | `key: string, value: string`            | `Result<null, string>`                 | Save secure OAuth credential   |
+| `deleteCredential`         | `key: string`                           | `Result<null, string>`                 | Delete secure OAuth credential |
+| `recordProductUsageEvent`  | `event, occurredAt, localDate`          | `Result<null, string>`                 | Record a local aggregate event |
+| `getProductUsageSnapshot`  | none                                    | `Result<ProductUsageSnapshot, string>` | Read the local diagnostics     |
 
 ## Dependencies
 

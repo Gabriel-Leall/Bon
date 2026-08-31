@@ -2,7 +2,7 @@
 
 Patterns for calling external HTTP APIs from Tauri applications.
 
-> **Note:** HTTP client dependencies are not installed in this app. Install `reqwest` (Rust) and optionally `tauri-plugin-keyring` (for token storage) when your app needs external API calls.
+> **Note:** HTTP client dependencies are not installed in this app. Install `reqwest` (Rust) and use the `keyring` crate for token storage when your app needs external API calls.
 
 ## Rust vs Frontend: When to Use Which
 
@@ -154,6 +154,12 @@ feature needs them immediately.
 | `keyring` crate           | High (OS keychain)  | API tokens, credentials           |
 | `tauri-plugin-stronghold` | High (encrypted DB) | Multiple secrets, encryption keys |
 | `tauri-plugin-store`      | Low (plain JSON)    | Non-sensitive data only           |
+
+Axis stores OAuth tokens, OAuth state, and PKCE verifiers through the typed
+`getCredential`, `saveCredential`, and `deleteCredential` commands. The Rust
+Module only accepts its known OAuth keys and stores them in the operating
+system credential store. Existing `auth.json` values are migrated on first
+read and removed only after a successful secure write.
 
 For OS keychain access, use the `keyring` crate directly:
 

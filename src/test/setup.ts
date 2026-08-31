@@ -196,6 +196,9 @@ vi.mock('@/lib/tauri-bindings', () => ({
       .mockResolvedValue({ status: 'ok', data: null }),
     toggleTaskComplete: vi.fn().mockResolvedValue({ status: 'ok', data: null }),
     updateTask: vi.fn().mockResolvedValue({ status: 'ok', data: null }),
+    getCredential: vi.fn().mockResolvedValue({ status: 'ok', data: null }),
+    saveCredential: vi.fn().mockResolvedValue({ status: 'ok', data: null }),
+    deleteCredential: vi.fn().mockResolvedValue({ status: 'ok', data: null }),
     startGoogleOauthLoopback: vi.fn().mockResolvedValue({
       status: 'ok',
       data: {
