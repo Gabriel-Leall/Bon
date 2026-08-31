@@ -564,7 +564,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   NOTES EDITOR - Inline (Toast UI) overrides
+   NOTES EDITOR & PREVIEW
    ═══════════════════════════════════════════════════════════ */
 .notes-codemirror {
   min-height: 0;
@@ -607,150 +607,70 @@
   background: var(--popover);
   color: var(--popover-foreground);
 }
-.notes-inline-editor .toastui-editor-defaultUI {
-  height: 100%;
-  border: 0;
-  background: transparent !important;
-  font-family: Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-}
 
-.notes-inline-editor .toastui-editor-defaultUI-toolbar {
-  display: none !important;
-  align-items: center;
-  height: auto;
-  min-height: 48px;
-  padding: 6px 14px;
-  border-bottom: 1px solid var(--border);
-  border-radius: 0;
-  background: transparent !important;
-}
-
-.notes-inline-editor .toastui-editor-toolbar {
-  height: auto;
-  box-sizing: border-box;
-  border: 0;
-  background: transparent !important;
-  backdrop-filter: blur(8px);
-  padding: 0;
-}
-
-.notes-inline-editor .toastui-editor-defaultUI-toolbar button {
-  width: 30px;
-  height: 30px;
-  margin: 3px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--muted-foreground) !important;
-}
-
-.notes-inline-editor
-  .toastui-editor-defaultUI-toolbar
-  button:not(:disabled):hover,
-.notes-inline-editor
-  .toastui-editor-defaultUI-toolbar
-  button:not(:disabled).active {
-  border-color: var(--border);
-  background: var(--accent) !important;
-  color: var(--accent-foreground) !important;
-}
-
-.notes-inline-editor .toastui-editor-toolbar-divider {
-  margin: 8px 10px;
-  background: var(--border);
-}
-
-.notes-inline-editor .toastui-editor-toolbar-icons {
-  /* Using current color works best if the icons inherit it, but in Toast UI they might be background SVG or fonts */
-  /* Remove the forced white filter */
-  filter: none;
-}
-
-.dark .notes-inline-editor .toastui-editor-toolbar-icons {
-  filter: brightness(0) saturate(100%) invert(90%) sepia(26%) saturate(280%)
-    hue-rotate(336deg) brightness(98%) contrast(91%);
-}
-
-.notes-inline-editor .toastui-editor-main {
-  background: transparent !important;
-  overflow-y: auto !important;
-}
-
-.notes-inline-editor .toastui-editor-main-container,
-.notes-inline-editor .toastui-editor-ww-container,
-.notes-inline-editor .toastui-editor-ww-container > .toastui-editor,
-.notes-inline-editor .toastui-editor-defaultUI .ProseMirror {
-  background: transparent !important;
-  color: var(--foreground) !important;
-  text-align: left !important;
-}
-
-.notes-inline-editor .toastui-editor-ww-container {
-  background: transparent !important;
-  padding: 0;
-}
-
-.notes-inline-editor .ProseMirror.toastui-editor-contents {
-  font-family: Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-size: 1.125rem;
-  line-height: 1.625;
-  color: var(--foreground) !important;
-  box-sizing: border-box;
+.notes-paper-preview .toastui-editor-contents {
   width: 100%;
   max-width: none;
-  margin: 0 !important;
+  margin: 0;
   padding: 0;
-  caret-color: var(--foreground);
-  text-align: left !important;
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.75;
 }
 
-.notes-inline-editor .ProseMirror.toastui-editor-contents p,
-.notes-inline-editor .ProseMirror.toastui-editor-contents li {
+.notes-paper-preview .toastui-editor-contents > :first-child {
+  margin-top: 0;
+}
+
+.notes-paper-preview .toastui-editor-contents > :last-child {
+  margin-bottom: 0;
+}
+
+.notes-paper-preview .toastui-editor-contents p,
+.notes-paper-preview .toastui-editor-contents li {
   margin: 0 0 1rem;
-  color: var(--foreground) !important;
+  color: var(--foreground);
 }
 
-.notes-inline-editor .ProseMirror.toastui-editor-contents h1,
-.notes-inline-editor .ProseMirror.toastui-editor-contents h2,
-.notes-inline-editor .ProseMirror.toastui-editor-contents h3 {
+.notes-paper-preview .toastui-editor-contents h1,
+.notes-paper-preview .toastui-editor-contents h2,
+.notes-paper-preview .toastui-editor-contents h3 {
   border-bottom: 0;
-  font-family: Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--foreground);
   letter-spacing: 0;
-  color: var(--foreground) !important;
-  text-align: left !important;
 }
 
-.notes-inline-editor .ProseMirror.toastui-editor-contents h1 {
+.notes-paper-preview .toastui-editor-contents h1 {
   margin: 0 0 2rem;
   font-size: clamp(2.25rem, 6vw, 3rem);
   font-weight: 700;
   line-height: 1.1;
-  outline: none;
 }
 
-.notes-inline-editor .ProseMirror.toastui-editor-contents h2 {
+.notes-paper-preview .toastui-editor-contents h2 {
   margin: 2.25rem 0 1rem;
   font-size: clamp(1.4rem, 2.1vw, 1.75rem);
   font-weight: 700;
   line-height: 1.2;
 }
 
-.notes-inline-editor .ProseMirror.toastui-editor-contents h3 {
+.notes-paper-preview .toastui-editor-contents h3 {
   margin: 1.75rem 0 0.75rem;
   font-size: 1.25rem;
   font-weight: 700;
   line-height: 1.3;
 }
 
-.notes-inline-editor .ProseMirror.toastui-editor-contents blockquote {
+.notes-paper-preview .toastui-editor-contents blockquote {
   margin: 1.25rem 0;
   border: 0;
   border-radius: 10px;
   background: var(--muted);
-  color: var(--muted-foreground) !important;
+  color: var(--muted-foreground);
 }
 
-.notes-inline-editor .ProseMirror.toastui-editor-contents code {
+.notes-paper-preview .toastui-editor-contents code {
   font-family:
     var(--font-geist-mono), ui-monospace, SFMono-Regular, 'SF Mono', Menlo,
     Consolas, monospace;
@@ -758,14 +678,6 @@
   color: var(--foreground);
   border-radius: 4px;
   padding: 0.1em 0.35em;
-}
-
-.notes-inline-editor .ProseMirror .placeholder {
-  color: var(--muted-foreground) !important;
-}
-
-.notes-inline-editor .toastui-editor-mode-switch {
-  display: none;
 }
 
 @theme inline {

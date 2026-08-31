@@ -1025,7 +1025,7 @@ function EditorArea({
                   onAnnotationsChange={onAnnotationsChange}
                 />
               ) : (
-                <div className="notes-paper-preview notes-inline-editor prose prose-sm max-w-none min-h-0 overflow-y-auto text-start text-foreground">
+                <div className="notes-paper-preview prose prose-sm max-w-none min-h-0 overflow-y-auto text-start text-foreground">
                   <ToastViewer initialValue={note.content} />
                 </div>
               )}

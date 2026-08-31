@@ -108,7 +108,6 @@
     "@tauri-apps/plugin-window-state": "^2.4.1",
     "@toast-ui/editor": "^3.2.2",
     "@toast-ui/react-editor": "^3.2.3",
-    "@uiw/react-md-editor": "^4.1.0",
     "boneyard-js": "^1.7.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
