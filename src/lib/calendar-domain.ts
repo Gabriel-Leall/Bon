@@ -1,14 +1,6 @@
-export interface CalendarEvent {
-  id: string
-  title: string
-  description?: string
-  start_date: string
-  end_date: string
-  all_day: boolean
-  color?: string
-  created_at: string
-  updated_at: string
-}
+import type { CalendarEvent as PersistedCalendarEvent } from './tauri-bindings'
+
+export type CalendarEvent = PersistedCalendarEvent
 
 export interface CreateEventInput {
   id: string

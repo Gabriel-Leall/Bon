@@ -47,9 +47,11 @@ describe('calendar-domain', () => {
       const event: CalendarEvent = {
         id: '1',
         title: 'Test',
+        description: null,
         start_date: '2023-11-10',
         end_date: '2023-11-12', // Not inclusive of end_date in all_day logic as written
         all_day: true,
+        color: null,
         created_at: '',
         updated_at: '',
       }
@@ -63,9 +65,11 @@ describe('calendar-domain', () => {
       const event: CalendarEvent = {
         id: '2',
         title: 'Test 2',
+        description: null,
         start_date: '2023-11-10',
         end_date: '2023-11-11',
         all_day: true,
+        color: null,
         created_at: '',
         updated_at: '',
       }
@@ -76,9 +80,11 @@ describe('calendar-domain', () => {
       const event: CalendarEvent = {
         id: '3',
         title: 'Test 3',
+        description: null,
         start_date: '2023-11-10T10:00:00Z',
         end_date: '2023-11-10T12:00:00Z',
         all_day: false,
+        color: null,
         created_at: '',
         updated_at: '',
       }
@@ -94,18 +100,22 @@ describe('calendar-domain', () => {
         {
           id: '1',
           title: 'Event 1',
+          description: null,
           start_date: '2023-11-10',
           end_date: '2023-11-11',
           all_day: true,
+          color: null,
           created_at: '',
           updated_at: '',
         },
         {
           id: '2',
           title: 'Event 2',
+          description: null,
           start_date: '2023-11-15',
           end_date: '2023-11-16',
           all_day: true,
+          color: null,
           created_at: '',
           updated_at: '',
         },

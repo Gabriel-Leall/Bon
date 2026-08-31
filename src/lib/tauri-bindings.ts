@@ -24,12 +24,15 @@
 export { commands, type Result } from './bindings'
 export type {
   AppPreferences,
+  CalendarEvent,
+  CreateEventInput,
   CreateDailyPlanInput,
   DailyPlan,
   JsonValue,
   ProductUsageEvent,
   ProductUsageSnapshot,
   RecoveryError,
+  UpdateEventInput,
 } from './bindings'
 
 export type DailyPlanStatus = 'open' | 'active' | 'wrapped_up'

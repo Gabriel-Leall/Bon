@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { calendarCommands } from '@/lib/calendar-commands'
+import {
+  commands,
+  unwrapResult,
+  type CreateEventInput as PersistedCreateEventInput,
+  type UpdateEventInput as PersistedUpdateEventInput,
+} from '@/lib/tauri-bindings'
 import type {
   CalendarEvent,
   CreateEventInput,
@@ -25,11 +30,29 @@ interface CalendarState {
   setSelectedEvent: (id: string | null) => void
 }
 
-function unwrapOrThrow<T>(
-  result: { status: 'ok'; data: T } | { status: 'error'; error: unknown }
-): T {
-  if (result.status === 'ok') return result.data
-  throw result.error
+function toPersistedCreateEventInput(
+  input: CreateEventInput
+): PersistedCreateEventInput {
+  return {
+    ...input,
+    description: input.description ?? null,
+    color: input.color ?? null,
+  }
+}
+
+function toPersistedUpdateEventInput(
+  input: UpdateEventInput
+): PersistedUpdateEventInput {
+  return {
+    id: input.id,
+    title: input.title ?? null,
+    description: input.description ?? null,
+    start_date: input.start_date ?? null,
+    end_date: input.end_date ?? null,
+    all_day: input.all_day ?? null,
+    color: input.color ?? null,
+    updated_at: input.updated_at,
+  }
 }
 
 export const useCalendarStore = create<CalendarState>()(
@@ -44,8 +67,7 @@ export const useCalendarStore = create<CalendarState>()(
         set({ isLoading: true }, undefined, 'loadEvents/start')
         try {
           const { start, end } = getMonthRange(date)
-          const result = await calendarCommands.getEventsRange(start, end)
-          const events = unwrapOrThrow(result)
+          const events = unwrapResult(await commands.getEventsRange(start, end))
           set({ events, isLoading: false }, undefined, 'loadEvents/done')
           logger.debug(`Loaded ${events.length} calendar events`)
         } catch (error) {
@@ -63,8 +85,9 @@ export const useCalendarStore = create<CalendarState>()(
           updated_at: now,
         }
 
-        const result = await calendarCommands.createEvent(fullInput)
-        const event = unwrapOrThrow(result)
+        const event = unwrapResult(
+          await commands.createEvent(toPersistedCreateEventInput(fullInput))
+        )
 
         set(
           state => ({ events: [...state.events, event] }),
@@ -76,8 +99,9 @@ export const useCalendarStore = create<CalendarState>()(
       },
 
       updateEvent: async input => {
-        const result = await calendarCommands.updateEvent(input)
-        const event = unwrapOrThrow(result)
+        const event = unwrapResult(
+          await commands.updateEvent(toPersistedUpdateEventInput(input))
+        )
 
         set(
           state => ({
@@ -90,7 +114,7 @@ export const useCalendarStore = create<CalendarState>()(
       },
 
       deleteEvent: async (id: string) => {
-        await calendarCommands.deleteEvent(id)
+        unwrapResult(await commands.deleteEvent(id))
         set(
           state => ({
             events: state.events.filter(e => e.id !== id),
