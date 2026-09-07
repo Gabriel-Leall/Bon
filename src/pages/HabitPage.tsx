@@ -6,6 +6,7 @@ import {
   AlertCircle,
   Check,
   CircleDot,
+  CircleHelp,
   Flame,
   MoreHorizontal,
   PauseCircle,
@@ -40,6 +41,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog'
 import {
   DropdownMenu,
@@ -99,6 +101,34 @@ const HABIT_COLOR_NAMES: Record<string, string> = {
   '#06b6d4': 'cyan',
   '#e11d48': 'rose',
 }
+
+const HABIT_GUIDE_STATES = [
+  {
+    key: 'done',
+    icon: Check,
+    tone: 'border-primary bg-primary text-primary-foreground',
+  },
+  {
+    key: 'minimal',
+    icon: CircleDot,
+    tone: 'border-primary/35 bg-primary/15 text-primary',
+  },
+  {
+    key: 'paused',
+    icon: PauseCircle,
+    tone: 'border-border-strong bg-muted text-muted-foreground',
+  },
+  {
+    key: 'recovered',
+    icon: RotateCcw,
+    tone: 'border-ring/60 bg-primary/10 text-primary ring-1 ring-ring/40',
+  },
+  {
+    key: 'missed',
+    icon: AlertCircle,
+    tone: 'border-border bg-surface-sunken text-muted-foreground shadow-neu-pressed',
+  },
+] as const
 
 interface HabitPageProps {
   initialSelectedHabitId?: string
@@ -263,11 +293,6 @@ function formatHabitFrequency(habit: Habit, t: TFunction): string {
   return formatCustomDays(parseFrequencyDays(habit.frequency_days), t)
 }
 
-function weekdayName(index: number, t: TFunction): string {
-  const key = WEEKDAY_KEYS[index]
-  return key ? t(`habits.weekday.${key}`) : t('habits.quickSummary.noData')
-}
-
 function weekdayDistribution(logs: HabitLog[]): number[] {
   const distribution = [0, 0, 0, 0, 0, 0, 0]
 
@@ -335,10 +360,10 @@ function SegmentedTab({
       aria-controls={controls}
       onClick={onClick}
       className={cn(
-        'rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide transition-colors',
+        'rounded-lg border border-transparent px-3.5 py-2 text-xs font-semibold tracking-wide transition-[background-color,color,border-color,box-shadow,transform] active:translate-y-px active:shadow-neu-pressed motion-reduce:transform-none',
         active
-          ? 'bg-foreground text-background'
-          : 'text-muted-foreground hover:bg-accent/70 hover:text-foreground'
+          ? 'border-border-strong bg-surface-elevated text-foreground shadow-neu-raised-sm'
+          : 'text-muted-foreground hover:bg-surface hover:text-foreground'
       )}
     >
       {label}
@@ -769,8 +794,8 @@ function HabitTodayPanel({ context }: { context: HabitPanelContext }) {
       transition={transition}
       className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(260px,1fr)]"
     >
-      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card/80 backdrop-blur-[1px]">
-        <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
+      <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-neu-raised">
+        <div className="flex items-center justify-between border-b border-border bg-surface-elevated px-4 py-3">
           <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
             {t('habits.executionQueue')}
           </p>
@@ -781,9 +806,9 @@ function HabitTodayPanel({ context }: { context: HabitPanelContext }) {
 
         {isLoading ? (
           <div className="space-y-3 p-4">
-            <div className="h-14 animate-pulse rounded-xl bg-muted/60" />
-            <div className="h-14 animate-pulse rounded-xl bg-muted/50" />
-            <div className="h-14 animate-pulse rounded-xl bg-muted/40" />
+            <div className="h-14 animate-pulse rounded-xl bg-surface-sunken shadow-neu-pressed" />
+            <div className="h-14 animate-pulse rounded-xl bg-surface-sunken shadow-neu-pressed" />
+            <div className="h-14 animate-pulse rounded-xl bg-surface-sunken shadow-neu-pressed" />
           </div>
         ) : todayHabits.length === 0 ? (
           <div className="space-y-3 px-4 py-8 text-center">
@@ -799,11 +824,10 @@ function HabitTodayPanel({ context }: { context: HabitPanelContext }) {
             </div>
           </div>
         ) : (
-          <div className="divide-y divide-border/60">
+          <div className="space-y-2 p-2">
             {todayHabits.map((habit, index) => {
               const todayLog = todayLogMap.get(habit.id) ?? null
               const todayState = todayLog?.state ?? null
-              const coveredToday = !!todayLog
               const isFocused = focusedHabit?.id === habit.id
               const streak = selectStreakByHabit(monthLogs, habit.id)
               const completionDates = selectHabitCompletionDates(
@@ -822,14 +846,10 @@ function HabitTodayPanel({ context }: { context: HabitPanelContext }) {
                     delay: reduceMotion ? 0 : index * 0.04,
                   }}
                   className={cn(
-                    'grid gap-3 px-4 py-4 transition-colors hover:bg-accent/15 md:grid-cols-[auto_minmax(0,1fr)_minmax(150px,auto)] md:items-center',
-                    isFocused && 'ring-1 ring-ring/45'
+                    'grid gap-3 rounded-xl border border-transparent bg-surface px-3 py-3 transition-[background-color,border-color,box-shadow] hover:bg-surface-elevated md:grid-cols-[auto_minmax(0,1fr)_minmax(150px,auto)] md:items-center',
+                    isFocused &&
+                      'border-primary/55 bg-surface-elevated shadow-neu-raised-sm'
                   )}
-                  style={{
-                    backgroundColor: coveredToday
-                      ? 'color-mix(in oklab, var(--card) 86%, transparent)'
-                      : `color-mix(in oklab, ${habit.color} 12%, var(--card))`,
-                  }}
                 >
                   <div className="flex flex-col gap-2">
                     <Button
@@ -854,6 +874,11 @@ function HabitTodayPanel({ context }: { context: HabitPanelContext }) {
 
                   <div className="min-w-0">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="size-2.5 shrink-0 rounded-full border border-border shadow-neu-raised-sm"
+                        style={{ backgroundColor: habit.color }}
+                      />
                       <button
                         type="button"
                         onClick={() => onSelectHabit(habit.id)}
@@ -970,7 +995,6 @@ function HabitFocusAside({ context }: { context: HabitPanelContext }) {
     habits,
     heatMapStateLabels,
     locale,
-    stats,
     t,
     onEditHabit,
     onSelectHabit,
@@ -978,23 +1002,18 @@ function HabitFocusAside({ context }: { context: HabitPanelContext }) {
   } = context
 
   return (
-    <aside className="space-y-4">
-      <section className="rounded-2xl border border-border/70 bg-card/80 p-4 backdrop-blur-[1px]">
+    <aside>
+      <section className="rounded-2xl border border-border bg-surface p-4 shadow-neu-raised">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-              {t('habits.focusHabit.heading')}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t('habits.focusHabit.hint')}
-            </p>
-          </div>
+          <h2 className="text-sm font-semibold">
+            {t('habits.focusHabit.heading')}
+          </h2>
           {focusedHabit ? (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               {habits.length > 1 ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="xs">
                       {t('habits.focusHabit.switch')}
                     </Button>
                   </DropdownMenuTrigger>
@@ -1018,7 +1037,7 @@ function HabitFocusAside({ context }: { context: HabitPanelContext }) {
               ) : null}
               <Button
                 variant="outline"
-                size="sm"
+                size="xs"
                 onClick={() => onEditHabit(focusedHabit)}
               >
                 {t('habits.focusHabit.manage')}
@@ -1028,15 +1047,28 @@ function HabitFocusAside({ context }: { context: HabitPanelContext }) {
         </div>
 
         {focusedHabit ? (
-          <div className="mt-3 space-y-3">
-            <div>
-              <p className="text-base font-semibold">
-                {focusedHabit.icon ? `${focusedHabit.icon} ` : ''}
-                {focusedHabit.name}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatHabitFrequency(focusedHabit, t)}
-              </p>
+          <div className="mt-4 space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-start gap-2.5">
+                <span
+                  aria-hidden
+                  className="mt-1 size-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: focusedHabit.color }}
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold">
+                    {focusedHabit.icon ? `${focusedHabit.icon} ` : ''}
+                    {focusedHabit.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatHabitFrequency(focusedHabit, t)}
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-surface-sunken px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-neu-pressed">
+                <Flame className="size-3.5" aria-hidden />
+                {t('habits.focusHabit.streak', { count: focusStreak })}
+              </span>
             </div>
 
             <HeatMap
@@ -1052,72 +1084,33 @@ function HabitFocusAside({ context }: { context: HabitPanelContext }) {
               })}
             />
 
-            <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-              {(
-                ['done', 'minimal', 'paused', 'recovered', 'missed'] as const
-              ).map(state => (
-                <span key={state} className="inline-flex items-center gap-1">
-                  <span
-                    aria-hidden
-                    className={cn(
-                      'size-2 rounded-[3px] border border-border/70',
-                      state === 'missed' && 'bg-muted/70',
-                      state === 'paused' && 'opacity-60',
-                      state === 'recovered' && 'ring-1 ring-ring/60'
-                    )}
-                    style={{
-                      backgroundColor:
-                        state === 'missed'
-                          ? undefined
-                          : state === 'minimal' || state === 'paused'
-                            ? `color-mix(in oklab, ${focusedHabit.color} 36%, var(--muted))`
-                            : state === 'recovered'
-                              ? `color-mix(in oklab, ${focusedHabit.color} 55%, var(--accent))`
-                              : focusedHabit.color,
-                    }}
-                  />
-                  {heatMapStateLabels[state]}
-                </span>
-              ))}
-            </div>
-
-            <p className="text-xs text-muted-foreground">
-              {t('habits.focusHabit.currentStreak', { count: focusStreak })}
-            </p>
-
             {focusRecoverableDates.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                <p className="mr-1 text-xs text-muted-foreground">
                   {t('habits.focusHabit.recoveryHeading')}
                 </p>
-                <div className="space-y-2">
-                  {focusRecoverableDates.map(dateISO => (
-                    <Button
-                      key={dateISO}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start"
-                      onClick={() =>
-                        void onSetHabitLogState(
-                          focusedHabit.id,
-                          'recovered',
-                          dateISO
-                        )
-                      }
-                      aria-label={t('habits.actions.recoverAria', {
-                        name: focusedHabit.name,
-                        date: dateISO,
-                      })}
-                    >
-                      <RotateCcw className="size-3.5" />
-                      <span>
-                        {t('habits.actions.recover')}{' '}
-                        {recoveryDateLabel(dateISO, locale, t)}
-                      </span>
-                    </Button>
-                  ))}
-                </div>
+                {focusRecoverableDates.map(dateISO => (
+                  <Button
+                    key={dateISO}
+                    type="button"
+                    variant="outline"
+                    size="xs"
+                    onClick={() =>
+                      void onSetHabitLogState(
+                        focusedHabit.id,
+                        'recovered',
+                        dateISO
+                      )
+                    }
+                    aria-label={t('habits.actions.recoverAria', {
+                      name: focusedHabit.name,
+                      date: dateISO,
+                    })}
+                  >
+                    <RotateCcw className="size-3" />
+                    {recoveryDateLabel(dateISO, locale, t)}
+                  </Button>
+                ))}
               </div>
             ) : null}
           </div>
@@ -1126,29 +1119,6 @@ function HabitFocusAside({ context }: { context: HabitPanelContext }) {
             {t('habits.focusHabit.noneSelected')}
           </p>
         )}
-      </section>
-
-      <section className="rounded-2xl border border-border/70 bg-card/80 p-4 backdrop-blur-[1px]">
-        <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-          {t('habits.quickSummary')}
-        </p>
-        <div className="mt-3 space-y-2 text-xs text-muted-foreground">
-          <p>
-            {t('habits.quickSummary.topStreak')}{' '}
-            {stats.topCurrentHabit
-              ? t('habits.quickSummary.topStreakValue', {
-                  name: stats.topCurrentHabit.name,
-                  count: stats.topCurrentHabit.streak,
-                })
-              : t('habits.quickSummary.noData')}
-          </p>
-          <p>
-            {t('habits.quickSummary.topWeekday')}{' '}
-            {stats.topWeekday === null
-              ? t('habits.quickSummary.noData')
-              : weekdayName(stats.topWeekday, t)}
-          </p>
-        </div>
       </section>
     </aside>
   )
@@ -1178,7 +1148,7 @@ function HabitOverviewPanel({ context }: { context: HabitPanelContext }) {
       className="space-y-4"
     >
       {habits.length === 0 ? (
-        <section className="rounded-2xl border border-border/70 bg-card/80 px-4 py-8 text-center backdrop-blur-[1px]">
+        <section className="rounded-2xl border border-border bg-surface px-4 py-8 text-center shadow-neu-raised">
           <p className="text-sm font-medium">
             {t('habits.overview.empty.title')}
           </p>
@@ -1205,24 +1175,28 @@ function HabitOverviewPanel({ context }: { context: HabitPanelContext }) {
             return (
               <article
                 key={habit.id}
-                className="rounded-2xl border border-border/70 bg-card/80 p-4 backdrop-blur-[1px] transition-colors hover:bg-accent/12"
-                style={{
-                  borderColor: `color-mix(in oklab, ${habit.color} 46%, var(--border))`,
-                }}
+                className="rounded-2xl border border-border bg-surface p-4 shadow-neu-raised-sm transition-[background-color,box-shadow,transform] hover:-translate-y-0.5 hover:bg-surface-elevated hover:shadow-neu-raised motion-reduce:transform-none"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <button
-                      type="button"
-                      onClick={() => onEditHabit(habit)}
-                      className="truncate text-start text-sm font-semibold"
-                    >
-                      {habit.icon ? `${habit.icon} ` : ''}
-                      {habit.name}
-                    </button>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {formatHabitFrequency(habit, t)}
-                    </p>
+                  <div className="flex min-w-0 items-start gap-2.5">
+                    <span
+                      aria-hidden="true"
+                      className="mt-1 size-2.5 shrink-0 rounded-full border border-border shadow-neu-raised-sm"
+                      style={{ backgroundColor: habit.color }}
+                    />
+                    <div className="min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => onEditHabit(habit)}
+                        className="truncate text-start text-sm font-semibold"
+                      >
+                        {habit.icon ? `${habit.icon} ` : ''}
+                        {habit.name}
+                      </button>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {formatHabitFrequency(habit, t)}
+                      </p>
+                    </div>
                   </div>
                   <span className="text-xs text-muted-foreground">
                     {t('habits.streakRun', { count: streak })}
@@ -1274,7 +1248,7 @@ function HabitStatsPanel({ context }: { context: HabitPanelContext }) {
       transition={transition}
       className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
     >
-      <section className="rounded-2xl border border-border/70 bg-card/80 p-4 backdrop-blur-[1px]">
+      <section className="rounded-2xl border border-border bg-surface p-4 shadow-neu-raised">
         <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
           {t('habits.stats.weekdayPressureMap')}
         </p>
@@ -1290,9 +1264,9 @@ function HabitStatsPanel({ context }: { context: HabitPanelContext }) {
                 className="grid grid-cols-[32px_minmax(0,1fr)_30px] items-center gap-2 text-xs"
               >
                 <span className="text-muted-foreground">{label}</span>
-                <div className="h-2 overflow-hidden rounded-full bg-muted/60">
+                <div className="h-2 overflow-hidden rounded-full bg-surface-sunken shadow-neu-pressed">
                   <div
-                    className="h-full rounded-full bg-foreground/80 transition-all duration-300"
+                    className="h-full rounded-full bg-primary transition-all duration-300"
                     style={{ width }}
                   />
                 </div>
@@ -1303,7 +1277,7 @@ function HabitStatsPanel({ context }: { context: HabitPanelContext }) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border/70 bg-card/80 p-4 backdrop-blur-[1px]">
+      <section className="rounded-2xl border border-border bg-surface p-4 shadow-neu-raised">
         <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
           {t('habits.stats.historicalBoard')}
         </p>
@@ -1353,6 +1327,76 @@ interface HabitPageHeaderProps {
   onCreateHabit: () => void
 }
 
+function HabitStateGuideDialog({ t }: { t: TFunction }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          aria-label={t('habits.guide.open')}
+          title={t('habits.guide.open')}
+        >
+          <CircleHelp className="size-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{t('habits.guide.title')}</DialogTitle>
+          <DialogDescription>{t('habits.guide.description')}</DialogDescription>
+        </DialogHeader>
+
+        <div className="overflow-hidden rounded-xl border border-border bg-surface-sunken shadow-neu-pressed">
+          <div className="flex items-start gap-3 border-b border-border px-4 py-3.5">
+            <span aria-hidden className="flex shrink-0 items-center gap-1 pt-1">
+              {HABIT_COLORS.slice(0, 3).map(color => (
+                <span
+                  key={color}
+                  className="size-2.5 rounded-full border border-border/60"
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </span>
+            <div>
+              <p className="text-sm font-medium">
+                {t('habits.guide.identityTitle')}
+              </p>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                {t('habits.guide.identityDescription')}
+              </p>
+            </div>
+          </div>
+
+          <ul className="divide-y divide-border">
+            {HABIT_GUIDE_STATES.map(({ key, icon: Icon, tone }) => (
+              <li key={key} className="flex items-start gap-3 px-4 py-3">
+                <span
+                  aria-hidden
+                  className={cn(
+                    'flex size-8 shrink-0 items-center justify-center rounded-lg border',
+                    tone
+                  )}
+                >
+                  <Icon className="size-4" />
+                </span>
+                <div>
+                  <p className="text-sm font-medium">
+                    {t(`habits.logState.${key}`)}
+                  </p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                    {t(`habits.guide.${key}`)}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function HabitPageHeader({
   locale,
   progress,
@@ -1363,89 +1407,96 @@ function HabitPageHeader({
   onCreateHabit,
 }: HabitPageHeaderProps) {
   return (
-    <header className="relative border-b border-border/70 px-5 pb-5 pt-6 md:px-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold leading-tight md:text-[2rem]">
-            {t('habits.pageTitle')}
-          </h1>
-          <p className="text-sm text-muted-foreground">{todayLabel(locale)}</p>
+    <header className="relative px-5 pb-2 pt-7 md:px-8 md:pt-9">
+      <div className="mx-auto w-full max-w-(--axis-content-max)">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-semibold leading-tight tracking-tight md:text-[2rem]">
+              {t('habits.pageTitle')}
+            </h1>
+            <p className="text-sm capitalize text-muted-foreground">
+              {todayLabel(locale)}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <HabitStateGuideDialog t={t} />
+            <Button size="sm" onClick={onCreateHabit}>
+              <Plus className="size-4" />
+              {t('habits.newHabit')}
+            </Button>
+          </div>
         </div>
 
-        <Button size="sm" onClick={onCreateHabit}>
-          <Plus className="size-4" />
-          {t('habits.newHabit')}
-        </Button>
-      </div>
+        <div className="mt-6 grid overflow-hidden rounded-2xl border border-border bg-surface shadow-neu-raised md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:divide-x md:divide-border">
+          <section className="px-5 py-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                {t('habits.dailyCompletion')}
+              </p>
+              <p className="text-sm font-medium">
+                {t('habits.dailyCompletionDetail', {
+                  done: progress.done,
+                  total: progress.total,
+                })}
+              </p>
+            </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <section className="rounded-2xl border border-border/70 bg-card/70 px-4 py-3 backdrop-blur-[1px]">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-              {t('habits.dailyCompletion')}
-            </p>
-            <p className="text-sm font-medium">
-              {t('habits.dailyCompletionDetail', {
-                done: progress.done,
-                total: progress.total,
+            <progress
+              className="sr-only"
+              aria-label={t('habits.dailyCompletion')}
+              value={progressPercent}
+              max={100}
+            />
+            <div
+              aria-hidden
+              className="mt-3 h-3 overflow-hidden rounded-full bg-surface-sunken shadow-neu-pressed"
+            >
+              <m.div
+                className="h-full rounded-full bg-primary"
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercent}%` }}
+                transition={transition}
+              />
+            </div>
+          </section>
+
+          <section className="border-t border-border px-5 py-4 md:border-t-0">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                {t('habits.monthlySignal')}
+              </p>
+              <p className="font-medium">
+                {t('habits.monthlyConsistency', {
+                  percentage: stats.monthRate.percentage,
+                })}
+              </p>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {t('habits.monthlyDetail', {
+                completed: stats.monthRate.completedDays,
+                total: stats.monthRate.totalDays,
               })}
             </p>
-          </div>
-
-          <progress
-            className="sr-only"
-            aria-label={t('habits.dailyCompletion')}
-            value={progressPercent}
-            max={100}
-          />
-          <div
-            aria-hidden
-            className="mt-2 h-4 overflow-hidden rounded-full bg-muted/70"
-          >
-            <m.div
-              className="h-full rounded-full bg-foreground/85"
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPercent}%` }}
-              transition={transition}
+            <progress
+              className="sr-only"
+              aria-label={t('habits.monthlySignal')}
+              value={stats.monthRate.percentage}
+              max={100}
             />
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-border/70 bg-card/70 px-4 py-3 backdrop-blur-[1px]">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-              {t('habits.monthlySignal')}
-            </p>
-            <p className="font-medium">
-              {t('habits.monthlyConsistency', {
-                percentage: stats.monthRate.percentage,
-              })}
-            </p>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {t('habits.monthlyDetail', {
-              completed: stats.monthRate.completedDays,
-              total: stats.monthRate.totalDays,
-            })}
-          </p>
-          <progress
-            className="sr-only"
-            aria-label={t('habits.monthlySignal')}
-            value={stats.monthRate.percentage}
-            max={100}
-          />
-          <div
-            aria-hidden
-            className="mt-2 h-3 overflow-hidden rounded-full bg-muted/70"
-          >
-            <m.div
-              className="h-full rounded-full bg-foreground/80"
-              initial={{ width: 0 }}
-              animate={{ width: `${stats.monthRate.percentage}%` }}
-              transition={transition}
-            />
-          </div>
-        </section>
+            <div
+              aria-hidden
+              className="mt-3 h-3 overflow-hidden rounded-full bg-surface-sunken shadow-neu-pressed"
+            >
+              <m.div
+                className="h-full rounded-full bg-primary/80"
+                initial={{ width: 0 }}
+                animate={{ width: `${stats.monthRate.percentage}%` }}
+                transition={transition}
+              />
+            </div>
+          </section>
+        </div>
       </div>
     </header>
   )
@@ -1459,33 +1510,35 @@ interface HabitTabListProps {
 
 function HabitTabList({ activeTab, t, onChange }: HabitTabListProps) {
   return (
-    <div className="relative border-b border-border/70 px-5 py-3 md:px-8">
-      <div
-        role="tablist"
-        aria-label={t('habits.tabs.label')}
-        className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card/70 p-1"
-      >
-        <SegmentedTab
-          id="habits-tab-today"
-          controls="habits-panel-today"
-          active={activeTab === 'today'}
-          label={t('habits.tabs.today')}
-          onClick={() => onChange('today')}
-        />
-        <SegmentedTab
-          id="habits-tab-overview"
-          controls="habits-panel-overview"
-          active={activeTab === 'overview'}
-          label={t('habits.tabs.overview')}
-          onClick={() => onChange('overview')}
-        />
-        <SegmentedTab
-          id="habits-tab-stats"
-          controls="habits-panel-stats"
-          active={activeTab === 'stats'}
-          label={t('habits.tabs.stats')}
-          onClick={() => onChange('stats')}
-        />
+    <div className="relative px-5 py-4 md:px-8">
+      <div className="mx-auto w-full max-w-(--axis-content-max)">
+        <div
+          role="tablist"
+          aria-label={t('habits.tabs.label')}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface-sunken p-1.5 shadow-neu-pressed"
+        >
+          <SegmentedTab
+            id="habits-tab-today"
+            controls="habits-panel-today"
+            active={activeTab === 'today'}
+            label={t('habits.tabs.today')}
+            onClick={() => onChange('today')}
+          />
+          <SegmentedTab
+            id="habits-tab-overview"
+            controls="habits-panel-overview"
+            active={activeTab === 'overview'}
+            label={t('habits.tabs.overview')}
+            onClick={() => onChange('overview')}
+          />
+          <SegmentedTab
+            id="habits-tab-stats"
+            controls="habits-panel-stats"
+            active={activeTab === 'stats'}
+            label={t('habits.tabs.stats')}
+            onClick={() => onChange('stats')}
+          />
+        </div>
       </div>
     </div>
   )
@@ -1637,15 +1690,6 @@ export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
   return (
     <LazyMotion features={domAnimation}>
       <div className="relative flex h-full flex-col overflow-hidden bg-background text-foreground">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(120% 90% at 5% 0%, color-mix(in oklab, var(--accent) 16%, transparent), transparent 58%), radial-gradient(90% 70% at 100% 100%, color-mix(in oklab, var(--primary) 14%, transparent), transparent 60%)',
-          }}
-        />
-
         <HabitPageHeader
           locale={locale}
           progress={progress}
@@ -1658,25 +1702,27 @@ export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
 
         <HabitTabList activeTab={activeTab} t={t} onChange={setActiveTab} />
 
-        <div className="relative flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-6">
-          {error ? (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="size-4" />
-              <AlertTitle>{t('habits.error.title')}</AlertTitle>
-              <AlertDescription>
-                {t('habits.error.description')}
-              </AlertDescription>
-            </Alert>
-          ) : null}
-          <AnimatePresence mode="wait">
-            {activeTab === 'today' ? (
-              <HabitTodayPanel context={panelContext} />
-            ) : activeTab === 'overview' ? (
-              <HabitOverviewPanel context={panelContext} />
-            ) : (
-              <HabitStatsPanel context={panelContext} />
-            )}
-          </AnimatePresence>
+        <div className="relative flex-1 overflow-y-auto px-4 pb-8 pt-2 md:px-8 md:pb-10">
+          <div className="mx-auto w-full max-w-(--axis-content-max)">
+            {error ? (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="size-4" />
+                <AlertTitle>{t('habits.error.title')}</AlertTitle>
+                <AlertDescription>
+                  {t('habits.error.description')}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <AnimatePresence mode="wait">
+              {activeTab === 'today' ? (
+                <HabitTodayPanel context={panelContext} />
+              ) : activeTab === 'overview' ? (
+                <HabitOverviewPanel context={panelContext} />
+              ) : (
+                <HabitStatsPanel context={panelContext} />
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         <HabitEditorDialog
@@ -1691,10 +1737,12 @@ export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
           }}
         />
 
-        <div className="relative border-t border-border/70 px-5 py-2 text-[11px] text-muted-foreground md:px-8">
-          {focusedHabit
-            ? t('habits.focusLock', { name: focusedHabit.name })
-            : t('habits.focusLockNone')}
+        <div className="relative border-t border-border bg-surface px-5 py-2 text-[11px] text-muted-foreground md:px-8">
+          <div className="mx-auto w-full max-w-(--axis-content-max)">
+            {focusedHabit
+              ? t('habits.focusLock', { name: focusedHabit.name })
+              : t('habits.focusLockNone')}
+          </div>
         </div>
       </div>
     </LazyMotion>

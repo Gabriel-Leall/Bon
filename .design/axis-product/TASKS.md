@@ -384,7 +384,7 @@ Só iniciar após S8. Cada página deve reutilizar shell, controles, painel e to
 - Agenda não vira uma terceira visualização inicial.
 - Falha externa não bloqueia leitura ou criação local.
 
-### [ ] P5. Reestruturar Hábitos
+### [~] P5. Reestruturar Hábitos
 
 **Objetivo:** separar check-in diário em Hoje do gerenciamento de recorrências.
 
@@ -394,6 +394,18 @@ Só iniciar após S8. Cada página deve reutilizar shell, controles, painel e to
 - Cores aparecem em ícones, pontos, regras ou células pequenas, não no card inteiro.
 - Sequência e histórico curto são explicáveis.
 - Métricas profundas direcionam para Análise.
+
+**Rodada 1 em 2026-09-07:** hierarquia e superfícies iniciadas. O fundo
+decorativo foi removido; cabeçalho, progresso, navegação local, fila, contexto
+e cartões passaram a usar os tokens e a profundidade da fundação. A cor de cada
+hábito foi reduzida a marcadores pequenos. A separação estrutural entre check-in
+em Hoje e gerenciamento nesta página permanece para a próxima rodada.
+
+**Rodada 2 em 2026-09-07:** o contexto do hábito em foco foi destilado para
+identidade, frequência, sequência, histórico curto e ações essenciais. A
+recuperação passou a usar controles compactos, enquanto a legenda e as
+explicações dos estados foram movidas para uma ajuda sob demanda ao lado de
+"Novo Hábito". O resumo redundante foi removido deste contexto.
 
 ### [ ] P6. Reestruturar Foco
 
