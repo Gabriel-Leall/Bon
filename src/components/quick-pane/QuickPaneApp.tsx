@@ -9,7 +9,15 @@ import {
   type CreateDailyPlanInput,
 } from '@/lib/tauri-bindings'
 import { logger } from '@/lib/logger'
-import { applyDocumentTheme, THEME_STORAGE_KEY } from '@/lib/theme'
+import {
+  APPEARANCE_CHANGED_EVENT,
+  applyDocumentAppearance,
+  applyStoredDocumentAppearance,
+  normalizeAppearancePreferences,
+  persistStoredAppearance,
+  readStoredAppearance,
+  type AppearancePreferences,
+} from '@/lib/theme'
 import { usePlatform } from '@/hooks/use-platform'
 import { formatShortcut } from '@/lib/platform-strings'
 import {
@@ -47,15 +55,9 @@ async function dismissQuickPane() {
  * This component demonstrates the quick pane pattern:
  * - Multiline text entry with submit on Cmd/Ctrl+Enter
  * - Optional visual type picker, with typed prefixes as a compact shortcut mode
- * - Theme synced with main window via localStorage
+ * - Theme and accent synced with the main window
  * - Hides window on submit or Escape
  */
-// Apply theme from localStorage to document
-function applyTheme() {
-  const theme = localStorage.getItem(THEME_STORAGE_KEY) || 'system'
-  applyDocumentTheme(theme as 'light' | 'dark' | 'system')
-}
-
 function nowISO() {
   return new Date().toISOString()
 }
@@ -338,7 +340,7 @@ async function createFromIntent(
     kind: 'focus',
     id: task.id,
     text: intent.content,
-    openTarget: openAfterSave ? 'pomodoro' : null,
+    openTarget: openAfterSave ? 'focus' : null,
   }
 }
 
@@ -516,15 +518,31 @@ export default function QuickPaneApp() {
       })
   }, [activeKind, error, isSaving, platform, showTypePicker, text])
 
-  // Apply theme on mount and listen for theme changes from main window
+  // Keep both surface theme and identity accent aligned with the main window.
   useEffect(() => {
-    applyTheme()
+    applyStoredDocumentAppearance()
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 
-    const unlisten = listen('theme-changed', () => {
-      applyTheme()
-    })
+    const applySystemAppearance = () => {
+      const appearance = readStoredAppearance()
+      if (appearance.theme === 'system') {
+        applyDocumentAppearance(appearance)
+      }
+    }
+
+    const unlisten = listen<AppearancePreferences>(
+      APPEARANCE_CHANGED_EVENT,
+      ({ payload }) => {
+        const appearance = normalizeAppearancePreferences(payload)
+        persistStoredAppearance(appearance)
+        applyDocumentAppearance(appearance)
+      }
+    )
+
+    mediaQuery.addEventListener('change', applySystemAppearance)
 
     return () => {
+      mediaQuery.removeEventListener('change', applySystemAppearance)
       unlisten.then(fn => fn())
     }
   }, [])
@@ -535,8 +553,8 @@ export default function QuickPaneApp() {
     const unlisten = currentWindow.onFocusChanged(
       async ({ payload: focused }) => {
         if (focused) {
-          // Re-apply theme in case it changed while hidden
-          applyTheme()
+          // Re-apply appearance in case it changed while hidden.
+          applyStoredDocumentAppearance()
           inputRef.current?.focus()
         } else {
           // Hide window when it loses focus (dismiss on blur)
@@ -640,7 +658,7 @@ export default function QuickPaneApp() {
       onSubmit={preventDefaultFormSubmit}
       aria-label={t('capturePane.label')}
       aria-busy={isSaving}
-      className="flex h-screen w-screen flex-col justify-center overflow-hidden rounded-(--app-corner-radius) border border-transparent bg-background/90 px-4 py-3 shadow-lg backdrop-blur-md transition-[background-color,backdrop-filter] focus-within:bg-background/95"
+      className="flex h-screen w-screen flex-col justify-center overflow-hidden rounded-(--app-corner-radius) border border-border-strong bg-surface px-4 py-3 shadow-neu-raised transition-[background-color,border-color,box-shadow] focus-within:border-primary/55 focus-within:bg-surface-elevated"
     >
       <div ref={mainRowRef} className="flex min-w-0 items-start gap-3">
         {showTypePicker ? (

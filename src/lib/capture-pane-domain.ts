@@ -77,5 +77,5 @@ export interface CapturePaneCreatedPayload {
   kind: CapturePaneKind
   id: string | null
   text: string
-  openTarget: 'tasks' | 'notes' | 'calendar' | 'habits' | 'pomodoro' | null
+  openTarget: 'tasks' | 'notes' | 'calendar' | 'habits' | 'focus' | null
 }

@@ -74,7 +74,7 @@ function PRRow({ pr }: { pr: PullRequest }) {
       exit={{ opacity: 0, y: -10, transition: { duration: 0.15 } }}
       type="button"
       onClick={handleClick}
-      className="group flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-start transition-colors hover:bg-accent/50"
+      className="group flex w-full items-start gap-2 rounded-lg border border-border-strong bg-surface px-2.5 py-2 text-start shadow-neu-raised-sm transition-[background-color,border-color,box-shadow,transform] hover:bg-accent/50 active:translate-y-px active:shadow-neu-pressed focus-visible:shadow-focus-ring focus-visible:outline-none"
     >
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-1.5">
@@ -129,9 +129,12 @@ function Section({
         )}
       </div>
       {isLoading ? (
-        <div className="space-y-1 px-2">
+        <div className="space-y-2 px-1">
           {[1, 2].map(i => (
-            <Skeleton key={i} className="h-10 w-full" />
+            <Skeleton
+              key={i}
+              className="h-10 w-full rounded-lg shadow-neu-raised-sm"
+            />
           ))}
         </div>
       ) : count === 0 ? (
@@ -223,7 +226,7 @@ export function GitHubWidget({ onNavigateToGitHub }: GitHubWidgetProps) {
               id="github-widget-refresh-btn"
               onClick={() => void refresh()}
               aria-label={t('widgets.github.refreshAria')}
-              className="rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-muted-foreground"
+              className="flex size-7 items-center justify-center rounded-full border border-border-strong bg-surface text-muted-foreground shadow-neu-raised-sm transition-[background-color,color,box-shadow,transform] hover:bg-accent hover:text-accent-foreground active:translate-y-px active:shadow-neu-pressed focus-visible:shadow-focus-ring focus-visible:outline-none"
             >
               <RefreshCw className="size-3" />
             </button>
@@ -236,7 +239,7 @@ export function GitHubWidget({ onNavigateToGitHub }: GitHubWidgetProps) {
             isLoading={isLoadingReviews}
             emptyText={t('widgets.github.noPendingReviews')}
           >
-            <div className="flex flex-col gap-0">
+            <div className="flex flex-col gap-2">
               {visibleReviews.map(pr => (
                 <PRRow key={pr.id} pr={pr} />
               ))}
@@ -250,7 +253,7 @@ export function GitHubWidget({ onNavigateToGitHub }: GitHubWidgetProps) {
             isLoading={isLoadingMyPRs}
             emptyText={t('widgets.github.noOpenPrs')}
           >
-            <div className="flex flex-col gap-0">
+            <div className="flex flex-col gap-2">
               {visibleMyPRs.map(pr => (
                 <PRRow key={pr.id} pr={pr} />
               ))}
@@ -268,7 +271,7 @@ export function GitHubWidget({ onNavigateToGitHub }: GitHubWidgetProps) {
               type="button"
               onClick={onNavigateToGitHub}
               className={cn(
-                'flex items-center gap-0.5 text-[10px] text-muted-foreground/50 transition-colors hover:text-muted-foreground',
+                'flex items-center gap-1 rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-[10px] text-muted-foreground shadow-neu-raised-sm transition-[background-color,color,box-shadow,transform] hover:bg-accent hover:text-accent-foreground active:translate-y-px active:shadow-neu-pressed focus-visible:shadow-focus-ring focus-visible:outline-none',
                 !updatedLabel && 'ml-auto'
               )}
             >

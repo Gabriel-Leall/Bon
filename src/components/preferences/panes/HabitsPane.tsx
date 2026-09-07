@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -53,12 +54,14 @@ export function HabitsPane() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="sunday">
-                {t('common.days.sunday', { defaultValue: 'Sunday' })}
-              </SelectItem>
-              <SelectItem value="monday">
-                {t('common.days.monday', { defaultValue: 'Monday' })}
-              </SelectItem>
+              <SelectGroup>
+                <SelectItem value="sunday">
+                  {t('common.days.sunday', { defaultValue: 'Sunday' })}
+                </SelectItem>
+                <SelectItem value="monday">
+                  {t('common.days.monday', { defaultValue: 'Monday' })}
+                </SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </SettingsField>

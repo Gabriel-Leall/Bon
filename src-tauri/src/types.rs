@@ -8,6 +8,10 @@ use std::sync::LazyLock;
 /// Default shortcut for the quick pane
 pub const DEFAULT_QUICK_PANE_SHORTCUT: &str = "CommandOrControl+Shift+.";
 
+/// Default visual preferences.
+pub const DEFAULT_THEME: &str = "system";
+pub const DEFAULT_ACCENT: &str = "blue";
+
 /// Maximum size for recovery data files (10MB)
 pub const MAX_RECOVERY_DATA_BYTES: u32 = 10_485_760;
 
@@ -26,7 +30,10 @@ pub static FILENAME_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
 /// Only contains settings that should be saved between sessions.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct AppPreferences {
+    #[serde(default = "default_theme")]
     pub theme: String,
+    #[serde(default = "default_accent")]
+    pub accent: String,
     /// Global shortcut for quick pane (e.g., "CommandOrControl+Shift+.")
     /// If None, uses the default shortcut
     pub quick_pane_shortcut: Option<String>,
@@ -48,7 +55,8 @@ pub struct AppPreferences {
 impl Default for AppPreferences {
     fn default() -> Self {
         Self {
-            theme: "system".to_string(),
+            theme: default_theme(),
+            accent: default_accent(),
             quick_pane_shortcut: None, // None means use default
             language: None,            // None means use system locale
             minimize_to_tray: Some(false),
@@ -57,6 +65,29 @@ impl Default for AppPreferences {
             adaptive_dashboard_mode: Some("full".to_string()),
             notes_vault_path: None,
         }
+    }
+}
+
+fn default_theme() -> String {
+    DEFAULT_THEME.to_string()
+}
+
+fn default_accent() -> String {
+    DEFAULT_ACCENT.to_string()
+}
+
+impl AppPreferences {
+    /// Normalizes persisted appearance values from older or malformed files.
+    /// Returns true when the in-memory preferences were migrated.
+    pub fn normalize_appearance(&mut self) -> bool {
+        let normalized_theme = normalize_theme(&self.theme);
+        let normalized_accent = normalize_accent(&self.accent);
+        let changed = self.theme != normalized_theme || self.accent != normalized_accent;
+
+        self.theme = normalized_theme;
+        self.accent = normalized_accent;
+
+        changed
     }
 }
 
@@ -128,14 +159,36 @@ pub fn validate_string_input(input: &str, max_len: usize, field_name: &str) -> R
     Ok(())
 }
 
-/// Validates theme value.
+/// Normalizes current, legacy, and invalid theme values.
+pub fn normalize_theme(theme: &str) -> String {
+    match theme {
+        "light" | "dark" | "cream" | "system" => theme.to_string(),
+        "entardecer" => "dark".to_string(),
+        _ => default_theme(),
+    }
+}
+
+/// Normalizes current and invalid accent values.
+pub fn normalize_accent(accent: &str) -> String {
+    match accent {
+        "blue" | "purple" | "red" => accent.to_string(),
+        _ => default_accent(),
+    }
+}
+
+/// Validates a normalized theme value.
 pub fn validate_theme(theme: &str) -> Result<(), String> {
     match theme {
-        "light" | "dark" | "system" | "entardecer" | "cream" => Ok(()),
-        _ => Err(
-            "Invalid theme: must be 'light', 'dark', 'system', 'entardecer', or 'cream'"
-                .to_string(),
-        ),
+        "light" | "dark" | "cream" | "system" => Ok(()),
+        _ => Err("Invalid theme: must be 'light', 'dark', 'cream', or 'system'".to_string()),
+    }
+}
+
+/// Validates a normalized accent value.
+pub fn validate_accent(accent: &str) -> Result<(), String> {
+    match accent {
+        "blue" | "purple" | "red" => Ok(()),
+        _ => Err("Invalid accent: must be 'blue', 'purple', or 'red'".to_string()),
     }
 }
 
@@ -146,5 +199,63 @@ pub fn validate_dashboard_adaptation_mode(mode: &str) -> Result<(), String> {
         _ => Err(
             "Invalid dashboard adaptation mode: must be 'full', 'reduced', or 'off'".to_string(),
         ),
+    }
+}
+
+#[cfg(test)]
+mod appearance_tests {
+    use super::*;
+
+    #[test]
+    fn preferences_default_to_system_and_blue() {
+        let preferences = AppPreferences::default();
+
+        assert_eq!(preferences.theme, DEFAULT_THEME);
+        assert_eq!(preferences.accent, DEFAULT_ACCENT);
+    }
+
+    #[test]
+    fn legacy_preferences_without_accent_deserialize_with_blue() {
+        let preferences: AppPreferences = serde_json::from_str(r#"{"theme":"cream"}"#)
+            .expect("legacy preferences should deserialize");
+
+        assert_eq!(preferences.theme, "cream");
+        assert_eq!(preferences.accent, DEFAULT_ACCENT);
+    }
+
+    #[test]
+    fn normalizes_legacy_and_invalid_appearance_values() {
+        let mut legacy = AppPreferences {
+            theme: "entardecer".to_string(),
+            accent: "".to_string(),
+            ..AppPreferences::default()
+        };
+
+        assert!(legacy.normalize_appearance());
+        assert_eq!(legacy.theme, "dark");
+        assert_eq!(legacy.accent, DEFAULT_ACCENT);
+
+        let mut invalid = AppPreferences {
+            theme: "sepia".to_string(),
+            accent: "green".to_string(),
+            ..AppPreferences::default()
+        };
+
+        assert!(invalid.normalize_appearance());
+        assert_eq!(invalid.theme, DEFAULT_THEME);
+        assert_eq!(invalid.accent, DEFAULT_ACCENT);
+    }
+
+    #[test]
+    fn validates_only_current_appearance_values() {
+        for theme in ["light", "dark", "cream", "system"] {
+            assert!(validate_theme(theme).is_ok());
+        }
+        assert!(validate_theme("entardecer").is_err());
+
+        for accent in ["blue", "purple", "red"] {
+            assert!(validate_accent(accent).is_ok());
+        }
+        assert!(validate_accent("green").is_err());
     }
 }

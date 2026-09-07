@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useUIStore } from './ui-store'
+import { APP_PAGES, normalizeAppPage, useUIStore } from './ui-store'
 import { DEFAULT_BON_CHAN_MOOD } from '@/lib/bon-chan'
 
 describe('UIStore', () => {
@@ -11,7 +11,7 @@ describe('UIStore', () => {
       commandPaletteOpen: false,
       preferencesOpen: false,
       lastQuickPaneEntry: null,
-      activePage: 'grid',
+      activePage: 'today',
       activePageData: {},
       activePreferencesPane: 'general',
       bonChanMood: DEFAULT_BON_CHAN_MOOD,
@@ -25,6 +25,7 @@ describe('UIStore', () => {
     expect(state.commandPaletteOpen).toBe(false)
     expect(state.preferencesOpen).toBe(false)
     expect(state.bonChanMood).toBe(DEFAULT_BON_CHAN_MOOD)
+    expect(state.activePage).toBe('today')
   })
 
   it('toggles left sidebar visibility', () => {
@@ -76,6 +77,30 @@ describe('UIStore', () => {
     expect(useUIStore.getState().activePageData['selectedHabitId']).toBe(
       'habit-1'
     )
+  })
+
+  it.each(APP_PAGES)('navigates to the canonical %s page', page => {
+    useUIStore.getState().navigateTo(page)
+
+    expect(useUIStore.getState().activePage).toBe(page)
+  })
+
+  it.each([
+    ['grid', 'today'],
+    ['pomodoro', 'focus'],
+    ['analytics', 'analysis'],
+    ['kanban', 'tasks'],
+    ['github', 'tasks'],
+    ['slack', 'today'],
+  ] as const)('migrates the legacy %s page to %s', (legacyPage, page) => {
+    useUIStore.getState().navigateTo(legacyPage)
+
+    expect(useUIStore.getState().activePage).toBe(page)
+  })
+
+  it('falls back to Today when a restored page id is unknown', () => {
+    expect(normalizeAppPage('removed-page')).toBe('today')
+    expect(normalizeAppPage(null)).toBe('today')
   })
 
   it('sets Bon-chan mood', () => {

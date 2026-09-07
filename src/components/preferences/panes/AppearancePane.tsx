@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -45,21 +46,20 @@ export function AppearancePane() {
               />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="light">
-                {t('preferences.appearance.theme.light')}
-              </SelectItem>
-              <SelectItem value="dark">
-                {t('preferences.appearance.theme.dark')}
-              </SelectItem>
-              <SelectItem value="entardecer">
-                {t('preferences.appearance.theme.entardecer')}
-              </SelectItem>
-              <SelectItem value="cream">
-                {t('preferences.appearance.theme.cream')}
-              </SelectItem>
-              <SelectItem value="system">
-                {t('preferences.appearance.theme.system')}
-              </SelectItem>
+              <SelectGroup>
+                <SelectItem value="light">
+                  {t('preferences.appearance.theme.light')}
+                </SelectItem>
+                <SelectItem value="dark">
+                  {t('preferences.appearance.theme.dark')}
+                </SelectItem>
+                <SelectItem value="cream">
+                  {t('preferences.appearance.theme.cream')}
+                </SelectItem>
+                <SelectItem value="system">
+                  {t('preferences.appearance.theme.system')}
+                </SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </SettingsField>

@@ -92,8 +92,8 @@ export function useMainWindowEventListeners() {
         navigateTo('habits', { selectedHabitId: event.payload.id })
       } else if (event.payload.openTarget === 'calendar') {
         navigateTo('calendar')
-      } else if (event.payload.openTarget === 'pomodoro') {
-        navigateTo('pomodoro')
+      } else if (event.payload.openTarget === 'focus') {
+        navigateTo('focus')
       }
     })
       .then(unlistenFn => {

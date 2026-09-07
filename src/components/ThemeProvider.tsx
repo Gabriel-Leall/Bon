@@ -1,10 +1,20 @@
-import { useEffect, useLayoutEffect, useState, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { emit } from '@tauri-apps/api/event'
-import { ThemeProviderContext, type Theme } from '@/lib/theme-context'
-import type { ResolvedTheme } from '@/lib/theme'
+import {
+  ThemeProviderContext,
+  type Accent,
+  type Theme,
+} from '@/lib/theme-context'
+import type { AppearancePreferences, ResolvedTheme } from '@/lib/theme'
 import { usePreferences } from '@/services/preferences'
 import {
-  applyDocumentTheme,
+  ACCENT_STORAGE_KEY,
+  APPEARANCE_CHANGED_EVENT,
+  applyDocumentAppearance,
+  normalizeAccentPreference,
+  normalizeAppearancePreferences,
+  normalizeThemePreference,
+  persistStoredAppearance,
   resolveThemePreference,
   syncNativeAppTheme,
   THEME_STORAGE_KEY,
@@ -13,71 +23,105 @@ import {
 interface ThemeProviderProps {
   children: React.ReactNode
   defaultTheme?: Theme
+  defaultAccent?: Accent
   storageKey?: string
+  accentStorageKey?: string
 }
 
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
+  defaultAccent = 'blue',
   storageKey = THEME_STORAGE_KEY,
+  accentStorageKey = ACCENT_STORAGE_KEY,
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
+  const [appearance, setAppearance] = useState<AppearancePreferences>(() =>
+    normalizeAppearancePreferences({
+      theme: localStorage.getItem(storageKey) ?? defaultTheme,
+      accent: localStorage.getItem(accentStorageKey) ?? defaultAccent,
+    })
   )
+  const appearanceRef = useRef(appearance)
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
     resolveThemePreference(
-      (localStorage.getItem(storageKey) as Theme) || defaultTheme,
+      appearance.theme,
       window.matchMedia('(prefers-color-scheme: dark)').matches
     )
   )
 
-  // Load theme from persistent preferences
   const { data: preferences } = usePreferences()
   const hasSyncedPreferences = useRef(false)
 
-  // Sync theme with preferences when they load
-  // This is a legitimate case of syncing with external async state (persistent preferences)
-  // The ref ensures this only happens once when preferences first load
+  const commitAppearance = (nextAppearance: AppearancePreferences) => {
+    appearanceRef.current = nextAppearance
+    const appliedAppearance = applyDocumentAppearance(nextAppearance)
+    persistStoredAppearance(
+      nextAppearance,
+      localStorage,
+      storageKey,
+      accentStorageKey
+    )
+    setResolvedTheme(appliedAppearance.resolvedTheme)
+    setAppearance(nextAppearance)
+    void emit(APPEARANCE_CHANGED_EVENT, nextAppearance)
+  }
+
+  // Persistent preferences are authoritative once their first load completes.
   useLayoutEffect(() => {
-    if (preferences?.theme && !hasSyncedPreferences.current) {
-      hasSyncedPreferences.current = true
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing with external async preferences on initial load
-      setTheme(preferences.theme as Theme)
-    }
-  }, [preferences?.theme])
+    if (!preferences || hasSyncedPreferences.current) return
+
+    hasSyncedPreferences.current = true
+    const nextAppearance = normalizeAppearancePreferences(preferences)
+    appearanceRef.current = nextAppearance
+    applyDocumentAppearance(nextAppearance)
+    persistStoredAppearance(
+      nextAppearance,
+      localStorage,
+      storageKey,
+      accentStorageKey
+    )
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time synchronization with persisted preferences
+    setAppearance(nextAppearance)
+    void emit(APPEARANCE_CHANGED_EVENT, nextAppearance)
+  }, [accentStorageKey, preferences, storageKey])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 
-    const applyTheme = () => {
-      const appliedTheme = applyDocumentTheme(theme)
-      setResolvedTheme(appliedTheme)
+    const applyAppearance = () => {
+      const appliedAppearance = applyDocumentAppearance(appearance)
+      setResolvedTheme(appliedAppearance.resolvedTheme)
     }
 
-    if (theme === 'system') {
-      applyTheme()
+    applyAppearance()
 
-      const handleChange = () => applyTheme()
-      mediaQuery.addEventListener('change', handleChange)
-      return () => mediaQuery.removeEventListener('change', handleChange)
-    }
+    if (appearance.theme !== 'system') return
 
-    applyTheme()
-  }, [theme])
+    const handleChange = () => applyAppearance()
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [appearance])
 
   useEffect(() => {
-    void syncNativeAppTheme(theme)
-  }, [theme])
+    void syncNativeAppTheme(appearance.theme)
+  }, [appearance.theme])
 
   const value = {
-    theme,
+    theme: appearance.theme,
+    accent: appearance.accent,
     resolvedTheme,
-    setTheme: (newTheme: Theme) => {
-      localStorage.setItem(storageKey, newTheme)
-      setTheme(newTheme)
-      // Notify other windows (e.g., quick pane) of theme change
-      void emit('theme-changed', { theme: newTheme })
+    setTheme: (theme: Theme) => {
+      commitAppearance({
+        ...appearanceRef.current,
+        theme: normalizeThemePreference(theme),
+      })
+    },
+    setAccent: (accent: Accent) => {
+      commitAppearance({
+        ...appearanceRef.current,
+        accent: normalizeAccentPreference(accent),
+      })
     },
   }
 

@@ -5,6 +5,7 @@ import { I18nextProvider } from 'react-i18next'
 import i18n from '@/i18n/config'
 import {
   ThemeProviderContext,
+  type Accent,
   type Theme,
   type ThemeProviderState,
 } from '@/lib/theme-context'
@@ -30,11 +31,14 @@ interface AllTheProvidersProps {
  */
 function MockThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light')
+  const [accent, setAccent] = useState<Accent>('blue')
 
   const value: ThemeProviderState = {
     theme,
+    accent,
     resolvedTheme: theme === 'system' ? 'light' : theme,
     setTheme,
+    setAccent,
   }
 
   return (

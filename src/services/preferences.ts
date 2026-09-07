@@ -2,11 +2,23 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { commands, type AppPreferences } from '@/lib/tauri-bindings'
+import { normalizeAppearancePreferences } from '@/lib/theme'
 
 // Query keys for preferences
 export const preferencesQueryKeys = {
   all: ['preferences'] as const,
   preferences: () => [...preferencesQueryKeys.all] as const,
+}
+
+export function normalizeAppPreferences(
+  preferences: AppPreferences
+): AppPreferences {
+  const appearance = normalizeAppearancePreferences(preferences)
+
+  return {
+    ...preferences,
+    ...appearance,
+  }
 }
 
 // TanStack Query hooks following the architectural patterns
@@ -24,6 +36,7 @@ export function usePreferences() {
         })
         return {
           theme: 'system',
+          accent: 'blue',
           quick_pane_shortcut: null,
           language: null,
           minimize_to_tray: false,
@@ -37,7 +50,7 @@ export function usePreferences() {
       logger.info('Preferences loaded successfully', {
         preferences: result.data,
       })
-      return result.data
+      return normalizeAppPreferences(result.data)
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
@@ -49,21 +62,25 @@ export function useSavePreferences() {
 
   return useMutation({
     mutationFn: async (preferences: AppPreferences) => {
-      logger.debug('Saving preferences to backend', { preferences })
-      const result = await commands.savePreferences(preferences)
+      const normalizedPreferences = normalizeAppPreferences(preferences)
+      logger.debug('Saving preferences to backend', {
+        preferences: normalizedPreferences,
+      })
+      const result = await commands.savePreferences(normalizedPreferences)
 
       if (result.status === 'error') {
         logger.error('Failed to save preferences', {
           error: result.error,
-          preferences,
+          preferences: normalizedPreferences,
         })
         toast.error('Failed to save preferences', { description: result.error })
         throw new Error(result.error)
       }
 
       logger.info('Preferences saved successfully')
+      return normalizedPreferences
     },
-    onSuccess: (_, preferences) => {
+    onSuccess: preferences => {
       // Update the cache with the new preferences
       queryClient.setQueryData(preferencesQueryKeys.preferences(), preferences)
       logger.info('Preferences cache updated')

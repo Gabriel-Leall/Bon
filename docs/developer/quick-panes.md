@@ -92,22 +92,31 @@ line becomes the habit name.
 
 ### Theme Synchronization
 
-Since windows don't share React context, theme must be synchronized manually:
+Since windows don't share React context, the complete appearance pair is
+synchronized explicitly:
 
 ```typescript
-// Main window: emit when theme changes
-emit('theme-changed', { theme })
+// Main window: persist locally for bootstrap and broadcast live changes
+persistStoredAppearance({ theme, accent })
+emit('appearance-changed', { theme, accent })
 
-// Quick pane: listen and apply
-listen('theme-changed', () => applyTheme())
+// Quick pane: listen and apply both axes
+listen('appearance-changed', ({ payload }) => {
+  persistStoredAppearance(payload)
+  applyDocumentAppearance(payload)
+})
 
-// Also re-apply on focus gain (catches changes while hidden)
+// Re-apply on focus gain to catch changes made while the pane was hidden
 onFocusChanged(({ payload: focused }) => {
-  if (focused) applyTheme()
+  if (focused) applyStoredDocumentAppearance()
 })
 ```
 
-Use `src/lib/theme.ts` as the shared source of truth for theme resolution (`system` -> `light`/`dark`) and DOM class application. This keeps main window and quick pane behavior consistent and prepares the codebase for future custom theme families on top of the same light/dark base.
+Both window entry points call `applyStoredDocumentAppearance()` before the first
+React render. Use `src/lib/theme.ts` as the shared source of truth for
+normalization, storage, `system` resolution (`light` or `dark` only), DOM class
+application, and `data-axis-accent`. This prevents a mismatched first frame and
+keeps the main window and Quick Pane consistent.
 
 ## Platform Behavior
 

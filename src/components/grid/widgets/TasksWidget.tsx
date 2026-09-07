@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CheckSquare, ChevronRight, Plus } from 'lucide-react'
+import { CheckSquare, Plus } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { WidgetCard } from '../WidgetCard'
@@ -51,7 +51,7 @@ function QuickAddInput({
   }
 
   return (
-    <div className="mt-2 flex items-center gap-1.5 rounded-md border border-dashed border-border/60 px-2 py-1.5 focus-within:border-border">
+    <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-border-strong bg-surface-sunken px-2.5 py-2 shadow-neu-pressed transition-[border-color,box-shadow] focus-within:border-primary/60 focus-within:shadow-focus-input">
       <Plus className="size-3 shrink-0 text-muted-foreground" />
       <input
         type="text"
@@ -92,7 +92,7 @@ function TaskRow({
       animate="visible"
       exit="exit"
       onClick={onSelect}
-      className="group flex cursor-pointer items-center gap-3 border-b border-border py-2.5 last:border-b-0"
+      className="group flex cursor-pointer items-center gap-3 rounded-lg border border-border-strong bg-surface px-3 py-2.5 shadow-neu-raised-sm transition-[background-color,border-color,box-shadow,transform] hover:bg-surface-elevated active:translate-y-px active:shadow-neu-pressed"
     >
       <m.button
         type="button"
@@ -109,7 +109,7 @@ function TaskRow({
         animate={{ scale: isDone ? [1, 1.08, 1] : 1 }}
         transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          'relative flex size-5 shrink-0 items-center justify-center rounded border transition-colors',
+          'relative flex size-5 shrink-0 items-center justify-center rounded border shadow-neu-raised-sm transition-[background-color,border-color,box-shadow,transform] active:shadow-neu-pressed focus-visible:shadow-focus-ring focus-visible:outline-none',
           isDone
             ? 'border-primary bg-primary'
             : 'border-muted-foreground/60 group-hover:border-muted-foreground'
@@ -205,14 +205,23 @@ export function TasksWidget({ onNavigateToTasks }: TasksWidgetProps) {
             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               {t('widgets.tasks.header')}
             </span>
-            {totalCount > 0 && (
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {pendingCount} / {totalCount}
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {totalCount > 0 && (
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {pendingCount} / {totalCount}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => onNavigateToTasks?.()}
+                className="rounded-sm px-1 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:shadow-focus-ring focus-visible:outline-none"
+              >
+                {t('widgets.tasks.viewAll')}
+              </button>
+            </div>
           </div>
 
-          <div className="flex flex-1 flex-col overflow-y-auto">
+          <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-1">
             {isLoading ? (
               <m.div
                 layout
@@ -224,7 +233,7 @@ export function TasksWidget({ onNavigateToTasks }: TasksWidgetProps) {
                 {[...Array(3)].map((_, i) => (
                   <div
                     key={`task-skeleton-${i}`}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-lg border border-border-strong bg-surface p-3 shadow-neu-raised-sm"
                   >
                     <Skeleton className="size-4 shrink-0 rounded-full" />
                     <Skeleton className="h-4 flex-1" />
@@ -263,15 +272,6 @@ export function TasksWidget({ onNavigateToTasks }: TasksWidgetProps) {
           </div>
 
           <QuickAddInput onAdd={handleAddTask} t={t} />
-
-          <button
-            type="button"
-            onClick={() => onNavigateToTasks?.()}
-            className="mt-auto flex items-center gap-0.5 self-end text-[11px] text-muted-foreground/60 transition-colors hover:text-muted-foreground"
-          >
-            {t('widgets.tasks.viewAll')}
-            <ChevronRight className="size-3" />
-          </button>
         </div>
       </LazyMotion>
     </WidgetCard>

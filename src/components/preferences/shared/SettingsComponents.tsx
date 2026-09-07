@@ -22,7 +22,7 @@ export function SettingsField({
       <Label className="text-sm font-medium text-foreground">{label}</Label>
       {children}
       {description && (
-        <p className="text-sm text-neutral-500 mt-1.5">{description}</p>
+        <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>
       )}
     </div>
   )
@@ -31,7 +31,7 @@ export function SettingsField({
 export function SettingsSection({ title, children }: SettingsSectionProps) {
   return (
     <div className="mt-8 mb-4">
-      <h3 className="text-xs font-bold tracking-wider text-neutral-500 uppercase">
+      <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
         {title}
       </h3>
       <div className="space-y-4 mt-4">{children}</div>

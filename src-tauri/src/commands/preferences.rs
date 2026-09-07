@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
 use crate::types::{
-    validate_dashboard_adaptation_mode, validate_string_input, validate_theme, AppPreferences,
+    validate_accent, validate_dashboard_adaptation_mode, validate_string_input, validate_theme,
+    AppPreferences,
 };
 
 /// Gets the path to the preferences file.
@@ -33,20 +34,31 @@ pub fn load_preferences_from_disk(app: &AppHandle) -> Result<AppPreferences, Str
     let contents = std::fs::read_to_string(&prefs_path)
         .map_err(|e| format!("Failed to read preferences file: {e}"))?;
 
-    serde_json::from_str(&contents).map_err(|e| format!("Failed to parse preferences: {e}"))
+    let mut preferences: AppPreferences =
+        serde_json::from_str(&contents).map_err(|e| format!("Failed to parse preferences: {e}"))?;
+
+    if preferences.normalize_appearance() {
+        log::info!("Migrated appearance preferences in memory");
+    }
+
+    Ok(preferences)
 }
 
 pub fn save_preferences_to_disk(
     app: &AppHandle,
     preferences: &AppPreferences,
 ) -> Result<(), String> {
-    validate_theme(&preferences.theme)?;
-    if let Some(mode) = &preferences.adaptive_dashboard_mode {
+    let mut normalized_preferences = preferences.clone();
+    normalized_preferences.normalize_appearance();
+
+    validate_theme(&normalized_preferences.theme)?;
+    validate_accent(&normalized_preferences.accent)?;
+    if let Some(mode) = &normalized_preferences.adaptive_dashboard_mode {
         validate_dashboard_adaptation_mode(mode)?;
     }
 
     let prefs_path = get_preferences_path(app)?;
-    let json_content = serde_json::to_string_pretty(preferences)
+    let json_content = serde_json::to_string_pretty(&normalized_preferences)
         .map_err(|e| format!("Failed to serialize preferences: {e}"))?;
 
     let temp_path = prefs_path.with_extension("tmp");

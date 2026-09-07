@@ -164,7 +164,7 @@ export function PomodoroWidget({ onNavigateToPomodoro }: PomodoroWidgetProps) {
             onClick={e => {
               e.stopPropagation()
             }}
-            className="flex items-center gap-1.5 rounded-full bg-muted px-4 py-1.5 transition-colors hover:bg-accent"
+            className="flex items-center gap-1.5 rounded-full border border-border-strong bg-surface-sunken px-4 py-1.5 shadow-neu-pressed transition-[background-color,color,box-shadow] hover:bg-accent focus-visible:shadow-focus-ring focus-visible:outline-none"
           >
             <Link2 className="size-3.5 shrink-0 text-muted-foreground" />
             <span className="max-w-[140px] truncate text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -192,7 +192,7 @@ export function PomodoroWidget({ onNavigateToPomodoro }: PomodoroWidgetProps) {
                 reset()
               }}
               aria-label={t('widgets.pomodoro.resetAria')}
-              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
+              className="flex size-10 items-center justify-center rounded-full border border-border-strong bg-surface text-muted-foreground shadow-neu-raised-sm transition-[background-color,color,box-shadow,transform] hover:bg-accent hover:text-accent-foreground active:shadow-neu-pressed focus-visible:shadow-focus-ring focus-visible:outline-none"
             >
               <RotateCcw className="size-5" />
             </m.button>
@@ -210,7 +210,7 @@ export function PomodoroWidget({ onNavigateToPomodoro }: PomodoroWidgetProps) {
                   ? t('widgets.pomodoro.pauseAria')
                   : t('widgets.pomodoro.startAria')
               }
-              className="flex size-16 items-center justify-center rounded-full bg-accent text-foreground shadow-lg transition-all hover:bg-accent/90"
+              className="flex size-16 items-center justify-center rounded-full border border-primary/70 bg-primary text-primary-foreground shadow-neu-raised transition-[background-color,box-shadow,transform] hover:bg-primary-hover active:bg-primary-active active:shadow-neu-pressed focus-visible:shadow-focus-ring focus-visible:outline-none"
             >
               {isRunning ? (
                 <Pause className="size-7" fill="currentColor" />
@@ -228,7 +228,7 @@ export function PomodoroWidget({ onNavigateToPomodoro }: PomodoroWidgetProps) {
                 void skip().catch(console.error)
               }}
               aria-label={t('widgets.pomodoro.skipAria')}
-              className="p-2 text-muted-foreground transition-colors hover:text-foreground"
+              className="flex size-10 items-center justify-center rounded-full border border-border-strong bg-surface text-muted-foreground shadow-neu-raised-sm transition-[background-color,color,box-shadow,transform] hover:bg-accent hover:text-accent-foreground active:shadow-neu-pressed focus-visible:shadow-focus-ring focus-visible:outline-none"
             >
               <SkipForward className="size-5" />
             </m.button>

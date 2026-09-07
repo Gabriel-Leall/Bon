@@ -118,7 +118,7 @@ export function DailyAxisBanner() {
     }
 
     linkTask(focusedTask.id)
-    navigateTo('pomodoro')
+    navigateTo('focus')
 
     if (timerState !== 'running' || linkedTaskId !== focusedTask.id) {
       const ok = await startContextualFocus(focusedTask.id)
@@ -144,7 +144,7 @@ export function DailyAxisBanner() {
     }
 
     if (isRunningFocusedTask) {
-      navigateTo('pomodoro')
+      navigateTo('focus')
       return
     }
 
@@ -162,7 +162,7 @@ export function DailyAxisBanner() {
           type="button"
           variant="outline"
           size="sm"
-          className="pointer-events-auto rounded-xl bg-background/95 shadow-modal backdrop-blur"
+          className="pointer-events-auto rounded-xl bg-surface-elevated shadow-modal"
           onClick={() => setMinimized(false)}
           title={t('dailyAxis.restore')}
         >
@@ -179,14 +179,7 @@ export function DailyAxisBanner() {
       aria-label="Daily Axis"
       className="pointer-events-none fixed bottom-5 right-5 z-50 w-[min(390px,calc(100vw-7rem))]"
     >
-      <div
-        className={cn(
-          'pointer-events-auto relative overflow-hidden rounded-xl border px-4 py-3 shadow-modal backdrop-blur',
-          period === 'evening'
-            ? 'border-amber-500/25 bg-gradient-to-br from-amber-500/8 via-background to-background'
-            : 'border-primary/15 bg-gradient-to-br from-primary/8 via-background to-background'
-        )}
-      >
+      <div className="pointer-events-auto relative overflow-hidden rounded-xl border border-border-strong bg-surface-elevated px-4 py-3 shadow-modal">
         <Button
           type="button"
           variant="ghost"

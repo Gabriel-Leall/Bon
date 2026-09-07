@@ -297,7 +297,7 @@ export function SlackPage() {
         <div className="mb-6 flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigateTo('grid')}
+            onClick={() => navigateTo('today')}
             className="rounded-md p-1 text-muted-foreground hover:bg-accent"
           >
             <ChevronLeft className="size-4" />
@@ -342,7 +342,7 @@ export function SlackPage() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigateTo('grid')}
+            onClick={() => navigateTo('today')}
             className="rounded-md p-1 text-muted-foreground hover:bg-accent"
           >
             <ChevronLeft className="size-4" />

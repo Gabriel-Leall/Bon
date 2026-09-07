@@ -2,13 +2,11 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { useUIStore } from '@/store/ui-store'
-import { executeCommand, useCommandContext } from '@/lib/commands'
 import {
   PanelLeft,
   PanelLeftClose,
   PanelRight,
   PanelRightClose,
-  Settings,
 } from 'lucide-react'
 
 /**
@@ -19,25 +17,22 @@ export function TitleBarLeftActions() {
   const { t } = useTranslation()
   const leftSidebarVisible = useUIStore(state => state.leftSidebarVisible)
   const toggleLeftSidebar = useUIStore(state => state.toggleLeftSidebar)
+  const label = t(
+    leftSidebarVisible ? 'titlebar.hideLeftSidebar' : 'titlebar.showLeftSidebar'
+  )
 
   return (
     <div className="flex items-center gap-1">
       <Button
+        type="button"
         onClick={toggleLeftSidebar}
         variant="ghost"
-        size="icon"
-        className="h-6 w-6 text-foreground/70 hover:text-foreground"
-        title={t(
-          leftSidebarVisible
-            ? 'titlebar.hideLeftSidebar'
-            : 'titlebar.showLeftSidebar'
-        )}
+        size="icon-xs"
+        className="text-foreground/70 hover:text-foreground"
+        aria-label={label}
+        title={label}
       >
-        {leftSidebarVisible ? (
-          <PanelLeftClose className="h-3 w-3" />
-        ) : (
-          <PanelLeft className="h-3 w-3" />
-        )}
+        {leftSidebarVisible ? <PanelLeftClose /> : <PanelLeft />}
       </Button>
     </div>
   )
@@ -51,43 +46,24 @@ export function TitleBarRightActions() {
   const { t } = useTranslation()
   const rightSidebarVisible = useUIStore(state => state.rightSidebarVisible)
   const toggleRightSidebar = useUIStore(state => state.toggleRightSidebar)
-  const commandContext = useCommandContext()
-
-  const handleOpenPreferences = async () => {
-    const result = await executeCommand('open-preferences', commandContext)
-    if (!result.success && result.error) {
-      commandContext.showToast(result.error, 'error')
-    }
-  }
+  const label = t(
+    rightSidebarVisible
+      ? 'titlebar.hideRightSidebar'
+      : 'titlebar.showRightSidebar'
+  )
 
   return (
     <div className="flex items-center gap-1">
       <Button
-        onClick={handleOpenPreferences}
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 text-foreground/70 hover:text-foreground"
-        title={t('titlebar.settings')}
-      >
-        <Settings className="h-3 w-3" />
-      </Button>
-
-      <Button
+        type="button"
         onClick={toggleRightSidebar}
         variant="ghost"
-        size="icon"
-        className="h-6 w-6 text-foreground/70 hover:text-foreground"
-        title={t(
-          rightSidebarVisible
-            ? 'titlebar.hideRightSidebar'
-            : 'titlebar.showRightSidebar'
-        )}
+        size="icon-xs"
+        className="text-foreground/70 hover:text-foreground"
+        aria-label={label}
+        title={label}
       >
-        {rightSidebarVisible ? (
-          <PanelRightClose className="h-3 w-3" />
-        ) : (
-          <PanelRight className="h-3 w-3" />
-        )}
+        {rightSidebarVisible ? <PanelRightClose /> : <PanelRight />}
       </Button>
     </div>
   )

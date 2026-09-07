@@ -8,11 +8,12 @@ import { useUIStore } from '@/store/ui-store'
 import { Maximize2, Minimize2 } from 'lucide-react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { lazy, Suspense, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 const TasksPage = lazy(() =>
   import('@/pages/TasksPage').then(module => ({ default: module.TasksPage }))
 )
-const PomodoroPage = lazy(() =>
+const FocusPage = lazy(() =>
   import('@/pages/PomodoroPage').then(module => ({
     default: module.PomodoroPage,
   }))
@@ -28,13 +29,7 @@ const CalendarPage = lazy(() =>
     default: module.CalendarPage,
   }))
 )
-const GitHubPage = lazy(() =>
-  import('@/pages/GitHubPage').then(module => ({ default: module.GitHubPage }))
-)
-const SlackPage = lazy(() =>
-  import('@/pages/SlackPage').then(module => ({ default: module.SlackPage }))
-)
-const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'))
+const AnalysisPage = lazy(() => import('@/pages/AnalyticsPage'))
 
 interface MainWindowContentProps {
   children?: React.ReactNode
@@ -48,6 +43,7 @@ export function MainWindowContent({
   const activePage = useUIStore(state => state.activePage)
   const activePageData = useUIStore(state => state.activePageData)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const { t } = useTranslation()
 
   const toggleFullscreen = async () => {
     const appWindow = getCurrentWindow()
@@ -62,7 +58,7 @@ export function MainWindowContent({
   }
 
   return (
-    <div className={cn('flex h-full flex-col bg-background', className)}>
+    <main className={cn('flex h-full flex-col bg-background', className)}>
       {children || (
         <Suspense
           fallback={<div className="flex h-full items-center justify-center" />}
@@ -80,9 +76,9 @@ export function MainWindowContent({
                   initialSelectedHabitId={activePageData['selectedHabitId']}
                 />
               </PageWrapper>
-            ) : activePage === 'pomodoro' ? (
-              <PageWrapper key="pomodoro">
-                <PomodoroPage />
+            ) : activePage === 'focus' ? (
+              <PageWrapper key="focus">
+                <FocusPage />
               </PageWrapper>
             ) : activePage === 'notes' ? (
               <PageWrapper key="notes">
@@ -90,37 +86,32 @@ export function MainWindowContent({
                   initialSelectedNoteId={activePageData['selectedNoteId']}
                 />
               </PageWrapper>
-            ) : activePage === 'kanban' ? (
-              <PageWrapper key="kanban">
-                <TasksPage initialViewMode="kanban" />
-              </PageWrapper>
             ) : activePage === 'calendar' ? (
               <PageWrapper key="calendar">
                 <CalendarPage />
               </PageWrapper>
-            ) : activePage === 'github' ? (
-              <PageWrapper key="github">
-                <GitHubPage />
-              </PageWrapper>
-            ) : activePage === 'slack' ? (
-              <PageWrapper key="slack">
-                <SlackPage />
-              </PageWrapper>
-            ) : activePage === 'analytics' ? (
-              <PageWrapper key="analytics">
-                <AnalyticsPage />
+            ) : activePage === 'analysis' ? (
+              <PageWrapper key="analysis">
+                <AnalysisPage />
               </PageWrapper>
             ) : (
-              <PageWrapper key="dashboard">
+              <PageWrapper key="today">
                 <div className="flex h-full flex-col">
                   <div className="flex shrink-0 items-center justify-end gap-1 border-b border-border px-4 py-1.5">
                     <button
                       type="button"
                       onClick={toggleFullscreen}
                       className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                      title={
-                        isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'
-                      }
+                      aria-label={t(
+                        isFullscreen
+                          ? 'navigation.exitFullscreen'
+                          : 'navigation.enterFullscreen'
+                      )}
+                      title={t(
+                        isFullscreen
+                          ? 'navigation.exitFullscreen'
+                          : 'navigation.enterFullscreen'
+                      )}
                     >
                       {isFullscreen ? (
                         <Minimize2 className="size-3.5" />
@@ -141,6 +132,6 @@ export function MainWindowContent({
           </AnimatePresence>
         </Suspense>
       )}
-    </div>
+    </main>
   )
 }

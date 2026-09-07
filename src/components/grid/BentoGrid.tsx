@@ -76,7 +76,7 @@ function BrainDumpWidgetConnected() {
 
 function GitHubWidgetConnected() {
   const navigateTo = useUIStore(state => state.navigateTo)
-  return <GitHubWidget onNavigateToGitHub={() => navigateTo('github')} />
+  return <GitHubWidget onNavigateToGitHub={() => navigateTo('tasks')} />
 }
 
 /** Map widget ID → React component */

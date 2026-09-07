@@ -1,42 +1,44 @@
 import { useEffect, useState } from 'react'
 import {
-  CheckSquare,
-  LayoutGrid,
-  Timer,
-  CircleCheck,
-  NotebookPen,
-  BarChart2,
-  PanelTopOpen,
-  User as UserIcon,
+  BarChart3,
+  CalendarDays,
+  House,
+  ListTodo,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Repeat2,
+  Settings2,
+  SquarePen,
+  StickyNote,
+  TimerReset,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useGitHubStore } from '@/store/github-store'
-import { useGoogleStore } from '@/store/google-store'
+
+import { Button } from '@/components/ui/button'
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { cn } from '@/lib/utils'
-import { useUIStore } from '@/store/ui-store'
-import type { AppPage } from '@/store/ui-store'
 import { commands } from '@/lib/tauri-bindings'
 import { notifications } from '@/lib/notifications'
+import { cn } from '@/lib/utils'
+import { useUIStore, type AppPage } from '@/store/ui-store'
 
 interface NavItem {
   id: AppPage
-  label: string
+  labelKey: string
   icon: React.ElementType
-  spacedBelow?: boolean
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { id: 'grid', label: 'Dashboard', icon: LayoutGrid, spacedBelow: true },
-  { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-  { id: 'notes', label: 'Notes', icon: NotebookPen },
-  { id: 'habits', label: 'Habits', icon: CircleCheck },
-  { id: 'pomodoro', label: 'Focus', icon: Timer, spacedBelow: true },
-  { id: 'analytics', label: 'Analytics', icon: BarChart2 },
+const NAV_ITEMS: readonly NavItem[] = [
+  { id: 'today', labelKey: 'navigation.today', icon: House },
+  { id: 'tasks', labelKey: 'navigation.tasks', icon: ListTodo },
+  { id: 'notes', labelKey: 'navigation.notes', icon: StickyNote },
+  { id: 'calendar', labelKey: 'navigation.calendar', icon: CalendarDays },
+  { id: 'habits', labelKey: 'navigation.habits', icon: Repeat2 },
+  { id: 'focus', labelKey: 'navigation.focus', icon: TimerReset },
+  { id: 'analysis', labelKey: 'navigation.analysis', icon: BarChart3 },
 ]
 
 interface LeftSideBarProps {
@@ -44,23 +46,26 @@ interface LeftSideBarProps {
   className?: string
 }
 
+const compactTooltipClassName = 'hidden max-[1099px]:block'
+
 export function LeftSideBar({ children, className }: LeftSideBarProps) {
   const { t } = useTranslation()
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [quickPaneShortcut, setQuickPaneShortcut] = useState<string | null>(
     null
   )
   const activePage = useUIStore(state => state.activePage)
   const navigateTo = useUIStore(state => state.navigateTo)
   const setPreferencesOpen = useUIStore(state => state.setPreferencesOpen)
-  const user = useGitHubStore(state => state.user)
-  const googleUser = useGoogleStore(state => state.user)
-  const profileImage = user?.avatar_url ?? googleUser?.picture
-  const profileName =
-    user?.name ?? user?.login ?? googleUser?.name ?? googleUser?.email
   const quickPaneLabel = quickPaneShortcut
     ? t('quickPane.openWithShortcut', { shortcut: quickPaneShortcut })
     : t('quickPane.open')
-  const isCompact = activePage === 'notes'
+  const collapseLabel = t(
+    sidebarCollapsed ? 'sidebar.expand' : 'sidebar.collapse'
+  )
+  const tooltipClassName = sidebarCollapsed
+    ? undefined
+    : compactTooltipClassName
 
   useEffect(() => {
     let cancelled = false
@@ -68,14 +73,10 @@ export function LeftSideBar({ children, className }: LeftSideBarProps) {
     commands
       .getDefaultQuickPaneShortcut()
       .then(shortcut => {
-        if (!cancelled) {
-          setQuickPaneShortcut(shortcut)
-        }
+        if (!cancelled) setQuickPaneShortcut(shortcut)
       })
       .catch(() => {
-        if (!cancelled) {
-          setQuickPaneShortcut(null)
-        }
+        if (!cancelled) setQuickPaneShortcut(null)
       })
 
     return () => {
@@ -92,146 +93,201 @@ export function LeftSideBar({ children, className }: LeftSideBarProps) {
   }
 
   return (
-    <div
-      data-testid="axis-activity-bar"
+    <aside
+      data-testid="axis-primary-sidebar"
+      data-state={sidebarCollapsed ? 'collapsed' : 'expanded'}
       className={cn(
-        'flex h-full flex-col border-r bg-sidebar',
-        isCompact && 'axis-activity-bar-compact',
+        'flex h-full w-(--axis-sidebar-width) shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-out max-[1099px]:w-(--axis-sidebar-width-compact) motion-reduce:transition-none',
+        sidebarCollapsed && 'w-(--axis-sidebar-width-compact)',
         className
       )}
     >
-      {/* Activity Bar - icon-only navigation */}
-      <nav
+      <div
         className={cn(
-          'flex flex-col items-center',
-          isCompact ? 'gap-0.5 p-1.5 pt-2' : 'gap-1 p-2 pt-3'
+          'flex h-14 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border px-3 max-[1099px]:justify-center max-[1099px]:px-0',
+          sidebarCollapsed && 'justify-center'
         )}
-        aria-label={t('sidebar.mainNavigation')}
       >
         <div
+          data-testid="axis-sidebar-brand"
           className={cn(
-            'flex items-center justify-center',
-            isCompact ? 'mb-4 mt-0.5' : 'mb-6 mt-1'
+            'flex min-w-0 flex-1 items-center gap-3 max-[1099px]:justify-center',
+            sidebarCollapsed && 'hidden max-[1099px]:flex'
           )}
         >
           <img
             src="/Axis-Logo.png"
-            alt="Axis Logo"
-            className={cn(
-              'object-contain drop-shadow-sm',
-              isCompact ? 'size-6' : 'size-8'
-            )}
+            alt=""
+            aria-hidden="true"
+            className="size-7 shrink-0 object-contain"
           />
+          <span className="truncate text-base font-semibold tracking-tight max-[1099px]:sr-only">
+            Axis
+          </span>
         </div>
-        {NAV_ITEMS.map(item => {
-          const isActive = activePage === item.id
-          return (
-            <div
-              key={item.id}
-              className={cn(item.spacedBelow && (isCompact ? 'mb-4' : 'mb-6'))}
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setSidebarCollapsed(value => !value)}
+              aria-label={collapseLabel}
+              aria-controls="axis-primary-navigation"
+              aria-expanded={!sidebarCollapsed}
+              title={collapseLabel}
+              className="rounded-lg border-sidebar-border bg-sidebar text-muted-foreground shadow-neu-raised-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:shadow-neu-pressed max-[1099px]:hidden"
             >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => navigateTo(item.id)}
-                    aria-label={item.label}
-                    aria-current={isActive ? 'page' : undefined}
+              {sidebarCollapsed ? (
+                <PanelLeftOpen aria-hidden="true" />
+              ) : (
+                <PanelLeftClose aria-hidden="true" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={8}>
+            {collapseLabel}
+          </TooltipContent>
+        </Tooltip>
+      </div>
+
+      <nav
+        id="axis-primary-navigation"
+        className="flex flex-1 flex-col gap-2 p-2 pt-3"
+        aria-label={t('sidebar.mainNavigation')}
+      >
+        {NAV_ITEMS.map(item => {
+          const label = t(item.labelKey)
+          const isActive = activePage === item.id
+
+          return (
+            <Tooltip key={item.id}>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigateTo(item.id)}
+                  aria-label={label}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={cn(
+                    'group/nav relative w-full justify-start gap-3 overflow-hidden rounded-lg px-3 max-[1099px]:size-9 max-[1099px]:justify-center max-[1099px]:px-0',
+                    sidebarCollapsed && 'mx-auto size-9 justify-center px-0',
+                    isActive
+                      ? 'border-sidebar-border bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-neu-raised active:shadow-neu-pressed before:absolute before:inset-y-2 before:left-0 before:w-px before:bg-sidebar-primary'
+                      : 'border-sidebar-border bg-sidebar text-muted-foreground shadow-neu-raised-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:shadow-neu-pressed'
+                  )}
+                >
+                  <item.icon
+                    aria-hidden="true"
+                    strokeWidth={isActive ? 2 : 1.75}
+                  />
+                  <span
                     className={cn(
-                      'group relative flex items-center justify-center rounded-md transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-                      isCompact ? 'size-7.5' : 'size-9',
-                      isActive
-                        ? [
-                            'text-foreground',
-                            'before:absolute before:left-0 before:top-1/2 before:h-4 before:-translate-y-1/2 before:w-0.75 before:rounded-r-full before:bg-accent',
-                          ]
-                        : [
-                            'text-muted-foreground',
-                            'hover:bg-accent/8 hover:text-foreground',
-                          ]
+                      'min-w-0 truncate',
+                      sidebarCollapsed ? 'sr-only' : 'max-[1099px]:sr-only'
                     )}
                   >
-                    <item.icon
-                      className={cn(
-                        'transition-colors',
-                        isCompact ? 'size-4' : 'size-4.5',
-                        isActive
-                          ? 'text-foreground'
-                          : 'text-muted-foreground group-hover:text-foreground'
-                      )}
-                      strokeWidth={isActive ? 2 : 1.75}
-                    />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={8}>
-                  {item.label}
-                </TooltipContent>
-              </Tooltip>
-            </div>
+                    {label}
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                sideOffset={8}
+                className={tooltipClassName}
+              >
+                {label}
+              </TooltipContent>
+            </Tooltip>
           )
         })}
       </nav>
 
-      <div
-        className={cn(
-          'mt-auto flex flex-col items-center',
-          isCompact ? 'pb-2' : 'pb-4'
-        )}
+      {children}
+
+      <nav
+        className="flex shrink-0 flex-col gap-2 border-t border-sidebar-border p-2"
+        aria-label={t('sidebar.utilityNavigation')}
       >
         <Tooltip>
           <TooltipTrigger asChild>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => void handleQuickPaneToggle()}
-              aria-label={quickPaneLabel}
+              aria-label={t('navigation.quickCapture')}
               className={cn(
-                'group flex items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-accent/8 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-                isCompact ? 'mb-2 size-7.5' : 'mb-3 size-9'
+                'w-full justify-start gap-3 rounded-lg border-sidebar-border bg-sidebar px-3 text-muted-foreground shadow-neu-raised-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:shadow-neu-pressed max-[1099px]:size-9 max-[1099px]:justify-center max-[1099px]:px-0',
+                sidebarCollapsed && 'mx-auto size-9 justify-center px-0'
               )}
             >
-              <PanelTopOpen
+              <SquarePen aria-hidden="true" />
+              <span
                 className={cn(
-                  'transition-colors',
-                  isCompact ? 'size-4' : 'size-4.5'
+                  'min-w-0 truncate',
+                  sidebarCollapsed ? 'sr-only' : 'max-[1099px]:sr-only'
                 )}
-              />
-            </button>
+              >
+                {t('navigation.quickCapture')}
+              </span>
+              {quickPaneShortcut ? (
+                <kbd
+                  aria-hidden="true"
+                  className={cn(
+                    'ml-auto max-w-20 truncate rounded-sm border border-sidebar-border bg-surface-sunken px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground max-[1099px]:hidden',
+                    sidebarCollapsed && 'hidden'
+                  )}
+                >
+                  {quickPaneShortcut}
+                </kbd>
+              ) : null}
+            </Button>
           </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={8}>
+          <TooltipContent
+            side="right"
+            sideOffset={8}
+            className={tooltipClassName}
+          >
             {quickPaneLabel}
           </TooltipContent>
         </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <button
+            <Button
               type="button"
-              onClick={() => setPreferencesOpen(true, 'user')}
-              aria-label={profileName || t('sidebar.account')}
+              variant="ghost"
+              size="sm"
+              onClick={() => setPreferencesOpen(true, 'general')}
+              aria-label={t('navigation.settings')}
               className={cn(
-                'group relative flex items-center justify-center overflow-hidden rounded-full border border-border bg-sidebar-accent/50 shadow-sm transition-all hover:border-primary/30 hover:ring-2 hover:ring-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-                isCompact ? 'size-7.5' : 'size-9'
+                'w-full justify-start gap-3 rounded-lg border-sidebar-border bg-sidebar px-3 text-muted-foreground shadow-neu-raised-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:shadow-neu-pressed max-[1099px]:size-9 max-[1099px]:justify-center max-[1099px]:px-0',
+                sidebarCollapsed && 'mx-auto size-9 justify-center px-0'
               )}
             >
-              {profileImage ? (
-                <img
-                  src={profileImage}
-                  alt={profileName ?? 'Conta'}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <UserIcon className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              )}
-            </button>
+              <Settings2 aria-hidden="true" />
+              <span
+                className={cn(
+                  'min-w-0 truncate',
+                  sidebarCollapsed ? 'sr-only' : 'max-[1099px]:sr-only'
+                )}
+              >
+                {t('navigation.settings')}
+              </span>
+            </Button>
           </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={8}>
-            {profileName || t('sidebar.account')}
+          <TooltipContent
+            side="right"
+            sideOffset={8}
+            className={tooltipClassName}
+          >
+            {t('navigation.settings')}
           </TooltipContent>
         </Tooltip>
-      </div>
-
-      {/* Slot for additional content */}
-      {children}
-    </div>
+      </nav>
+    </aside>
   )
 }

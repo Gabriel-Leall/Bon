@@ -39,7 +39,7 @@ const CalendarHeader = ({ compact = false }: { compact?: boolean }) => (
     <Button
       slot="previous"
       className={cn(
-        'flex items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground focus:outline-none data-[focus-visible]:outline data-[focus-visible]:outline-2 data-[focus-visible]:outline-ring/70',
+        'flex items-center justify-center rounded-full border border-border-strong bg-surface text-muted-foreground shadow-neu-raised-sm transition-[background-color,color,box-shadow,transform] hover:bg-accent hover:text-accent-foreground data-[pressed]:translate-y-px data-[pressed]:shadow-neu-pressed focus:outline-none data-[focus-visible]:shadow-focus-ring',
         compact ? 'size-5.5' : 'size-7'
       )}
     >
@@ -54,7 +54,7 @@ const CalendarHeader = ({ compact = false }: { compact?: boolean }) => (
     <Button
       slot="next"
       className={cn(
-        'flex items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground focus:outline-none data-[focus-visible]:outline data-[focus-visible]:outline-2 data-[focus-visible]:outline-ring/70',
+        'flex items-center justify-center rounded-full border border-border-strong bg-surface text-muted-foreground shadow-neu-raised-sm transition-[background-color,color,box-shadow,transform] hover:bg-accent hover:text-accent-foreground data-[pressed]:translate-y-px data-[pressed]:shadow-neu-pressed focus:outline-none data-[focus-visible]:shadow-focus-ring',
         compact ? 'size-5.5' : 'size-7'
       )}
     >
@@ -99,10 +99,10 @@ const CalendarGridComponent = ({
             <CalendarCellRac
               date={date}
               className={cn(
-                'relative mx-auto my-0.5 flex h-9 w-9 items-center justify-center whitespace-nowrap rounded-lg border border-transparent text-sm font-medium text-foreground outline-offset-2 duration-150 focus:outline-none data-[disabled]:pointer-events-none data-[unavailable]:pointer-events-none data-[focus-visible]:z-10',
+                'relative mx-auto my-0.5 flex h-9 w-9 items-center justify-center whitespace-nowrap rounded-lg border border-transparent text-sm font-medium text-foreground outline-offset-2 duration-150 focus:outline-none data-[pressed]:translate-y-px data-[pressed]:shadow-neu-pressed data-[disabled]:pointer-events-none data-[unavailable]:pointer-events-none data-[focus-visible]:z-10',
                 compact && 'my-0.5 h-7 w-7 text-[13px]',
                 // Hover & Selected states
-                'data-[hovered]:bg-accent data-[selected]:bg-primary data-[hovered]:text-foreground data-[selected]:text-primary-foreground',
+                'data-[hovered]:bg-accent data-[hovered]:shadow-neu-raised-sm data-[selected]:border-primary/70 data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[selected]:shadow-neu-raised',
                 // Disabled states
                 'data-[outside-month]:text-muted-foreground/40 data-[unavailable]:line-through data-[disabled]:opacity-30 data-[unavailable]:opacity-30',
                 // Focus outline
@@ -113,7 +113,7 @@ const CalendarGridComponent = ({
                 // Today styles
                 isToday &&
                   !isRange &&
-                  'bg-foreground text-background shadow-sm hover:bg-foreground/90 data-[selected]:bg-primary data-[selected]:text-primary-foreground',
+                  'bg-foreground text-background shadow-neu-raised-sm hover:bg-foreground/90 data-[selected]:border-primary/70 data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[selected]:shadow-neu-raised',
                 // Task indicator
                 hasTask &&
                   cn(

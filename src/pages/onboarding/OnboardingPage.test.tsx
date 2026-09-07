@@ -28,7 +28,7 @@ describe('OnboardingPage', () => {
       isSaving: false,
       error: null,
     })
-    useUIStore.setState({ activePage: 'grid', activePageData: {} })
+    useUIStore.setState({ activePage: 'today', activePageData: {} })
 
     vi.mocked(commands.getDailyPlan).mockResolvedValue({
       status: 'ok',
@@ -168,7 +168,7 @@ describe('OnboardingPage', () => {
     await user.click(screen.getByRole('button', { name: /abrir meu espaço/i }))
 
     expect(useOnboardingStore.getState().hasCompleted).toBe(true)
-    expect(useUIStore.getState().activePage).toBe('pomodoro')
+    expect(useUIStore.getState().activePage).toBe('focus')
     expect(recordProductUsage).toHaveBeenCalledWith('onboarding_completed')
   }, 10_000)
 })

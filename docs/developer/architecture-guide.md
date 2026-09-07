@@ -100,14 +100,23 @@ Event-Driven Bridge
 ```
 MainWindow (Top-level orchestrator)
 ├── TitleBar (Window controls + toolbar)
-├── LeftSidebar (Collapsible panel)
-├── MainWindowContent (Primary content area)
-├── RightSidebar (Collapsible panel)
+├── LeftSideBar (Primary navigation + quick capture + settings)
+├── Resizable content region
+│   ├── MainWindowContent (Canonical page dispatcher)
+│   └── RightSideBar (Optional contextual panel)
+├── Active focus controller region (Global, page-independent)
 └── Global Overlays
     ├── PreferencesDialog (Settings)
     ├── CommandPalette (Cmd+K)
+    ├── WrapUpDialog (Daily close)
     └── Toaster (Notifications)
 ```
+
+`ui-store.ts` exposes the canonical page IDs `today`, `tasks`, `notes`,
+`calendar`, `habits`, `focus`, and `analysis`. Restored legacy IDs are
+normalized at the navigation boundary; page components should never branch on
+legacy names. The primary navigation is a stable shell element and must not
+change width or structure for a particular page.
 
 ## File Organization
 

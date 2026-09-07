@@ -110,7 +110,7 @@ export function OnboardingPage() {
   const handleFinish = () => {
     completeOnboarding()
     void recordProductUsage('onboarding_completed')
-    navigateTo('pomodoro')
+    navigateTo('focus')
   }
 
   const handleQuickCapture = async (event: FormEvent<HTMLFormElement>) => {

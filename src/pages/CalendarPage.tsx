@@ -106,7 +106,7 @@ export function CalendarPage({ tasks = [] }: CalendarPageProps) {
   }
 
   function goBack() {
-    navigateTo('grid')
+    navigateTo('today')
   }
 
   return (

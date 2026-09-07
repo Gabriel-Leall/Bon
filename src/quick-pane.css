@@ -3,15 +3,6 @@
 
 :root {
   --app-corner-radius: 12px;
-  --font-sans:
-    'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic',
-    'Meiryo', -apple-system, 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
-  --font-heading:
-    'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', 'MS PMincho', Georgia,
-    serif;
-  --font-mono:
-    'M PLUS 1 Code', 'Cascadia Code', 'SF Mono', ui-monospace, SFMono-Regular,
-    Menlo, Consolas, monospace;
 }
 
 /* Quick pane needs transparent background for rounded corners to show */
@@ -27,17 +18,29 @@ body,
 }
 
 body {
-  font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.5;
+  color: var(--foreground);
+  font-family: var(--axis-font-sans);
+  font-size: var(--axis-text-base);
+  line-height: var(--axis-leading-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'palt' 1;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 /* Allow text input */
 input {
   user-select: text !important;
   -webkit-user-select: text !important;
+  caret-color: var(--primary);
   cursor: text !important;
 }

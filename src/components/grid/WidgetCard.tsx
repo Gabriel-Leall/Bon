@@ -7,6 +7,7 @@ interface WidgetCardProps {
   children: React.ReactNode
   className?: string
   contentClassName?: string
+  headerActions?: React.ReactNode
   onClick?: () => void
 }
 
@@ -24,6 +25,7 @@ export function WidgetCard({
   children,
   className,
   contentClassName,
+  headerActions,
   onClick,
 }: WidgetCardProps) {
   const activateCard = () => {
@@ -42,7 +44,8 @@ export function WidgetCard({
     <section
       className={cn(
         'widget-card axis-type-widget-body flex h-full w-full flex-col overflow-hidden border border-border bg-card text-card-foreground',
-        onClick && 'cursor-pointer',
+        onClick &&
+          'cursor-pointer focus-visible:shadow-focus-ring focus-visible:outline-none active:shadow-neu-pressed',
         className
       )}
       onClick={onClick ? activateCard : undefined}
@@ -62,6 +65,11 @@ export function WidgetCard({
             {title}
           </span>
         </div>
+        {headerActions && (
+          <div className="flex shrink-0 items-center gap-1">
+            {headerActions}
+          </div>
+        )}
       </div>
 
       <div

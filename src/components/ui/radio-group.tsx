@@ -25,7 +25,7 @@ function RadioGroupItem({
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
       className={cn(
-        'border-input text-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 aspect-square size-4 shrink-0 rounded-full border shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50',
+        'border-border-strong bg-surface text-primary shadow-neu-raised-sm data-[state=checked]:border-primary data-[state=checked]:shadow-neu-pressed aspect-square size-5 shrink-0 rounded-full border outline-none transition-[background-color,color,border-color,box-shadow,transform] hover:border-primary active:scale-95 active:shadow-neu-pressed focus-visible:shadow-focus-ring disabled:cursor-not-allowed disabled:border-border-subtle disabled:bg-surface-sunken disabled:text-foreground-disabled disabled:opacity-100 disabled:shadow-none disabled:active:scale-100 aria-invalid:border-destructive aria-invalid:shadow-error-input motion-reduce:transform-none',
         className
       )}
       {...props}
@@ -34,7 +34,10 @@ function RadioGroupItem({
         data-slot="radio-group-indicator"
         className="relative flex items-center justify-center"
       >
-        <CircleIcon className="fill-primary absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2" />
+        <CircleIcon
+          aria-hidden="true"
+          className="fill-current absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2"
+        />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   )

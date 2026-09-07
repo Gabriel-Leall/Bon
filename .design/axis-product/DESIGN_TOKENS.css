@@ -1,0 +1,496 @@
+/*
+ * Axis Design Tokens
+ *
+ * Approved design artifact for the shared visual foundation.
+ * The runtime implementation lives in src/theme-variables.css.
+ *
+ * Theme axes:
+ *   surface theme: light | dark | cream | system(light/dark)
+ *   accent theme:  blue | purple | red
+ *
+ * Philosophy: calm editorial desktop minimalism with precise boundaries,
+ * restrained depth and a small amount of user-controlled identity color.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* Primitive colors                                                           */
+/* -------------------------------------------------------------------------- */
+
+:root {
+  /* Light neutral — Alabaster */
+  --axis-alabaster-50: oklch(0.982 0.002 247.8);
+  --axis-alabaster-100: oklch(0.96 0.003 247.9);
+  --axis-alabaster-200: oklch(0.895 0.01 252.8);
+  --axis-alabaster-300: oklch(0.819 0.018 248);
+  --axis-alabaster-400: oklch(0.735 0.026 248.2);
+  --axis-alabaster-500: oklch(0.644 0.022 245.8);
+  --axis-alabaster-600: oklch(0.547 0.02 248.2);
+  --axis-alabaster-700: oklch(0.449 0.015 244.5);
+  --axis-alabaster-800: oklch(0.345 0.012 243.2);
+  --axis-alabaster-900: oklch(0.236 0.008 240.2);
+  --axis-alabaster-950: oklch(0.176 0.005 248.1);
+
+  /* Dark neutral — Woodsmoke */
+  --axis-woodsmoke-50: oklch(0.958 0 0);
+  --axis-woodsmoke-100: oklch(0.888 0 0);
+  --axis-woodsmoke-200: oklch(0.786 0 0);
+  --axis-woodsmoke-300: oklch(0.689 0 0);
+  --axis-woodsmoke-400: oklch(0.603 0 0);
+  --axis-woodsmoke-500: oklch(0.517 0 0);
+  --axis-woodsmoke-600: oklch(0.439 0 0);
+  --axis-woodsmoke-700: oklch(0.356 0 0);
+  --axis-woodsmoke-800: oklch(0.281 0 0);
+  --axis-woodsmoke-900: oklch(0.205 0 0);
+  --axis-woodsmoke-950: oklch(0.178 0 0);
+
+  /* Accent — Dodger blue */
+  --axis-blue-50: oklch(0.958 0.02 267.3);
+  --axis-blue-100: oklch(0.895 0.051 268.1);
+  --axis-blue-200: oklch(0.803 0.099 264.6);
+  --axis-blue-300: oklch(0.717 0.147 259.9);
+  --axis-blue-400: oklch(0.638 0.198 253.3);
+  --axis-blue-500: oklch(0.585 0.182 253.3);
+  --axis-blue-600: oklch(0.509 0.159 253.4);
+  --axis-blue-700: oklch(0.425 0.131 253.1);
+  --axis-blue-800: oklch(0.331 0.104 253.7);
+  --axis-blue-900: oklch(0.232 0.073 253.5);
+  --axis-blue-950: oklch(0.178 0.055 252.8);
+
+  /* Accent — Dull lavender */
+  --axis-purple-50: oklch(0.957 0.014 299.8);
+  --axis-purple-100: oklch(0.907 0.032 299.6);
+  --axis-purple-200: oklch(0.83 0.06 300.3);
+  --axis-purple-300: oklch(0.761 0.086 300.7);
+  --axis-purple-400: oklch(0.696 0.111 300.1);
+  --axis-purple-500: oklch(0.639 0.134 300.3);
+  --axis-purple-600: oklch(0.56 0.161 300.5);
+  --axis-purple-700: oklch(0.465 0.148 300.4);
+  --axis-purple-800: oklch(0.358 0.115 300);
+  --axis-purple-900: oklch(0.246 0.079 299.9);
+  --axis-purple-950: oklch(0.183 0.059 300.6);
+
+  /* Accent — Scarlet */
+  --axis-red-50: oklch(0.96 0.02 21.4);
+  --axis-red-100: oklch(0.9 0.052 21.1);
+  --axis-red-200: oklch(0.808 0.109 22.5);
+  --axis-red-300: oklch(0.727 0.169 25.5);
+  --axis-red-400: oklch(0.651 0.236 31.5);
+  --axis-red-500: oklch(0.598 0.225 32.3);
+  --axis-red-600: oklch(0.521 0.196 32.3);
+  --axis-red-700: oklch(0.436 0.164 32.2);
+  --axis-red-800: oklch(0.34 0.128 32.3);
+  --axis-red-900: oklch(0.242 0.091 32.2);
+  --axis-red-950: oklch(0.183 0.07 31.9);
+
+  /* Fixed semantic colors — never replaced by the selected accent */
+  --axis-green-500: oklch(0.62 0.135 153);
+  --axis-green-700: oklch(0.45 0.11 153);
+  --axis-green-300: oklch(0.78 0.11 153);
+  --axis-amber-500: oklch(0.72 0.145 75);
+  --axis-amber-700: oklch(0.5 0.12 70);
+  --axis-amber-300: oklch(0.84 0.11 82);
+  --axis-danger-500: oklch(0.59 0.205 22);
+  --axis-danger-700: oklch(0.45 0.17 22);
+  --axis-danger-300: oklch(0.76 0.14 22);
+  --axis-info-500: oklch(0.61 0.12 220);
+  --axis-info-700: oklch(0.46 0.1 220);
+  --axis-info-300: oklch(0.78 0.09 220);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Accent choice                                                              */
+/* -------------------------------------------------------------------------- */
+
+:root,
+:root[data-axis-accent='blue'] {
+  --axis-accent-50: var(--axis-blue-50);
+  --axis-accent-100: var(--axis-blue-100);
+  --axis-accent-200: var(--axis-blue-200);
+  --axis-accent-300: var(--axis-blue-300);
+  --axis-accent-400: var(--axis-blue-400);
+  --axis-accent-500: var(--axis-blue-500);
+  --axis-accent-600: var(--axis-blue-600);
+  --axis-accent-700: var(--axis-blue-700);
+  --axis-accent-800: var(--axis-blue-800);
+  --axis-accent-900: var(--axis-blue-900);
+  --axis-accent-950: var(--axis-blue-950);
+}
+
+:root[data-axis-accent='purple'] {
+  --axis-accent-50: var(--axis-purple-50);
+  --axis-accent-100: var(--axis-purple-100);
+  --axis-accent-200: var(--axis-purple-200);
+  --axis-accent-300: var(--axis-purple-300);
+  --axis-accent-400: var(--axis-purple-400);
+  --axis-accent-500: var(--axis-purple-500);
+  --axis-accent-600: var(--axis-purple-600);
+  --axis-accent-700: var(--axis-purple-700);
+  --axis-accent-800: var(--axis-purple-800);
+  --axis-accent-900: var(--axis-purple-900);
+  --axis-accent-950: var(--axis-purple-950);
+}
+
+:root[data-axis-accent='red'] {
+  --axis-accent-50: var(--axis-red-50);
+  --axis-accent-100: var(--axis-red-100);
+  --axis-accent-200: var(--axis-red-200);
+  --axis-accent-300: var(--axis-red-300);
+  --axis-accent-400: var(--axis-red-400);
+  --axis-accent-500: var(--axis-red-500);
+  --axis-accent-600: var(--axis-red-600);
+  --axis-accent-700: var(--axis-red-700);
+  --axis-accent-800: var(--axis-red-800);
+  --axis-accent-900: var(--axis-red-900);
+  --axis-accent-950: var(--axis-red-950);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Shared non-color tokens                                                    */
+/* -------------------------------------------------------------------------- */
+
+:root {
+  --axis-font-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --axis-font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+
+  --axis-text-xs: 0.75rem;
+  --axis-text-sm: 0.8125rem;
+  --axis-text-base: 0.875rem;
+  --axis-text-md: 1rem;
+  --axis-text-lg: 1.125rem;
+  --axis-text-xl: 1.375rem;
+  --axis-text-2xl: 1.75rem;
+  --axis-text-3xl: 2.25rem;
+
+  --axis-leading-tight: 1.2;
+  --axis-leading-normal: 1.5;
+  --axis-leading-relaxed: 1.65;
+  --axis-tracking-tight: -0.02em;
+  --axis-tracking-normal: 0;
+  --axis-tracking-label: 0.08em;
+
+  --axis-space-0: 0;
+  --axis-space-1: 0.25rem;
+  --axis-space-2: 0.5rem;
+  --axis-space-3: 0.75rem;
+  --axis-space-4: 1rem;
+  --axis-space-5: 1.25rem;
+  --axis-space-6: 1.5rem;
+  --axis-space-8: 2rem;
+  --axis-space-10: 2.5rem;
+  --axis-space-12: 3rem;
+  --axis-space-16: 4rem;
+
+  --axis-radius-xs: 0.25rem;
+  --axis-radius-sm: 0.375rem;
+  --axis-radius-md: 0.5rem;
+  --axis-radius-lg: 0.75rem;
+  --axis-radius-xl: 1rem;
+  --axis-radius-2xl: 1.25rem;
+  --axis-radius-full: 9999px;
+
+  --axis-duration-instant: 80ms;
+  --axis-duration-fast: 140ms;
+  --axis-duration-normal: 220ms;
+  --axis-duration-slow: 320ms;
+  --axis-duration-deliberate: 440ms;
+  --axis-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --axis-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --axis-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  --axis-control-height-sm: 2rem;
+  --axis-control-height-md: 2.25rem;
+  --axis-control-height-lg: 2.5rem;
+  --axis-sidebar-width: 15rem;
+  --axis-sidebar-width-compact: 3.5rem;
+  --axis-sheet-width: 28rem;
+  --axis-sheet-width-wide: 36rem;
+  --axis-page-gutter: clamp(1rem, 2.4vw, 2rem);
+  --axis-content-max: 90rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Light semantic theme                                                       */
+/* -------------------------------------------------------------------------- */
+
+:root,
+.light {
+  --background: var(--axis-alabaster-100);
+  --surface: var(--axis-alabaster-50);
+  --surface-elevated: oklch(0.995 0.001 248);
+  --surface-sunken: color-mix(
+    in oklch,
+    var(--axis-alabaster-100) 72%,
+    var(--axis-alabaster-200)
+  );
+
+  --foreground: var(--axis-alabaster-950);
+  --foreground-secondary: var(--axis-alabaster-800);
+  --foreground-muted: var(--axis-alabaster-700);
+  --foreground-disabled: var(--axis-alabaster-500);
+  --foreground-inverse: var(--axis-alabaster-50);
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-elevated);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--axis-alabaster-100);
+  --secondary-foreground: var(--foreground-secondary);
+  --muted: var(--axis-alabaster-100);
+  --muted-foreground: var(--foreground-muted);
+
+  --primary: var(--axis-accent-600);
+  --primary-hover: var(--axis-accent-700);
+  --primary-active: var(--axis-accent-800);
+  --primary-foreground: var(--axis-alabaster-50);
+  --accent: color-mix(in oklch, var(--axis-accent-100) 58%, var(--surface));
+  --accent-foreground: var(--axis-accent-900);
+  --ring: var(--axis-accent-500);
+
+  --success: var(--axis-green-700);
+  --warning: var(--axis-amber-700);
+  --destructive: var(--axis-danger-500);
+  --info: var(--axis-info-700);
+
+  --border: var(--axis-alabaster-200);
+  --border-strong: var(--axis-alabaster-300);
+  --border-subtle: color-mix(
+    in oklch,
+    var(--axis-alabaster-200) 58%,
+    transparent
+  );
+  --input: var(--axis-alabaster-300);
+  --overlay: oklch(0.176 0.005 248.1 / 0.34);
+
+  --sidebar: var(--axis-alabaster-50);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+
+  --chart-1: var(--axis-accent-600);
+  --chart-2: var(--axis-green-500);
+  --chart-3: var(--axis-amber-500);
+  --chart-4: var(--axis-info-500);
+  --chart-5: var(--axis-purple-600);
+
+  --axis-shadow-xs: 0 1px 2px oklch(0.176 0.005 248.1 / 0.05);
+  --axis-shadow-sm: 0 1px 3px oklch(0.176 0.005 248.1 / 0.07);
+  --axis-shadow-md: 0 8px 24px -16px oklch(0.176 0.005 248.1 / 0.2);
+  --axis-shadow-panel:
+    0 0 0 1px var(--border), 0 24px 64px -28px oklch(0.176 0.005 248.1 / 0.3);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Dark semantic theme                                                        */
+/* -------------------------------------------------------------------------- */
+
+.dark {
+  --background: var(--axis-woodsmoke-950);
+  --surface: var(--axis-woodsmoke-900);
+  --surface-elevated: var(--axis-woodsmoke-800);
+  --surface-sunken: oklch(0.15 0 0);
+
+  --foreground: var(--axis-woodsmoke-50);
+  --foreground-secondary: var(--axis-woodsmoke-200);
+  --foreground-muted: var(--axis-woodsmoke-300);
+  --foreground-disabled: var(--axis-woodsmoke-500);
+  --foreground-inverse: var(--axis-woodsmoke-950);
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-elevated);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--axis-woodsmoke-800);
+  --secondary-foreground: var(--foreground-secondary);
+  --muted: var(--surface-sunken);
+  --muted-foreground: var(--foreground-muted);
+
+  --primary: var(--axis-accent-400);
+  --primary-hover: var(--axis-accent-300);
+  --primary-active: var(--axis-accent-500);
+  --primary-foreground: var(--axis-woodsmoke-950);
+  --accent: color-mix(in oklch, var(--axis-accent-950) 45%, var(--surface));
+  --accent-foreground: var(--axis-accent-200);
+  --ring: var(--axis-accent-400);
+
+  --success: var(--axis-green-300);
+  --warning: var(--axis-amber-300);
+  --destructive: var(--axis-danger-300);
+  --info: var(--axis-info-300);
+
+  --border: var(--axis-woodsmoke-800);
+  --border-strong: var(--axis-woodsmoke-700);
+  --border-subtle: color-mix(
+    in oklch,
+    var(--axis-woodsmoke-700) 56%,
+    transparent
+  );
+  --input: var(--axis-woodsmoke-800);
+  --overlay: oklch(0.08 0 0 / 0.68);
+
+  --sidebar: var(--axis-woodsmoke-950);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+
+  --chart-1: var(--axis-accent-400);
+  --chart-2: var(--axis-green-300);
+  --chart-3: var(--axis-amber-300);
+  --chart-4: var(--axis-info-300);
+  --chart-5: var(--axis-purple-300);
+
+  --axis-shadow-xs: 0 1px 2px oklch(0.08 0 0 / 0.28);
+  --axis-shadow-sm: 0 1px 4px oklch(0.08 0 0 / 0.34);
+  --axis-shadow-md: 0 12px 28px -18px oklch(0.08 0 0 / 0.72);
+  --axis-shadow-panel:
+    0 0 0 1px var(--border), 0 28px 72px -30px oklch(0.08 0 0 / 0.9);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Cream semantic theme — inherited direction, normalized shared aliases      */
+/* -------------------------------------------------------------------------- */
+
+.cream {
+  --background: oklch(0.985 0.014 88);
+  --surface: oklch(0.985 0.014 88);
+  --surface-elevated: oklch(0.995 0.008 88);
+  --surface-sunken: oklch(0.96 0.03 88);
+
+  --foreground: oklch(0.18 0.005 60);
+  --foreground-secondary: oklch(0.31 0.012 65);
+  --foreground-muted: oklch(0.42 0.015 60);
+  --foreground-disabled: oklch(0.58 0.018 65);
+  --foreground-inverse: oklch(0.985 0.014 88);
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-elevated);
+  --popover-foreground: var(--foreground);
+  --secondary: oklch(0.96 0.03 88);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.965 0.022 88);
+  --muted-foreground: var(--foreground-muted);
+
+  --primary: var(--axis-accent-600);
+  --primary-hover: var(--axis-accent-700);
+  --primary-active: var(--axis-accent-800);
+  --primary-foreground: oklch(0.985 0.014 88);
+  --accent: color-mix(in oklch, var(--axis-accent-100) 48%, var(--surface));
+  --accent-foreground: var(--axis-accent-900);
+  --ring: var(--axis-accent-500);
+
+  --success: var(--axis-green-700);
+  --warning: var(--axis-amber-700);
+  --destructive: var(--axis-danger-500);
+  --info: var(--axis-info-700);
+
+  --border: oklch(0.88 0.025 80);
+  --border-strong: oklch(0.8 0.032 78);
+  --border-subtle: oklch(0.88 0.025 80 / 0.62);
+  --input: oklch(0.9 0.02 80);
+  --overlay: oklch(0.18 0.005 60 / 0.34);
+
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+
+  --chart-1: var(--axis-accent-600);
+  --chart-2: var(--axis-green-500);
+  --chart-3: var(--axis-amber-500);
+  --chart-4: var(--axis-info-500);
+  --chart-5: var(--axis-purple-600);
+
+  --axis-shadow-xs: 0 1px 2px oklch(0.18 0.005 60 / 0.05);
+  --axis-shadow-sm: 0 1px 3px oklch(0.18 0.005 60 / 0.07);
+  --axis-shadow-md: 0 8px 24px -16px oklch(0.18 0.005 60 / 0.2);
+  --axis-shadow-panel:
+    0 0 0 1px var(--border), 0 24px 64px -28px oklch(0.18 0.005 60 / 0.26);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tailwind v4 bridge                                                         */
+/* -------------------------------------------------------------------------- */
+
+@theme inline {
+  --font-sans: var(--axis-font-sans);
+  --font-mono: var(--axis-font-mono);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-border-subtle: var(--border-subtle);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive: var(--destructive);
+  --color-info: var(--info);
+  --color-overlay: var(--overlay);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --radius-xs: var(--axis-radius-xs);
+  --radius-sm: var(--axis-radius-sm);
+  --radius-md: var(--axis-radius-md);
+  --radius-lg: var(--axis-radius-lg);
+  --radius-xl: var(--axis-radius-xl);
+  --radius-2xl: var(--axis-radius-2xl);
+
+  --shadow-xs: var(--axis-shadow-xs);
+  --shadow-sm: var(--axis-shadow-sm);
+  --shadow-md: var(--axis-shadow-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --axis-duration-instant: 0ms;
+    --axis-duration-fast: 0ms;
+    --axis-duration-normal: 0ms;
+    --axis-duration-slow: 0ms;
+    --axis-duration-deliberate: 0ms;
+  }
+}

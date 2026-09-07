@@ -19,24 +19,17 @@ import { WrapUpDialog } from '@/components/wrap-up/WrapUpDialog'
 /**
  * Layout sizing configuration for resizable panels.
  * All values are percentages of total width.
- * Sidebar defaults + main default must equal 100.
+ * Main + right sidebar defaults must equal 100.
  */
 const LAYOUT = {
-  leftSidebar: { default: 4, min: 4, max: 4 },
-  notesActivityBar: { default: 3, min: 3, max: 3 },
   rightSidebar: { default: 20, min: 15, max: 40 },
-  main: { min: 30 },
+  main: { default: 80, min: 60 },
 } as const
 
 export function MainWindow() {
-  const { theme } = useTheme()
+  const { resolvedTheme } = useTheme()
   const leftSidebarVisible = useUIStore(state => state.leftSidebarVisible)
   const rightSidebarVisible = useUIStore(state => state.rightSidebarVisible)
-  const activePage = useUIStore(state => state.activePage)
-  const leftSidebarLayout =
-    activePage === 'notes' ? LAYOUT.notesActivityBar : LAYOUT.leftSidebar
-  const mainContentDefault =
-    100 - leftSidebarLayout.default - LAYOUT.rightSidebar.default
 
   // Set up global event listeners (keyboard shortcuts, etc.)
   useMainWindowEventListeners()
@@ -46,23 +39,11 @@ export function MainWindow() {
       <TitleBar />
 
       <div className="flex flex-1 overflow-hidden">
-        <ResizablePanelGroup
-          key={activePage === 'notes' ? 'notes-layout' : 'default-layout'}
-          direction="horizontal"
-        >
-          <ResizablePanel
-            defaultSize={leftSidebarLayout.default}
-            minSize={leftSidebarLayout.min}
-            maxSize={leftSidebarLayout.max}
-            className={cn(!leftSidebarVisible && 'hidden')}
-          >
-            <LeftSideBar />
-          </ResizablePanel>
+        <LeftSideBar className={cn(!leftSidebarVisible && 'hidden')} />
 
-          <ResizableHandle className={cn(!leftSidebarVisible && 'hidden')} />
-
+        <ResizablePanelGroup direction="horizontal" className="min-w-0 flex-1">
           <ResizablePanel
-            defaultSize={mainContentDefault}
+            defaultSize={LAYOUT.main.default}
             minSize={LAYOUT.main.min}
           >
             <MainWindowContent />
@@ -81,15 +62,19 @@ export function MainWindow() {
         </ResizablePanelGroup>
       </div>
 
+      <div
+        id="axis-active-focus-controller"
+        data-slot="active-focus-controller-region"
+        className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-4 [&>*]:pointer-events-auto"
+      />
+
       {/* Global UI Components (hidden until triggered) */}
       <CommandPalette />
       <PreferencesDialog />
       <WrapUpDialog />
       <Toaster
         position="bottom-right"
-        theme={
-          theme === 'dark' ? 'dark' : theme === 'light' ? 'light' : 'system'
-        }
+        theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
         className="toaster group"
         toastOptions={{
           classNames: {

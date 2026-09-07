@@ -52,7 +52,10 @@ std::fs::rename(&temp_path, &file_path)?;
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct AppPreferences {
+    #[serde(default = "default_theme")]
     pub theme: String,
+    #[serde(default = "default_accent")]
+    pub accent: String,
     // Add new preferences here
 }
 
@@ -60,10 +63,17 @@ impl Default for AppPreferences {
     fn default() -> Self {
         Self {
             theme: "system".to_string(),
+            accent: "blue".to_string(),
         }
     }
 }
 ```
+
+Appearance has two independent persisted axes: surface theme
+(`light | dark | cream | system`) and accent (`blue | purple | red`). Keep
+serde defaults on both fields so older preference files still deserialize.
+Loading normalizes the legacy `entardecer` value to `dark`; invalid values fall
+back to `system` and `blue`. Saving always writes the normalized format.
 
 ### React Side
 

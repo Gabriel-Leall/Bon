@@ -938,7 +938,7 @@ export type AnalyticsSummary = { total_focus_seconds: number; total_focus_second
  * Application preferences that persist to disk.
  * Only contains settings that should be saved between sessions.
  */
-export type AppPreferences = { theme: string; 
+export type AppPreferences = { theme?: string; accent?: string;
 /**
  * Global shortcut for quick pane (e.g., "CommandOrControl+Shift+.")
  * If None, uses the default shortcut

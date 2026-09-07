@@ -2,17 +2,46 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { DEFAULT_BON_CHAN_MOOD, type BonChanMood } from '@/lib/bon-chan'
 
-export type AppPage =
+export const APP_PAGES = [
+  'today',
+  'tasks',
+  'notes',
+  'calendar',
+  'habits',
+  'focus',
+  'analysis',
+] as const
+
+export type AppPage = (typeof APP_PAGES)[number]
+
+export type LegacyAppPage =
   | 'grid'
-  | 'tasks'
   | 'pomodoro'
-  | 'habits'
-  | 'notes'
+  | 'analytics'
   | 'kanban'
-  | 'calendar'
   | 'github'
   | 'slack'
-  | 'analytics'
+
+export type AppPageInput = AppPage | LegacyAppPage
+
+const APP_PAGE_MIGRATIONS: Record<LegacyAppPage, AppPage> = {
+  grid: 'today',
+  pomodoro: 'focus',
+  analytics: 'analysis',
+  kanban: 'tasks',
+  github: 'tasks',
+  slack: 'today',
+}
+
+export function normalizeAppPage(page: unknown): AppPage {
+  if (APP_PAGES.includes(page as AppPage)) return page as AppPage
+
+  if (typeof page === 'string' && page in APP_PAGE_MIGRATIONS) {
+    return APP_PAGE_MIGRATIONS[page as LegacyAppPage]
+  }
+
+  return 'today'
+}
 
 interface UIState {
   leftSidebarVisible: boolean
@@ -39,7 +68,7 @@ interface UIState {
   setLastQuickPaneEntry: (text: string) => void
   setSquareCorners: (enabled: boolean) => void
   setBonChanMood: (mood: BonChanMood) => void
-  navigateTo: (page: AppPage, data?: Record<string, string>) => void
+  navigateTo: (page: AppPageInput, data?: Record<string, string>) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -51,7 +80,7 @@ export const useUIStore = create<UIState>()(
       preferencesOpen: false,
       wrapUpOpen: false,
       lastQuickPaneEntry: null,
-      activePage: 'grid' as AppPage,
+      activePage: 'today',
       activePageData: {},
       activePreferencesPane: 'general',
       bonChanMood: DEFAULT_BON_CHAN_MOOD,
@@ -133,7 +162,7 @@ export const useUIStore = create<UIState>()(
 
       navigateTo: (page, data = {}) =>
         set(
-          { activePage: page, activePageData: data },
+          { activePage: normalizeAppPage(page), activePageData: data },
           undefined,
           'navigateTo'
         ),

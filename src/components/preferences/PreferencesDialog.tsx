@@ -95,7 +95,7 @@ export function PreferencesDialog() {
 
   return (
     <Dialog open={preferencesOpen} onOpenChange={setPreferencesOpen}>
-      <DialogContent className="overflow-hidden p-0 md:max-h-150 md:max-w-225 lg:max-w-250 font-sans rounded-xl">
+      <DialogContent className="overflow-hidden p-0 font-sans md:max-h-150 md:max-w-225 lg:max-w-250">
         <DialogTitle className="sr-only">{t('preferences.title')}</DialogTitle>
         <DialogDescription className="sr-only">
           {t('preferences.description')}
@@ -106,12 +106,13 @@ export function PreferencesDialog() {
             <SidebarContent>
               <SidebarGroup>
                 <SidebarGroupContent>
-                  <SidebarMenu>
+                  <SidebarMenu className="gap-2">
                     {navigationItems.map(item => (
                       <SidebarMenuItem key={item.id}>
                         <SidebarMenuButton
                           asChild
                           isActive={activePane === item.id}
+                          variant="outline"
                         >
                           <button
                             type="button"

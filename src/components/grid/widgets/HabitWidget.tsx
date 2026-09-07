@@ -52,7 +52,7 @@ export function HabitWidget({ onNavigateToHabits }: HabitWidgetProps) {
       <WidgetCard title={t('widgets.habits.title')} icon={CheckCircle2}>
         <div className="flex h-full flex-col gap-4">
           <div className="flex items-center justify-between border-b-2 border-foreground pb-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-accent">
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">
               {t('widgets.habits.activeCount', {
                 done: progress.done,
                 total: progress.total || 0,
@@ -73,7 +73,7 @@ export function HabitWidget({ onNavigateToHabits }: HabitWidgetProps) {
                   {skeletonKeys.map(key => (
                     <div
                       key={key}
-                      className="flex items-center justify-between border border-border bg-background p-3 shadow-sm"
+                      className="flex items-center justify-between rounded-lg border border-border-strong bg-surface p-3 shadow-neu-raised-sm"
                     >
                       <div className="flex flex-col gap-2">
                         <Skeleton className="h-5 w-32" />
@@ -119,10 +119,10 @@ export function HabitWidget({ onNavigateToHabits }: HabitWidgetProps) {
                       >
                         <div
                           className={cn(
-                            'group/pill relative flex items-center justify-between overflow-hidden rounded-md border p-3 shadow-md transition-colors',
+                            'group/pill relative flex items-center justify-between overflow-hidden rounded-lg border p-3 transition-[background-color,border-color,box-shadow]',
                             doneToday
-                              ? 'border-foreground bg-foreground shadow-lg'
-                              : 'border-border bg-background shadow-md'
+                              ? 'border-primary bg-surface-elevated shadow-neu-raised-sm'
+                              : 'border-border-strong bg-surface shadow-neu-raised-sm'
                           )}
                         >
                           {/* Habit Name */}
@@ -134,10 +134,10 @@ export function HabitWidget({ onNavigateToHabits }: HabitWidgetProps) {
                                 onNavigateToHabits?.(habit.id)
                               }}
                               className={cn(
-                                'truncate text-left text-base font-bold uppercase tracking-wide transition-colors',
+                                'truncate rounded-sm text-left text-base font-bold uppercase tracking-wide transition-colors focus-visible:shadow-focus-ring focus-visible:outline-none',
                                 doneToday
-                                  ? 'text-chart-1'
-                                  : 'text-foreground hover:text-accent'
+                                  ? 'text-primary'
+                                  : 'text-foreground hover:text-primary'
                               )}
                             >
                               {habit.name}
@@ -146,7 +146,7 @@ export function HabitWidget({ onNavigateToHabits }: HabitWidgetProps) {
                               className={cn(
                                 'text-[10px] font-bold uppercase tracking-wider',
                                 doneToday
-                                  ? 'text-chart-1/80'
+                                  ? 'text-primary/80'
                                   : 'text-muted-foreground'
                               )}
                             >
@@ -158,7 +158,7 @@ export function HabitWidget({ onNavigateToHabits }: HabitWidgetProps) {
                           <div className="relative flex shrink-0 justify-end">
                             <div
                               className={cn(
-                                'pointer-events-none absolute -top-10 right-2 z-10 text-xl font-bold text-chart-1 drop-shadow-md transition-all duration-300',
+                                'pointer-events-none absolute -top-10 right-2 z-10 text-xl font-bold text-primary drop-shadow-md transition-all duration-300',
                                 !doneToday &&
                                   'translate-y-4 opacity-0 group-hover/btn:-translate-y-2 group-hover/btn:opacity-100'
                               )}
@@ -180,10 +180,10 @@ export function HabitWidget({ onNavigateToHabits }: HabitWidgetProps) {
                                 ease: [0.16, 1, 0.3, 1],
                               }}
                               className={cn(
-                                'group/btn z-0 flex h-12 w-12 items-center justify-center rounded-full border-[3px] transition-colors duration-200',
+                                'group/btn z-0 flex h-12 w-12 items-center justify-center rounded-full border-[3px] shadow-neu-raised-sm transition-[background-color,border-color,color,box-shadow,transform] duration-200 active:shadow-neu-pressed focus-visible:shadow-focus-ring focus-visible:outline-none',
                                 doneToday
-                                  ? 'border-chart-1 bg-chart-1 text-background'
-                                  : 'border-muted bg-background text-muted-foreground hover:border-chart-1 hover:bg-chart-1 hover:text-primary-foreground'
+                                  ? 'border-primary bg-primary text-primary-foreground'
+                                  : 'border-border-strong bg-surface text-muted-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground'
                               )}
                             >
                               <Flame
@@ -205,7 +205,7 @@ export function HabitWidget({ onNavigateToHabits }: HabitWidgetProps) {
           <button
             type="button"
             onClick={() => onNavigateToHabits?.()}
-            className="self-end text-[11px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+            className="self-end rounded-md border border-border-strong bg-surface px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground shadow-neu-raised-sm transition-[background-color,color,box-shadow,transform] hover:bg-accent hover:text-accent-foreground active:translate-y-px active:shadow-neu-pressed focus-visible:shadow-focus-ring focus-visible:outline-none"
           >
             {t('widgets.habits.viewAll')}
           </button>
