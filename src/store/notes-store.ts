@@ -1,7 +1,12 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { commands, unwrapResult } from '@/lib/tauri-bindings'
-import { countWords, flattenNoteTree, noteHasTag } from '@/lib/notes-domain'
+import {
+  countWords,
+  flattenNoteTree,
+  getNoteTitle,
+  noteHasTag,
+} from '@/lib/notes-domain'
 import { logger } from '@/lib/logger'
 import type {
   Note as BindingNote,
@@ -16,6 +21,28 @@ import type {
 import type { Note, NoteTreeItem, NoteWorkspaceTree } from '@/lib/notes-domain'
 
 export type NotesWorkspaceView = 'inbox' | 'archive' | 'trash'
+
+export const NOTES_PIN_STORAGE_KEY = 'axis.notes.pinned'
+
+function loadPinnedNoteIds(): string[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const value = JSON.parse(
+      window.localStorage.getItem(NOTES_PIN_STORAGE_KEY) ?? '[]'
+    )
+    return Array.isArray(value)
+      ? value.filter((id): id is string => typeof id === 'string')
+      : []
+  } catch {
+    return []
+  }
+}
+
+function persistPinnedNoteIds(ids: string[]) {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(NOTES_PIN_STORAGE_KEY, JSON.stringify(ids))
+}
 
 interface CreateAnnotationRequest {
   noteId: string
@@ -42,6 +69,7 @@ interface NotesState {
   selectedAnnotationId: string | null
   annotationsPanelOpen: boolean
   isLoadingAnnotations: boolean
+  pinnedNoteIds: string[]
 
   loadNotes: () => Promise<void>
   loadWidgetNotes: () => Promise<void>
@@ -91,6 +119,7 @@ interface NotesState {
   replaceLocalAnnotations: (annotations: NoteAnnotation[]) => void
   selectAnnotation: (annotationId: string | null) => void
   setAnnotationsPanelOpen: (open: boolean) => void
+  togglePinnedNote: (id: string) => void
 
   filteredNotes: () => Note[]
   selectedNote: () => Note | null
@@ -522,6 +551,7 @@ export const useNotesStore = create<NotesState>()(
         selectedAnnotationId: null,
         annotationsPanelOpen: false,
         isLoadingAnnotations: false,
+        pinnedNoteIds: loadPinnedNoteIds(),
 
         loadNotes: async () => {
           if (loadNotesInFlight) {
@@ -875,7 +905,9 @@ export const useNotesStore = create<NotesState>()(
             const createdNote = mapBindingNote(
               unwrapResult(
                 await commands.createNote({
-                  title: null,
+                  title: content.trim()
+                    ? getNoteTitle(content).slice(0, 80)
+                    : null,
                   content,
                   folder: folder ?? null,
                 })
@@ -1537,6 +1569,19 @@ export const useNotesStore = create<NotesState>()(
             { annotationsPanelOpen: open },
             undefined,
             'setAnnotationsPanelOpen'
+          ),
+
+        togglePinnedNote: id =>
+          set(
+            state => {
+              const pinnedNoteIds = state.pinnedNoteIds.includes(id)
+                ? state.pinnedNoteIds.filter(noteId => noteId !== id)
+                : [id, ...state.pinnedNoteIds]
+              persistPinnedNoteIds(pinnedNoteIds)
+              return { pinnedNoteIds }
+            },
+            undefined,
+            'togglePinnedNote'
           ),
 
         filteredNotes: () => {

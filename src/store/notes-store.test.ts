@@ -51,6 +51,7 @@ vi.mock('@/lib/logger', () => ({
 describe('useNotesStore lifecycle actions', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    window.localStorage.clear()
     vi.mocked(commands.updateNote).mockResolvedValue({
       status: 'ok',
       data: {
@@ -433,6 +434,7 @@ describe('useNotesStore lifecycle actions', () => {
       selectedAnnotationId: null,
       annotationsPanelOpen: false,
       isLoadingAnnotations: false,
+      pinnedNoteIds: [],
     })
   })
 
@@ -775,6 +777,11 @@ describe('useNotesStore lifecycle actions', () => {
     const createdId = await useNotesStore.getState().createNote('# New')
 
     expect(createdId).toBe('inbox/new.md')
+    expect(commands.createNote).toHaveBeenCalledWith({
+      title: 'New',
+      content: '# New',
+      folder: null,
+    })
     expect(commands.getNotesWorkspaceTree).toHaveBeenCalledWith('inbox')
     expect(useNotesStore.getState().workspaceView).toBe('inbox')
     expect(useNotesStore.getState().notes.map(note => note.id)).toEqual([
@@ -782,6 +789,22 @@ describe('useNotesStore lifecycle actions', () => {
       'plan-id',
     ])
     expect(useNotesStore.getState().selectedNoteId).toBe('inbox/new.md')
+  })
+
+  it('persists pinned note IDs as device-local UI metadata', () => {
+    const { togglePinnedNote } = useNotesStore.getState()
+
+    togglePinnedNote('inbox/alpha.md')
+
+    expect(useNotesStore.getState().pinnedNoteIds).toEqual(['inbox/alpha.md'])
+    expect(window.localStorage.getItem('axis.notes.pinned')).toBe(
+      JSON.stringify(['inbox/alpha.md'])
+    )
+
+    togglePinnedNote('inbox/alpha.md')
+
+    expect(useNotesStore.getState().pinnedNoteIds).toEqual([])
+    expect(window.localStorage.getItem('axis.notes.pinned')).toBe('[]')
   })
 
   it('creates a note in the requested Inbox folder', async () => {

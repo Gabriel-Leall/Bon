@@ -1,1811 +1,480 @@
-import { useState, useEffect, useRef } from 'react'
-import { Viewer as ToastViewer } from '@toast-ui/react-editor'
+import { useEffect, useRef, useState } from 'react'
+import { Archive, FileText, Inbox, Pin, Search, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import {
-  Plus,
-  Search,
-  Tag,
-  FileText,
-  Folder,
-  ChevronDown,
-  ChevronRight,
-  MoreHorizontal,
-  Trash2,
-  Archive,
-  Inbox,
-  RotateCcw,
-  Download,
-  Upload,
-  Copy,
-  X,
-  Eye,
-  PencilLine,
-  MessageSquarePlus,
-  PanelRightOpen,
-} from 'lucide-react'
-import { save, open } from '@tauri-apps/plugin-dialog'
-import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
 import { toast } from 'sonner'
-import { useNotesStore } from '@/store/notes-store'
+import { NoteDetailsSheet } from '@/components/notes/NoteDetailsSheet'
+import { Button } from '@/components/ui/button'
+import { SegmentedControl } from '@/components/ui/segmented-control'
+import type { Note } from '@/lib/notes-domain'
 import {
-  NotesExplorerTree,
-  type NotesTreeContextAction,
-  type NotesTreeItemRef,
-} from '@/components/notes/NotesExplorerTree'
-import { useNotesTreeContextActions } from '@/hooks/use-notes-tree-context-actions'
-import {
-  useNotesAnnotationsController,
-  type NotesEditorSelection,
-} from '@/hooks/use-notes-annotations-controller'
-import { MarkdownLiveEditor } from '@/components/notes/editor/MarkdownLiveEditor'
-import { NotesAnnotationsPanel } from '@/components/notes/NotesAnnotationsPanel'
-import type { NotesWorkspaceView } from '@/store/notes-store'
-import {
-  relativeDate,
-  groupNotesByDate,
-  countTags,
-  countWords,
-} from '@/lib/notes-domain'
+  filterAndSortNotes,
+  getNoteMarkerIndex,
+  getPostItText,
+  splitPinnedNotes,
+} from '@/lib/notes-page-domain'
 import { cn } from '@/lib/utils'
-import { logger } from '@/lib/logger'
-import type { Note, NoteWorkspaceTree } from '@/lib/notes-domain'
-
-import '@toast-ui/editor/dist/toastui-editor.css'
+import { type NotesWorkspaceView, useNotesStore } from '@/store/notes-store'
 
 interface NotesPageProps {
   initialSelectedNoteId?: string
 }
 
-type NotesEditorMode = 'edit' | 'preview'
-type NotesPaneId = 'left' | 'right'
-const GROUP_LABEL_KEYS: Record<string, string> = {
-  today: 'notes.groups.today',
-  yesterday: 'notes.groups.yesterday',
-  thisWeek: 'notes.groups.thisWeek',
-  older: 'notes.groups.older',
-}
+const NOTE_MARKERS = [
+  'rounded-full bg-primary',
+  'rounded-full border-2 border-primary bg-transparent',
+  'rounded-sm bg-primary/55',
+] as const
 
-const WORKSPACE_LABEL_KEYS: Record<NotesWorkspaceView, string> = {
-  inbox: 'notes.workspace.inbox',
-  archive: 'notes.workspace.archive',
-  trash: 'notes.workspace.trash',
-}
+const noteDateFormatters = new Map<string, Intl.DateTimeFormat>()
 
-const WORKSPACE_OPTIONS: {
-  view: NotesWorkspaceView
-  icon: typeof Inbox
-}[] = [
-  { view: 'inbox', icon: Inbox },
-  { view: 'archive', icon: Archive },
-  { view: 'trash', icon: Trash2 },
-]
-
-const EDITOR_MODE_OPTIONS: {
-  mode: NotesEditorMode
-  labelKey: string
-  ariaKey: string
-  icon: typeof PencilLine
-}[] = [
-  {
-    mode: 'edit',
-    labelKey: 'notes.editor.mode.edit',
-    ariaKey: 'notes.editor.mode.editAria',
-    icon: PencilLine,
-  },
-  {
-    mode: 'preview',
-    labelKey: 'notes.editor.mode.preview',
-    ariaKey: 'notes.editor.mode.previewAria',
-    icon: Eye,
-  },
-]
-
-interface SidebarProps {
-  allNotes: Note[]
-  notes: Note[]
-  tree: NoteWorkspaceTree | null
-  selectedNoteId: string | null
-  workspaceView: NotesWorkspaceView
-  searchQuery: string
-  selectedTag: string | null
-  onSelectNote: (id: string) => void
-  onWorkspaceChange: (view: NotesWorkspaceView) => Promise<void>
-  onSelectTag: (tag: string | null) => void
-  onCreateNote: () => Promise<void>
-  onContextAction: (
-    action: NotesTreeContextAction,
-    item: NotesTreeItemRef
-  ) => void
-  onMoveTreeItem: (
-    item: NotesTreeItemRef,
-    destinationFolder: string
-  ) => Promise<void>
-  onSearchChange: (q: string) => void
-  onClearFilters: () => void
-}
-
-function WorkspaceSwitcher({
-  workspaceView,
-  onWorkspaceChange,
-}: {
-  workspaceView: NotesWorkspaceView
-  onWorkspaceChange: (view: NotesWorkspaceView) => Promise<void>
-}) {
-  const { t } = useTranslation()
-
-  return (
-    <div className="px-2 pb-2">
-      <div className="space-y-0.5">
-        {WORKSPACE_OPTIONS.map(option => {
-          const Icon = option.icon
-          const isActive = workspaceView === option.view
-
-          return (
-            <button
-              key={option.view}
-              type="button"
-              onClick={() => {
-                if (!isActive) {
-                  void onWorkspaceChange(option.view).catch(error => {
-                    logger.error(
-                      `Failed to change notes workspace: ${String(error)}`
-                    )
-                  })
-                }
-              }}
-              className={cn(
-                'notes-explorer-row notes-paper-nav-item flex w-full items-center gap-2 rounded-md border px-2 py-1.5 text-start transition-colors',
-                isActive
-                  ? 'is-active border-border text-accent-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              )}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              <Icon className="size-3.5 shrink-0" />
-              <span className="min-w-0 flex-1 truncate text-xs">
-                {t(WORKSPACE_LABEL_KEYS[option.view])}
-              </span>
-              <span className="text-[10px] text-muted-foreground/70">
-                {option.view === 'inbox' ? '·' : ''}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function SidebarSearch({
-  searchQuery,
-  onSearchChange,
-}: {
-  searchQuery: string
-  onSearchChange: (q: string) => void
-}) {
-  const { t } = useTranslation()
-  const hasSearch = searchQuery.trim().length > 0
-
-  return (
-    <div className="px-2 pb-2.5">
-      <div className="notes-paper-input flex items-center gap-1.5 rounded-lg border px-2 py-1.5 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
-        <Search className="size-3 shrink-0 text-muted-foreground" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={e => onSearchChange(e.target.value)}
-          placeholder={t('notes.sidebar.searchPlaceholder')}
-          aria-label={t('notes.sidebar.searchPlaceholder')}
-          className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        />
-        {hasSearch && (
-          <button
-            type="button"
-            onClick={() => onSearchChange('')}
-            className="rounded-sm p-0.5 text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground"
-            aria-label={t('notes.sidebar.clearSearch')}
-          >
-            <X className="size-3" />
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function TagsSection({
-  allNotes,
-  selectedTag,
-  onSelectTag,
-}: {
-  allNotes: Note[]
-  selectedTag: string | null
-  onSelectTag: (tag: string | null) => void
-}) {
-  const { t } = useTranslation()
-  const [tagsCollapsed, setTagsCollapsed] = useState(false)
-  const [showAllTags, setShowAllTags] = useState(false)
-  const tagCounts = countTags(allNotes)
-  const visibleTags = showAllTags ? tagCounts : tagCounts.slice(0, 8)
-  const hasHiddenTags = tagCounts.length > 8
-
-  return (
-    <div className="border-t border-border/50 px-2 pt-2">
-      <button
-        type="button"
-        onClick={() => setTagsCollapsed(prev => !prev)}
-        className="flex w-full items-center justify-between rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-background/55 hover:text-foreground"
-      >
-        <span className="inline-flex items-center gap-1.5">
-          <Tag className="size-3" />
-          {t('notes.sidebar.tagsTitle')}
-        </span>
-        {tagsCollapsed ? (
-          <ChevronRight className="size-3" />
-        ) : (
-          <ChevronDown className="size-3" />
-        )}
-      </button>
-
-      {!tagsCollapsed && (
-        <div className="mt-1">
-          {tagCounts.length === 0 ? (
-            <p className="px-2 py-1 text-[11px] text-muted-foreground">
-              {t('notes.sidebar.tagsEmpty')}
-            </p>
-          ) : (
-            <>
-              <div className="space-y-0.5">
-                {visibleTags.map(({ tag, count }) => {
-                  const isSelectedTag = selectedTag === tag
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => onSelectTag(isSelectedTag ? null : tag)}
-                      className={cn(
-                        'notes-explorer-row flex w-full items-center gap-2 rounded-md border border-transparent px-2 py-1.5 text-xs transition-colors',
-                        isSelectedTag
-                          ? 'bg-accent/80 text-accent-foreground'
-                          : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
-                      )}
-                    >
-                      <Tag className="size-3 shrink-0" />
-                      <span className="min-w-0 flex-1 truncate">#{tag}</span>
-                      <span className="text-[10px] text-muted-foreground/70">
-                        {count}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-              {hasHiddenTags && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllTags(prev => !prev)}
-                  className="mt-1 px-2 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  {showAllTags
-                    ? t('notes.sidebar.showLessTags')
-                    : t('notes.sidebar.showMoreTags', {
-                        count: tagCounts.length - visibleTags.length,
-                      })}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SidebarEmptyState({
-  workspaceView,
-  workspaceLabel,
-  searchQuery,
-  selectedTag,
-  onClearFilters,
-}: {
-  workspaceView: NotesWorkspaceView
-  workspaceLabel: string
-  searchQuery: string
-  selectedTag: string | null
-  onClearFilters: () => void
-}) {
-  const { t } = useTranslation()
-  const hasSearch = searchQuery.trim().length > 0
-  const hasActiveFilters = hasSearch || selectedTag !== null
-
-  if (!hasActiveFilters) {
-    return (
-      <div className="notes-explorer-empty px-3 py-4 text-xs text-muted-foreground">
-        {t(`notes.empty.${workspaceView}`)}
-        <span className="mt-1 block text-muted-foreground/70">
-          {workspaceView === 'inbox'
-            ? t('notes.empty.hint')
-            : t('notes.empty.lifecycleHint')}
-        </span>
-      </div>
-    )
+function formatNoteDate(value: string, locale: string) {
+  let formatter = noteDateFormatters.get(locale)
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'short',
+    })
+    noteDateFormatters.set(locale, formatter)
   }
-
-  return (
-    <div className="notes-explorer-empty px-3 py-4 text-xs text-muted-foreground">
-      <p>
-        {hasSearch && selectedTag
-          ? t('notes.empty.searchAndTagInWorkspace', {
-              query: searchQuery,
-              tag: selectedTag,
-              workspace: workspaceLabel,
-            })
-          : hasSearch
-            ? t('notes.empty.searchInWorkspace', {
-                query: searchQuery,
-                workspace: workspaceLabel,
-              })
-            : t('notes.empty.tagInWorkspace', {
-                tag: selectedTag,
-                workspace: workspaceLabel,
-              })}
-      </p>
-      <button
-        type="button"
-        onClick={onClearFilters}
-        className="mt-3 rounded-md border border-border px-2 py-1 text-[11px] text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-      >
-        {t('notes.empty.clearFilters')}
-      </button>
-    </div>
-  )
+  return formatter.format(new Date(value))
 }
 
-function NotesList({
-  notes,
-  selectedNoteId,
-  onSelectNote,
-}: {
-  notes: Note[]
-  selectedNoteId: string | null
-  onSelectNote: (id: string) => void
-}) {
+function QuickNoteCapture({ onCreated }: { onCreated: () => void }) {
   const { t } = useTranslation()
-  const grouped = groupNotesByDate(notes)
-
-  return (
-    <>
-      {grouped.map(group => (
-        <div key={group.label} className="mb-2">
-          <div className="notes-explorer-group flex items-center gap-1.5 px-2 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/75">
-            <ChevronDown className="size-3" />
-            <Folder className="size-3" />
-            <span>
-              {t(GROUP_LABEL_KEYS[group.label] ?? 'notes.groups.older')}
-            </span>
-          </div>
-          {group.notes.map(note => {
-            const title = note.title
-            const isSelected = note.id === selectedNoteId
-
-            return (
-              <button
-                key={note.id}
-                type="button"
-                onClick={() => onSelectNote(note.id)}
-                className={cn(
-                  'notes-explorer-note notes-paper-note-row flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-start transition-colors',
-                  isSelected
-                    ? 'is-selected text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <FileText className="size-3.5 shrink-0" />
-                <span className="min-w-0 flex-1 truncate text-xs font-medium">
-                  {title}
-                </span>
-                <span className="shrink-0 text-[10px] text-muted-foreground/60">
-                  {relativeDate(note.updated_at)}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      ))}
-    </>
-  )
-}
-
-function Sidebar({
-  allNotes,
-  notes,
-  tree,
-  selectedNoteId,
-  workspaceView,
-  searchQuery,
-  selectedTag,
-  onSelectNote,
-  onWorkspaceChange,
-  onSelectTag,
-  onCreateNote,
-  onContextAction,
-  onMoveTreeItem,
-  onSearchChange,
-  onClearFilters,
-}: SidebarProps) {
-  const { t } = useTranslation()
-  const hasActiveFilters = searchQuery.trim().length > 0 || selectedTag !== null
-  const [createMenuOpen, setCreateMenuOpen] = useState(false)
-
-  return (
-    <aside className="notes-paper-sidebar notes-explorer flex h-full w-56 shrink-0 flex-col text-card-foreground">
-      <div className="notes-explorer-vault flex items-center justify-between px-3 py-2.5">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <div className="notes-explorer-vault-mark flex size-5 shrink-0 items-center justify-center rounded">
-              <Folder className="size-3.5" />
-            </div>
-            <h2 className="truncate text-xs font-semibold text-foreground">
-              {t('notes.sidebar.title')}
-            </h2>
-          </div>
-          <p className="mt-1 pl-7 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground/70">
-            {t('notes.sidebar.vaultWorkspace')}
-          </p>
-        </div>
-      </div>
-
-      <SidebarSearch
-        searchQuery={searchQuery}
-        onSearchChange={onSearchChange}
-      />
-      <WorkspaceSwitcher
-        workspaceView={workspaceView}
-        onWorkspaceChange={onWorkspaceChange}
-      />
-
-      <div className="min-h-0 flex-1 overflow-y-auto px-1">
-        <div className="flex items-center justify-between px-2 pb-1 pt-2">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/75">
-              {t('notes.sidebar.title')}
-            </span>
-            <span className="text-[10px] text-muted-foreground/65">
-              {allNotes.length}
-            </span>
-          </div>
-          {workspaceView === 'inbox' && (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setCreateMenuOpen(open => !open)}
-                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground"
-                aria-label={t('notes.sidebar.newNote')}
-                aria-expanded={createMenuOpen}
-              >
-                <Plus className="size-3.5" />
-              </button>
-              {createMenuOpen && (
-                <div className="absolute end-0 top-full z-20 mt-1 min-w-36 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCreateMenuOpen(false)
-                      void onCreateNote()
-                    }}
-                    className="flex w-full rounded-sm px-2 py-1.5 text-start text-xs hover:bg-accent"
-                  >
-                    {t('notes.sidebar.newNote')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCreateMenuOpen(false)
-                      onContextAction('create-folder', {
-                        kind: 'folder',
-                        path: 'inbox',
-                      })
-                    }}
-                    className="flex w-full rounded-sm px-2 py-1.5 text-start text-xs hover:bg-accent"
-                  >
-                    {t('notes.contextMenu.newFolder')}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-        {notes.length === 0 ? (
-          <SidebarEmptyState
-            workspaceView={workspaceView}
-            workspaceLabel={t(WORKSPACE_LABEL_KEYS[workspaceView])}
-            searchQuery={searchQuery}
-            selectedTag={selectedTag}
-            onClearFilters={onClearFilters}
-          />
-        ) : !hasActiveFilters && tree ? (
-          <NotesExplorerTree
-            tree={tree}
-            selectedNoteId={selectedNoteId}
-            onSelectNote={onSelectNote}
-            onContextAction={onContextAction}
-            onMoveItem={onMoveTreeItem}
-          />
-        ) : (
-          <NotesList
-            notes={notes}
-            selectedNoteId={selectedNoteId}
-            onSelectNote={onSelectNote}
-          />
-        )}
-      </div>
-      <TagsSection
-        allNotes={allNotes}
-        selectedTag={selectedTag}
-        onSelectTag={onSelectTag}
-      />
-    </aside>
-  )
-}
-
-function NoteActionsMenu({
-  note,
-  workspaceView,
-  onArchive,
-  onMoveToTrash,
-  onRestore,
-  onImport,
-}: {
-  note: Note
-  workspaceView: NotesWorkspaceView
-  onArchive: () => Promise<void>
-  onMoveToTrash: () => Promise<void>
-  onRestore: () => Promise<void>
-  onImport: (content: string) => Promise<void>
-}) {
-  const { t } = useTranslation()
-  const [showMenu, setShowMenu] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const createNote = useNotesStore(state => state.createNote)
+  const selectNote = useNotesStore(state => state.selectNote)
+  const isSaving = useNotesStore(state => state.isSaving)
+  const [draft, setDraft] = useState('')
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowMenu(false)
-        setConfirmDelete(false)
+    const focusCapture = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement
+      const editing = ['INPUT', 'TEXTAREA'].includes(target.tagName)
+      if (
+        event.key.toLowerCase() === 'n' &&
+        !editing &&
+        !event.ctrlKey &&
+        !event.metaKey
+      ) {
+        event.preventDefault()
+        inputRef.current?.focus()
       }
     }
-    if (showMenu) {
-      document.addEventListener('mousedown', handleClick)
-      return () => document.removeEventListener('mousedown', handleClick)
-    }
-  }, [showMenu])
 
-  async function handleExport() {
-    const title = note.title
-    const path = await save({
-      defaultPath: `${title}.md`,
-      filters: [{ name: 'Markdown', extensions: ['md'] }],
-    })
-    if (path) {
-      await writeTextFile(path, note.content)
-    }
-    setShowMenu(false)
-  }
+    window.addEventListener('keydown', focusCapture)
+    return () => window.removeEventListener('keydown', focusCapture)
+  }, [])
 
-  async function handleImport() {
-    const path = await open({
-      filters: [{ name: 'Markdown', extensions: ['md'] }],
-    })
-    if (path) {
-      const content = await readTextFile(path as string)
-      await onImport(content)
-    }
-    setShowMenu(false)
-  }
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(note.content)
-    setShowMenu(false)
-  }
-
-  async function handleArchive() {
-    await onArchive()
-    setShowMenu(false)
-    setConfirmDelete(false)
-  }
-
-  return (
-    <div className="relative" ref={menuRef}>
-      <button
-        type="button"
-        onClick={() => setShowMenu(!showMenu)}
-        className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-        aria-label={t('notes.editor.menu.actions')}
-      >
-        <MoreHorizontal className="size-4" />
-      </button>
-      {showMenu && (
-        <div className="absolute end-0 top-full z-10 mt-1 min-w-40 rounded-md border border-border bg-popover py-1 shadow-md">
-          <button
-            type="button"
-            onClick={handleExport}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-popover-foreground hover:bg-accent"
-          >
-            <Download className="size-3" />
-            {t('notes.editor.menu.export')}
-          </button>
-          {workspaceView === 'inbox' && (
-            <button
-              type="button"
-              onClick={handleImport}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-popover-foreground hover:bg-accent"
-            >
-              <Upload className="size-3" />
-              {t('notes.editor.menu.import')}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-popover-foreground hover:bg-accent"
-          >
-            <Copy className="size-3" />
-            {t('notes.editor.menu.copy')}
-          </button>
-          {workspaceView === 'inbox' && (
-            <button
-              type="button"
-              onClick={() => {
-                void handleArchive().catch(error => {
-                  logger.error(
-                    `Failed to archive note from UI: ${String(error)}`
-                  )
-                })
-              }}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-popover-foreground hover:bg-accent"
-            >
-              <Archive className="size-3" />
-              {t('notes.editor.menu.archive')}
-            </button>
-          )}
-          {workspaceView !== 'inbox' && (
-            <button
-              type="button"
-              onClick={() => {
-                void onRestore()
-                  .catch(error => {
-                    logger.error(
-                      `Failed to restore note from UI: ${String(error)}`
-                    )
-                  })
-                  .finally(() => {
-                    setShowMenu(false)
-                    setConfirmDelete(false)
-                  })
-              }}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-popover-foreground hover:bg-accent"
-            >
-              <RotateCcw className="size-3" />
-              {t('notes.editor.menu.restore')}
-            </button>
-          )}
-          {workspaceView !== 'trash' && (
-            <>
-              <div className="my-1 border-t border-border" />
-              {confirmDelete ? (
-                <div className="px-3 py-1.5">
-                  <p className="mb-1.5 text-[10px] text-destructive">
-                    {t('notes.editor.menu.moveToTrashConfirm')}
-                  </p>
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void onMoveToTrash()
-                          .catch(error => {
-                            logger.error(
-                              `Failed to move note to trash from UI: ${String(error)}`
-                            )
-                          })
-                          .finally(() => {
-                            setShowMenu(false)
-                            setConfirmDelete(false)
-                          })
-                      }}
-                      className="rounded bg-destructive px-2 py-0.5 text-[10px] text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {t('notes.editor.menu.moveToTrash')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDelete(false)}
-                      className="rounded bg-secondary px-2 py-0.5 text-[10px] text-secondary-foreground hover:bg-secondary/80"
-                    >
-                      {t('common.cancel')}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirmDelete(true)}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-destructive hover:bg-accent"
-                >
-                  <Trash2 className="size-3" />
-                  {t('notes.editor.menu.moveToTrash')}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function EditorModeSwitcher({
-  editorMode,
-  onEditorModeChange,
-}: {
-  editorMode: NotesEditorMode
-  onEditorModeChange: (mode: NotesEditorMode) => void
-}) {
-  const { t } = useTranslation()
-
-  return (
-    <div
-      className="notes-paper-segmented inline-flex items-center rounded-lg p-0.5"
-      aria-label={t('notes.editor.mode.label')}
-    >
-      {EDITOR_MODE_OPTIONS.map(option => {
-        const Icon = option.icon
-        const isActive = editorMode === option.mode
-
-        return (
-          <button
-            key={option.mode}
-            type="button"
-            aria-label={t(option.ariaKey)}
-            aria-pressed={isActive}
-            onClick={() => onEditorModeChange(option.mode)}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors',
-              isActive
-                ? 'bg-background/85 text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Icon className="size-3" />
-            <span>{t(option.labelKey)}</span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function EditorArea({
-  note,
-  paneLabel,
-  isActivePane,
-  splitOpen,
-  workspaceView,
-  editorMode,
-  isSaving,
-  onActivatePane,
-  onArchive,
-  onMoveToTrash,
-  onRestore,
-  onOpenBeside,
-  onClosePane,
-  onImportNote,
-  onContentChange,
-  onRename,
-  onCreateNote,
-  onEditorModeChange,
-  annotations,
-  activeSelection,
-  annotationsPanelOpen,
-  onCreateAnnotation,
-  onSelectionChange,
-  onSelectAnnotation,
-  onAnnotationsChange,
-  onOpenAnnotationsPanel,
-}: {
-  note: Note | null
-  paneLabel: string
-  isActivePane: boolean
-  splitOpen: boolean
-  workspaceView: NotesWorkspaceView
-  editorMode: NotesEditorMode
-  isSaving: boolean
-  onActivatePane: () => void
-  onArchive: () => Promise<void>
-  onMoveToTrash: () => Promise<void>
-  onRestore: () => Promise<void>
-  onOpenBeside?: () => void
-  onClosePane?: () => void
-  onImportNote: (content: string) => Promise<void>
-  onContentChange: (noteId: string, content: string) => void
-  onRename: (noteId: string, title: string) => Promise<void>
-  onCreateNote: () => Promise<void>
-  onEditorModeChange: (mode: NotesEditorMode) => void
-  annotations: ReturnType<typeof useNotesStore.getState>['annotations']
-  activeSelection: NotesEditorSelection
-  annotationsPanelOpen: boolean
-  onCreateAnnotation: () => Promise<void>
-  onSelectionChange: (selection: NotesEditorSelection) => void
-  onSelectAnnotation: (annotationId: string) => void
-  onAnnotationsChange: Parameters<
-    typeof MarkdownLiveEditor
-  >[0]['onAnnotationsChange']
-  onOpenAnnotationsPanel: () => void
-}) {
-  const { t } = useTranslation()
-  const [titleDraft, setTitleDraft] = useState({
-    noteId: null as string | null,
-    value: '',
-  })
-  const displayedTitle =
-    note && titleDraft.noteId === note.id
-      ? titleDraft.value
-      : (note?.title ?? '')
-
-  async function commitTitle() {
-    if (!note || workspaceView !== 'inbox') return
-    const nextTitle = displayedTitle.trim()
-    if (!nextTitle || nextTitle === note.title) {
-      setTitleDraft({ noteId: note.id, value: note.title ?? '' })
-      return
-    }
+  const handleCreate = async () => {
+    const content = draft.trim()
+    if (!content) return
 
     try {
-      await onRename(note.id, nextTitle)
+      await createNote(content)
+      selectNote(null)
+      setDraft('')
+      onCreated()
+      requestAnimationFrame(() => inputRef.current?.focus())
     } catch (error) {
-      setTitleDraft({ noteId: note.id, value: note.title ?? '' })
-      toast.error(t('notes.editor.renameFailed'), {
+      toast.error(t('notes.quickCapture.error'), {
         description: String(error),
       })
     }
   }
 
-  if (!note) {
-    return (
-      <section
-        aria-label={paneLabel}
-        data-active-pane={isActivePane ? 'true' : 'false'}
-        onPointerDown={onActivatePane}
-        onFocusCapture={onActivatePane}
-        className="notes-paper-editor flex h-full flex-1 items-center justify-center px-8 text-muted-foreground"
-      >
-        <div className="notes-paper-empty max-w-md text-center">
-          <h2 className="text-lg font-semibold text-foreground">
-            {t('notes.editor.selectPrompt')}
-          </h2>
-          <button
-            type="button"
-            onClick={() => void onCreateNote()}
-            className="mt-5 inline-flex items-center gap-2 rounded-xl border border-border bg-background/70 px-3 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-accent/80 hover:text-accent-foreground"
-          >
-            <Plus className="size-4" />
-            {t('notes.sidebar.newNote')}
-          </button>
-        </div>
-      </section>
-    )
-  }
+  return (
+    <form
+      className="mt-7 flex w-full max-w-3xl items-end gap-3 rounded-2xl border border-border bg-surface p-3 shadow-neu-raised"
+      onSubmit={event => {
+        event.preventDefault()
+        void handleCreate()
+      }}
+    >
+      <label htmlFor="notes-quick-capture" className="sr-only">
+        {t('notes.quickCapture.label')}
+      </label>
+      <textarea
+        ref={inputRef}
+        id="notes-quick-capture"
+        rows={2}
+        value={draft}
+        onChange={event => setDraft(event.target.value)}
+        onKeyDown={event => {
+          if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault()
+            void handleCreate()
+          }
+        }}
+        placeholder={t('notes.quickCapture.placeholder')}
+        className="min-h-12 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-base leading-6 text-foreground outline-none placeholder:text-foreground-disabled"
+      />
+      <Button type="submit" size="lg" disabled={!draft.trim() || isSaving}>
+        {t('notes.quickCapture.submit')}
+      </Button>
+    </form>
+  )
+}
 
-  const wordCount = countWords(note.content)
-  const isReadOnly = workspaceView !== 'inbox'
-  const activeMode: NotesEditorMode = isReadOnly ? 'preview' : editorMode
+function NoteCard({
+  note,
+  pinned,
+  selected,
+  editable,
+  onOpen,
+  onTogglePinned,
+}: {
+  note: Note
+  pinned: boolean
+  selected: boolean
+  editable: boolean
+  onOpen: () => void
+  onTogglePinned: () => void
+}) {
+  const { t, i18n } = useTranslation()
+  const text = getPostItText(note)
+  const markerClass = NOTE_MARKERS[getNoteMarkerIndex(note.id)]
 
   return (
-    <section
-      aria-label={paneLabel}
-      data-active-pane={isActivePane ? 'true' : 'false'}
-      onPointerDown={onActivatePane}
-      onFocusCapture={onActivatePane}
+    <article
       className={cn(
-        'notes-paper-editor flex h-full flex-1 flex-col text-foreground transition-shadow motion-reduce:transition-none',
-        splitOpen &&
-          (isActivePane
-            ? 'ring-1 ring-primary/35'
-            : 'opacity-95 ring-1 ring-border/60')
+        'group relative min-h-44 overflow-hidden rounded-2xl border border-border bg-surface shadow-neu-raised transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-border-strong hover:shadow-neu-raised-lg motion-reduce:transform-none',
+        selected && 'border-primary/65 shadow-focus-card'
       )}
-      data-color-mode="auto"
     >
-      <div className="notes-paper-editorbar flex items-center justify-between gap-4 px-4 py-2.5">
-        <div className="min-w-0">
-          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-            {relativeDate(note.updated_at)}
-          </div>
-          <div className="mt-0.5 truncate text-xs text-muted-foreground/70">
-            {isReadOnly
-              ? t('notes.editor.readonlySurface')
-              : t('notes.editor.paperSurface')}
-          </div>
-        </div>
+      <span
+        aria-hidden="true"
+        className="absolute end-0 top-0 size-7 border-b border-s border-border bg-surface-elevated shadow-neu-pressed [clip-path:polygon(0_0,100%_100%,100%_0)]"
+      />
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex min-h-44 w-full flex-col p-5 pe-11 text-start outline-none focus-visible:shadow-focus-input"
+        aria-label={t('notes.card.openAria', {
+          note: text || t('notes.card.empty'),
+        })}
+      >
+        <span className="mb-4 flex items-center gap-2">
+          <span className={cn('size-2.5 shrink-0', markerClass)} />
+          {pinned ? (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+              <Pin className="size-3" />
+              {t('notes.card.pinned')}
+            </span>
+          ) : null}
+        </span>
+        <span className="line-clamp-6 whitespace-pre-line text-[15px] leading-6 text-foreground">
+          {text || t('notes.card.empty')}
+        </span>
+        <span className="mt-auto pt-5 text-xs text-muted-foreground">
+          {formatNoteDate(note.updated_at, i18n.language)}
+        </span>
+      </button>
+      {editable ? (
+        <button
+          type="button"
+          onClick={() => onTogglePinned()}
+          aria-label={pinned ? t('notes.detail.unpin') : t('notes.detail.pin')}
+          aria-pressed={pinned}
+          className="absolute bottom-4 end-4 flex size-8 items-center justify-center rounded-xl border border-border-strong bg-surface-elevated text-muted-foreground shadow-neu-raised-sm outline-none transition-[color,box-shadow,transform] hover:text-primary active:translate-y-px active:shadow-neu-pressed focus-visible:shadow-focus-ring motion-reduce:transform-none"
+        >
+          <Pin className="size-3.5" />
+        </button>
+      ) : null}
+    </article>
+  )
+}
 
-        <div className="flex items-center gap-2">
-          {!isReadOnly && (
-            <EditorModeSwitcher
-              editorMode={editorMode}
-              onEditorModeChange={onEditorModeChange}
-            />
-          )}
-          {onOpenBeside && !splitOpen && (
-            <button
-              type="button"
-              onClick={onOpenBeside}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/70 px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              <PanelRightOpen className="size-3.5" />
-              {t('notes.editor.openBeside')}
-            </button>
-          )}
-          {!isReadOnly && activeSelection && (
-            <button
-              type="button"
-              onClick={() => void onCreateAnnotation()}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/70 px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              <MessageSquarePlus className="size-3.5" />
-              {t('notes.annotations.createFromSelection')}
-            </button>
-          )}
-          {!annotationsPanelOpen && (
-            <button
-              type="button"
-              onClick={onOpenAnnotationsPanel}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/70 px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              aria-label={t('notes.annotations.open')}
-            >
-              <PanelRightOpen className="size-3.5" />
-              {annotations.length}
-            </button>
-          )}
-          <NoteActionsMenu
+function NotesSection({
+  title,
+  notes,
+  pinnedNoteIds,
+  selectedNoteId,
+  editable,
+  onSelect,
+  onTogglePinned,
+}: {
+  title: string
+  notes: Note[]
+  pinnedNoteIds: string[]
+  selectedNoteId: string | null
+  editable: boolean
+  onSelect: (id: string) => void
+  onTogglePinned: (id: string) => void
+}) {
+  if (notes.length === 0) return null
+  const pinnedIds = new Set(pinnedNoteIds)
+
+  return (
+    <section className="mt-8">
+      <div className="mb-4 flex items-baseline gap-2">
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <span className="text-xs tabular-nums text-muted-foreground">
+          {notes.length}
+        </span>
+      </div>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {notes.map(note => (
+          <NoteCard
+            key={note.id}
             note={note}
-            workspaceView={workspaceView}
-            onArchive={onArchive}
-            onMoveToTrash={onMoveToTrash}
-            onRestore={onRestore}
-            onImport={onImportNote}
+            pinned={pinnedIds.has(note.id)}
+            selected={selectedNoteId === note.id}
+            editable={editable}
+            onOpen={() => onSelect(note.id)}
+            onTogglePinned={() => onTogglePinned(note.id)}
           />
-          {onClosePane && (
-            <button
-              type="button"
-              onClick={onClosePane}
-              className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              aria-label={t('notes.editor.closeRightPane')}
-            >
-              <X className="size-4" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-hidden text-start">
-        <div className="h-full w-full text-start">
-          <div className="h-full px-8 pt-8 pb-10 font-sans antialiased text-foreground text-start flex flex-col">
-            {isReadOnly ? (
-              <h1 className="mb-8 text-2xl font-semibold text-foreground">
-                {note.title}
-              </h1>
-            ) : (
-              <input
-                type="text"
-                value={displayedTitle}
-                onChange={event =>
-                  setTitleDraft({ noteId: note.id, value: event.target.value })
-                }
-                onBlur={() => void commitTitle()}
-                onKeyDown={event => {
-                  if (event.key !== 'Enter') return
-                  event.preventDefault()
-                  void commitTitle()
-                }}
-                placeholder={t('notes.editor.titlePlaceholder')}
-                aria-label={t('notes.editor.titlePlaceholder')}
-                spellCheck={false}
-                className="mb-8 w-full rounded bg-transparent text-2xl font-semibold text-foreground outline-none placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-ring"
-              />
-            )}
-
-            <div className="notes-paper-writing-grid min-h-0 flex-1">
-              {activeMode === 'edit' && !isReadOnly ? (
-                <MarkdownLiveEditor
-                  noteId={note.id}
-                  value={note.content}
-                  placeholder={t('notes.editor.placeholder')}
-                  annotations={annotations}
-                  onChange={content => onContentChange(note.id, content)}
-                  onSelectionChange={onSelectionChange}
-                  onSelectAnnotation={onSelectAnnotation}
-                  onAnnotationsChange={onAnnotationsChange}
-                />
-              ) : (
-                <div className="notes-paper-preview prose prose-sm max-w-none min-h-0 overflow-y-auto text-start text-foreground">
-                  <ToastViewer initialValue={note.content} />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="notes-paper-statusbar flex items-center justify-between px-4 py-2">
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {isReadOnly
-            ? t('notes.editor.footer.readonly')
-            : t('notes.editor.footer.hint')}
-        </span>
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {t('notes.editor.footer.words', { count: wordCount })}
-          {!isReadOnly && (
-            <>
-              {' '}
-              ·{' '}
-              {isSaving
-                ? t('notes.editor.footer.saving')
-                : t('notes.editor.footer.saved')}
-            </>
-          )}
-        </span>
+        ))}
       </div>
     </section>
   )
 }
 
-interface NotesSplitEditorWorkspaceProps {
-  primaryNote: Note | null
-  secondaryNote: Note | null
-  activeNoteId: string | null
-  splitOpen: boolean
-  currentActivePaneId: NotesPaneId
-  currentVisibleSplitPane: NotesPaneId
-  workspaceView: NotesWorkspaceView
-  editorModes: Record<NotesPaneId, NotesEditorMode>
-  isSaving: boolean
-  annotations: ReturnType<typeof useNotesStore.getState>['annotations']
-  activeSelection: NotesEditorSelection
-  annotationsPanelOpen: boolean
-  onActivatePane: (paneId: NotesPaneId) => void
-  onArchiveNote: (noteId: string) => Promise<void>
-  onMoveNoteToTrash: (noteId: string) => Promise<void>
-  onRestoreNote: (noteId: string) => Promise<void>
-  onOpenNoteBeside: (noteId: string) => void
-  onCloseSecondaryPane: () => void
-  getNextNoteBeside: (noteId: string | null) => string | null
-  onContentChange: (noteId: string, content: string) => void
-  onRename: (noteId: string, title: string) => Promise<void>
-  onCreateNote: (paneId: NotesPaneId) => Promise<void>
-  onImportNote: (paneId: NotesPaneId, content: string) => Promise<void>
-  onEditorModeChange: (paneId: NotesPaneId, mode: NotesEditorMode) => void
-  onCreateAnnotation: () => Promise<void>
-  onSelectionChange: (selection: NotesEditorSelection, noteId?: string) => void
-  onSelectAnnotation: (annotationId: string) => void
-  onAnnotationsChange: Parameters<
-    typeof MarkdownLiveEditor
-  >[0]['onAnnotationsChange']
-  onOpenAnnotationsPanel: () => void
-}
-
-function NotesSplitEditorWorkspace({
-  primaryNote,
-  secondaryNote,
-  activeNoteId,
-  splitOpen,
-  currentActivePaneId,
-  currentVisibleSplitPane,
-  workspaceView,
-  editorModes,
-  isSaving,
-  annotations,
-  activeSelection,
-  annotationsPanelOpen,
-  onActivatePane,
-  onArchiveNote,
-  onMoveNoteToTrash,
-  onRestoreNote,
-  onOpenNoteBeside,
-  onCloseSecondaryPane,
-  getNextNoteBeside,
-  onContentChange,
-  onRename,
-  onCreateNote,
-  onImportNote,
-  onEditorModeChange,
-  onCreateAnnotation,
-  onSelectionChange,
-  onSelectAnnotation,
-  onAnnotationsChange,
-  onOpenAnnotationsPanel,
-}: NotesSplitEditorWorkspaceProps) {
+export function NotesPage({ initialSelectedNoteId }: NotesPageProps) {
   const { t } = useTranslation()
-  const primaryNextNoteId = getNextNoteBeside(primaryNote?.id ?? null)
-
-  return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-      {splitOpen && (
-        <div className="notes-paper-editorbar flex items-center justify-center gap-1 border-b border-border/60 px-3 py-1.5 lg:hidden">
-          <button
-            type="button"
-            onClick={() => onActivatePane('left')}
-            className={cn(
-              'rounded-md px-2.5 py-1 text-[11px] font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-              currentVisibleSplitPane === 'left'
-                ? 'bg-background text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {t('notes.editor.showLeftPane')}
-          </button>
-          <button
-            type="button"
-            onClick={() => onActivatePane('right')}
-            className={cn(
-              'rounded-md px-2.5 py-1 text-[11px] font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-              currentVisibleSplitPane === 'right'
-                ? 'bg-background text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {t('notes.editor.showRightPane')}
-          </button>
-        </div>
-      )}
-
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-        <div
-          className={cn(
-            'min-h-0 min-w-0 flex-1',
-            splitOpen && currentVisibleSplitPane !== 'left' && 'hidden lg:block'
-          )}
-        >
-          <EditorArea
-            note={primaryNote}
-            paneLabel={t('notes.editor.leftPane')}
-            isActivePane={currentActivePaneId === 'left'}
-            splitOpen={splitOpen}
-            workspaceView={workspaceView}
-            editorMode={editorModes.left}
-            isSaving={isSaving}
-            onActivatePane={() => onActivatePane('left')}
-            onArchive={() =>
-              primaryNote ? onArchiveNote(primaryNote.id) : Promise.resolve()
-            }
-            onMoveToTrash={() =>
-              primaryNote
-                ? onMoveNoteToTrash(primaryNote.id)
-                : Promise.resolve()
-            }
-            onRestore={() =>
-              primaryNote ? onRestoreNote(primaryNote.id) : Promise.resolve()
-            }
-            onOpenBeside={
-              primaryNote && primaryNextNoteId
-                ? () => onOpenNoteBeside(primaryNextNoteId)
-                : undefined
-            }
-            onContentChange={onContentChange}
-            onRename={onRename}
-            onCreateNote={() => onCreateNote('left')}
-            onImportNote={content => onImportNote('left', content)}
-            onEditorModeChange={mode => onEditorModeChange('left', mode)}
-            annotations={primaryNote?.id === activeNoteId ? annotations : []}
-            activeSelection={
-              primaryNote?.id === activeNoteId ? activeSelection : null
-            }
-            annotationsPanelOpen={annotationsPanelOpen}
-            onCreateAnnotation={onCreateAnnotation}
-            onSelectionChange={selection =>
-              onSelectionChange(selection, primaryNote?.id)
-            }
-            onSelectAnnotation={annotationId => {
-              onActivatePane('left')
-              onSelectAnnotation(annotationId)
-            }}
-            onAnnotationsChange={
-              primaryNote?.id === activeNoteId
-                ? onAnnotationsChange
-                : () => undefined
-            }
-            onOpenAnnotationsPanel={() => {
-              onActivatePane('left')
-              onOpenAnnotationsPanel()
-            }}
-          />
-        </div>
-
-        {secondaryNote && (
-          <div
-            className={cn(
-              'min-h-0 min-w-0 flex-1 border-s border-border/60',
-              currentVisibleSplitPane !== 'right' && 'hidden lg:block'
-            )}
-          >
-            <EditorArea
-              note={secondaryNote}
-              paneLabel={t('notes.editor.rightPane')}
-              isActivePane={currentActivePaneId === 'right'}
-              splitOpen={splitOpen}
-              workspaceView={workspaceView}
-              editorMode={editorModes.right}
-              isSaving={isSaving}
-              onActivatePane={() => onActivatePane('right')}
-              onArchive={() => onArchiveNote(secondaryNote.id)}
-              onMoveToTrash={() => onMoveNoteToTrash(secondaryNote.id)}
-              onRestore={() => onRestoreNote(secondaryNote.id)}
-              onClosePane={onCloseSecondaryPane}
-              onContentChange={onContentChange}
-              onRename={onRename}
-              onCreateNote={() => onCreateNote('right')}
-              onImportNote={content => onImportNote('right', content)}
-              onEditorModeChange={mode => onEditorModeChange('right', mode)}
-              annotations={secondaryNote.id === activeNoteId ? annotations : []}
-              activeSelection={
-                secondaryNote.id === activeNoteId ? activeSelection : null
-              }
-              annotationsPanelOpen={annotationsPanelOpen}
-              onCreateAnnotation={onCreateAnnotation}
-              onSelectionChange={selection =>
-                onSelectionChange(selection, secondaryNote.id)
-              }
-              onSelectAnnotation={annotationId => {
-                onActivatePane('right')
-                onSelectAnnotation(annotationId)
-              }}
-              onAnnotationsChange={
-                secondaryNote.id === activeNoteId
-                  ? onAnnotationsChange
-                  : () => undefined
-              }
-              onOpenAnnotationsPanel={() => {
-                onActivatePane('right')
-                onOpenAnnotationsPanel()
-              }}
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function useNotesPageController({ initialSelectedNoteId }: NotesPageProps) {
-  const { t } = useTranslation()
-  const [editorModes, setEditorModes] = useState<
-    Record<NotesPaneId, NotesEditorMode>
-  >({
-    left: 'edit',
-    right: 'edit',
-  })
-  const [activePaneId, setActivePaneId] = useState<NotesPaneId>('left')
-  const [visibleSplitPane, setVisibleSplitPane] = useState<NotesPaneId>('left')
-  const [secondaryNoteId, setSecondaryNoteId] = useState<string | null>(null)
-  const {
-    contextDialog,
-    onContextAction: onTreeContextAction,
-    onMoveTreeItem,
-  } = useNotesTreeContextActions()
   const notes = useNotesStore(state => state.notes)
-  const selectedNoteId = useNotesStore(state => state.selectedNoteId)
   const workspaceView = useNotesStore(state => state.workspaceView)
-  const searchQuery = useNotesStore(state => state.searchQuery)
-  const selectedTag = useNotesStore(state => state.selectedTag)
-  const tree = useNotesStore(state => state.tree)
-  const isSaving = useNotesStore(state => state.isSaving)
+  const selectedNoteId = useNotesStore(state => state.selectedNoteId)
   const isLoading = useNotesStore(state => state.isLoading)
+  const isSaving = useNotesStore(state => state.isSaving)
+  const pinnedNoteIds = useNotesStore(state => state.pinnedNoteIds)
   const loadNotes = useNotesStore(state => state.loadNotes)
   const setWorkspaceView = useNotesStore(state => state.setWorkspaceView)
-  const createNote = useNotesStore(state => state.createNote)
-  const renameNote = useNotesStore(state => state.renameNote)
-  const updateNote = useNotesStore(state => state.updateNote)
-  const deleteNote = useNotesStore(state => state.deleteNote)
-  const archiveNote = useNotesStore(state => state.archiveNote)
-  const restoreNote = useNotesStore(state => state.restoreNote)
   const selectNote = useNotesStore(state => state.selectNote)
-  const setSearchQuery = useNotesStore(state => state.setSearchQuery)
-  const setSelectedTag = useNotesStore(state => state.setSelectedTag)
-  const filteredNotes = useNotesStore(state => state.filteredNotes)
+  const updateNote = useNotesStore(state => state.updateNote)
+  const archiveNote = useNotesStore(state => state.archiveNote)
+  const deleteNote = useNotesStore(state => state.deleteNote)
+  const restoreNote = useNotesStore(state => state.restoreNote)
+  const togglePinnedNote = useNotesStore(state => state.togglePinnedNote)
+  const [search, setSearch] = useState('')
+  const didSyncInitialNote = useRef(false)
 
   useEffect(() => {
-    loadNotes()
-  }, [loadNotes])
+    let active = true
 
-  useEffect(() => {
-    // react-doctor-disable-next-line react-doctor/no-event-handler -- Syncs external route data into the notes store; Tasks/Habits use the same page-entry pattern.
-    if (initialSelectedNoteId) {
-      selectNote(initialSelectedNoteId)
+    void loadNotes().then(() => {
+      if (active && !initialSelectedNoteId) {
+        useNotesStore.getState().selectNote(null)
+      }
+    })
+
+    return () => {
+      active = false
     }
-  }, [initialSelectedNoteId, selectNote])
-
-  const displayedNotes = filteredNotes()
-  const selectedNote = selectedNoteId
-    ? (displayedNotes.find(note => note.id === selectedNoteId) ?? null)
-    : null
-  const primaryNote = selectedNote ?? displayedNotes.at(0) ?? null
-  const resolvedSecondaryNote = secondaryNoteId
-    ? (displayedNotes.find(note => note.id === secondaryNoteId) ?? null)
-    : null
-  const secondaryNote =
-    resolvedSecondaryNote?.id === primaryNote?.id ? null : resolvedSecondaryNote
-  const splitOpen = secondaryNote !== null
-  const currentActivePaneId = splitOpen ? activePaneId : 'left'
-  const currentVisibleSplitPane = splitOpen ? visibleSplitPane : 'left'
-  const activeNote =
-    currentActivePaneId === 'right' && secondaryNote
-      ? secondaryNote
-      : primaryNote
-  const effectiveSelectedNoteId = activeNote?.id ?? null
-  const {
-    annotations,
-    selectedAnnotationId,
-    annotationsPanelOpen,
-    activeSelection,
-    handleCreateAnnotation,
-    handleSelectionChange,
-    handleSelectAnnotation,
-    handleAnnotationsChange,
-    updateAnnotationText,
-    resolveAnnotation,
-    reopenAnnotation,
-    deleteAnnotation,
-    repositionAnnotation,
-    setAnnotationsPanelOpen,
-  } = useNotesAnnotationsController(activeNote)
+  }, [initialSelectedNoteId, loadNotes])
 
   useEffect(() => {
     if (
-      selectedNoteId !== null &&
-      !displayedNotes.some(note => note.id === selectedNoteId)
+      didSyncInitialNote.current ||
+      !initialSelectedNoteId ||
+      !notes.some(note => note.id === initialSelectedNoteId)
     ) {
-      selectNote(null)
-    }
-  }, [displayedNotes, selectedNoteId, selectNote])
-
-  function activatePane(paneId: NotesPaneId) {
-    setActivePaneId(paneId)
-    setVisibleSplitPane(paneId)
-  }
-
-  function openNoteBeside(noteId: string) {
-    if (primaryNote?.id === noteId) {
-      activatePane('left')
       return
     }
 
-    if (secondaryNote?.id === noteId) {
-      activatePane('right')
-      return
-    }
+    didSyncInitialNote.current = true
+    selectNote(initialSelectedNoteId)
+  }, [initialSelectedNoteId, notes, selectNote])
 
-    if (!displayedNotes.some(note => note.id === noteId)) return
+  const visibleNotes = filterAndSortNotes(notes, search)
+  const { pinned, recent } = splitPinnedNotes(
+    visibleNotes,
+    workspaceView === 'inbox' ? pinnedNoteIds : []
+  )
+  const selectedNote = notes.find(note => note.id === selectedNoteId) ?? null
+  const editable = workspaceView === 'inbox'
 
-    setSecondaryNoteId(noteId)
-    activatePane('right')
-  }
+  const viewOptions = (['inbox', 'archive', 'trash'] as const).map(value => ({
+    value,
+    label: t(`notes.views.${value}`),
+    icon: value === 'inbox' ? Inbox : value === 'archive' ? Archive : Trash2,
+  }))
 
-  function closeSecondaryPane() {
-    setSecondaryNoteId(null)
-    activatePane('left')
-  }
+  const changeWorkspace = async (view: NotesWorkspaceView) => {
+    if (view === workspaceView) return
 
-  function selectNoteForActivePane(noteId: string) {
-    if (primaryNote?.id === noteId) {
-      activatePane('left')
-      return
-    }
-
-    if (secondaryNote?.id === noteId) {
-      activatePane('right')
-      return
-    }
-
-    if (currentActivePaneId === 'right' && secondaryNote) {
-      setSecondaryNoteId(noteId)
-      activatePane('right')
-      return
-    }
-
-    selectNote(noteId)
-    activatePane('left')
-  }
-
-  function nextNoteBeside(noteId: string | null): string | null {
-    return (
-      displayedNotes.find(
-        note => note.id !== noteId && note.id !== (secondaryNote?.id ?? null)
-      )?.id ?? null
-    )
-  }
-
-  function setPaneEditorMode(paneId: NotesPaneId, mode: NotesEditorMode) {
-    setEditorModes(current => ({ ...current, [paneId]: mode }))
-  }
-
-  async function createNoteInPane(paneId: NotesPaneId, content = '') {
     try {
-      setSelectedTag(null)
-      const previousPrimaryNoteId = primaryNote?.id ?? null
-      const createdNoteId = await createNote(content)
-      if (paneId === 'right' && secondaryNote) {
-        setSecondaryNoteId(createdNoteId)
-        if (previousPrimaryNoteId) {
-          selectNote(previousPrimaryNoteId)
-        }
-        activatePane('right')
-      } else {
-        selectNote(createdNoteId)
-        activatePane('left')
-      }
-    } catch (error) {
-      logger.error(`Failed to create note from UI: ${String(error)}`)
-    }
-  }
-
-  async function handleCreateNote() {
-    await createNoteInPane(currentActivePaneId)
-  }
-
-  async function handleImportNote(paneId: NotesPaneId, content: string) {
-    await createNoteInPane(paneId, content)
-  }
-
-  function handleContentChange(noteId: string, content: string) {
-    if (workspaceView !== 'inbox') return
-    updateNote(noteId, content)
-  }
-
-  async function handleRenameNote(noteId: string, title: string) {
-    if (workspaceView !== 'inbox') return
-    await renameNote(noteId, title)
-  }
-
-  function handleClearFilters() {
-    setSearchQuery('')
-    setSelectedTag(null)
-  }
-
-  const showLifecycleError = (error: unknown) => {
-    toast.error(t('notes.snackbar.actionFailed'), {
-      description: String(error),
-    })
-  }
-
-  async function goToWorkspaceNote(
-    view: NotesWorkspaceView,
-    noteId: string | null
-  ) {
-    await setWorkspaceView(view)
-    if (noteId) {
-      selectNote(noteId)
-    }
-  }
-
-  async function reloadWorkspaceIfVisible(view: NotesWorkspaceView) {
-    if (useNotesStore.getState().workspaceView === view) {
       await setWorkspaceView(view)
+      setSearch('')
+    } catch (error) {
+      toast.error(t('notes.snackbar.actionFailed'), {
+        description: String(error),
+      })
     }
   }
 
-  async function handleArchiveNote(noteId: string) {
-    if (!noteId) return
-
+  const handleArchive = async (id: string) => {
     try {
-      const archivedId = await archiveNote(noteId)
-      if (secondaryNoteId === noteId) {
-        closeSecondaryPane()
-      }
+      const archivedId = await archiveNote(id)
+      selectNote(null)
       toast.success(t('notes.snackbar.archived'), {
         action: {
           label: t('common.undo'),
-          onClick: () => {
-            void (async () => {
-              await restoreNote(archivedId)
-            })().catch(showLifecycleError)
-          },
-        },
-        cancel: {
-          label: t('notes.snackbar.viewArchive'),
-          onClick: () => {
-            void goToWorkspaceNote('archive', archivedId).catch(
-              showLifecycleError
-            )
-          },
+          onClick: () => void restoreNote(archivedId),
         },
       })
     } catch (error) {
-      showLifecycleError(error)
-      throw error
+      toast.error(t('notes.snackbar.actionFailed'), {
+        description: String(error),
+      })
     }
   }
 
-  async function handleMoveNoteToTrash(noteId: string) {
-    if (!noteId) return
-
-    const sourceView = workspaceView
-
+  const handleMoveToTrash = async (id: string) => {
     try {
-      const trashedId = await deleteNote(noteId)
-      if (secondaryNoteId === noteId) {
-        closeSecondaryPane()
-      }
+      const trashedId = await deleteNote(id)
+      selectNote(null)
       toast.success(t('notes.snackbar.movedToTrash'), {
         action: {
           label: t('common.undo'),
-          onClick: () => {
-            void (async () => {
-              const restoredId = await restoreNote(trashedId)
-              if (sourceView === 'archive') {
-                await archiveNote(restoredId)
-                await reloadWorkspaceIfVisible('archive')
-              }
-            })().catch(showLifecycleError)
-          },
-        },
-        cancel: {
-          label: t('notes.snackbar.viewTrash'),
-          onClick: () => {
-            void goToWorkspaceNote('trash', trashedId).catch(showLifecycleError)
-          },
+          onClick: () => void restoreNote(trashedId),
         },
       })
     } catch (error) {
-      showLifecycleError(error)
-      throw error
+      toast.error(t('notes.snackbar.actionFailed'), {
+        description: String(error),
+      })
     }
   }
 
-  async function handleRestoreNote(noteId: string) {
-    if (!noteId || workspaceView === 'inbox') return
-
-    const sourceView = workspaceView
-
+  const handleRestore = async (id: string) => {
     try {
-      const restoredId = await restoreNote(noteId)
-      if (secondaryNoteId === noteId) {
-        closeSecondaryPane()
-      }
-      toast.success(t('notes.snackbar.restored'), {
-        action: {
-          label: t('common.undo'),
-          onClick: () => {
-            void (async () => {
-              if (sourceView === 'archive') {
-                await archiveNote(restoredId)
-                await reloadWorkspaceIfVisible('archive')
-              } else {
-                await deleteNote(restoredId)
-                await reloadWorkspaceIfVisible('trash')
-              }
-            })().catch(showLifecycleError)
-          },
-        },
-        cancel: {
-          label: t('notes.snackbar.goToNote'),
-          onClick: () => {
-            void goToWorkspaceNote('inbox', restoredId).catch(
-              showLifecycleError
-            )
-          },
-        },
-      })
+      await restoreNote(id)
+      selectNote(null)
+      toast.success(t('notes.snackbar.restored'))
     } catch (error) {
-      showLifecycleError(error)
-      throw error
+      toast.error(t('notes.snackbar.actionFailed'), {
+        description: String(error),
+      })
     }
   }
 
-  return {
-    t,
-    notes,
-    tree,
-    displayedNotes,
-    effectiveSelectedNoteId,
-    workspaceView,
-    searchQuery,
-    selectedTag,
-    contextDialog,
-    primaryNote,
-    secondaryNote,
-    activeNote,
-    splitOpen,
-    currentActivePaneId,
-    currentVisibleSplitPane,
-    editorModes,
-    isSaving,
-    annotations,
-    selectedAnnotationId,
-    annotationsPanelOpen,
-    activeSelection,
-    isInitialLoading: isLoading && !tree && notes.length === 0,
-    setWorkspaceView,
-    setSelectedTag,
-    setSearchQuery,
-    setPaneEditorMode,
-    setAnnotationsPanelOpen,
-    selectNoteForActivePane,
-    handleCreateNote,
-    handleImportNote,
-    handleClearFilters,
-    handleArchiveNote,
-    handleMoveNoteToTrash,
-    handleRestoreNote,
-    handleContentChange,
-    handleRenameNote,
-    handleCreateAnnotation,
-    handleSelectionChange,
-    handleSelectAnnotation,
-    handleAnnotationsChange,
-    updateAnnotationText,
-    resolveAnnotation,
-    reopenAnnotation,
-    deleteAnnotation,
-    repositionAnnotation,
-    activatePane,
-    openNoteBeside,
-    closeSecondaryPane,
-    nextNoteBeside,
-    onTreeContextAction,
-    onMoveTreeItem,
-  }
-}
-
-export function NotesPage({ initialSelectedNoteId }: NotesPageProps) {
-  const {
-    t,
-    notes,
-    tree,
-    displayedNotes,
-    effectiveSelectedNoteId,
-    workspaceView,
-    searchQuery,
-    selectedTag,
-    contextDialog,
-    primaryNote,
-    secondaryNote,
-    activeNote,
-    splitOpen,
-    currentActivePaneId,
-    currentVisibleSplitPane,
-    editorModes,
-    isSaving,
-    annotations,
-    selectedAnnotationId,
-    annotationsPanelOpen,
-    activeSelection,
-    isInitialLoading,
-    setWorkspaceView,
-    setSelectedTag,
-    setSearchQuery,
-    setPaneEditorMode,
-    setAnnotationsPanelOpen,
-    selectNoteForActivePane,
-    handleCreateNote,
-    handleImportNote,
-    handleClearFilters,
-    handleArchiveNote,
-    handleMoveNoteToTrash,
-    handleRestoreNote,
-    handleContentChange,
-    handleRenameNote,
-    handleCreateAnnotation,
-    handleSelectionChange,
-    handleSelectAnnotation,
-    handleAnnotationsChange,
-    updateAnnotationText,
-    resolveAnnotation,
-    reopenAnnotation,
-    deleteAnnotation,
-    repositionAnnotation,
-    activatePane,
-    openNoteBeside,
-    closeSecondaryPane,
-    nextNoteBeside,
-    onTreeContextAction,
-    onMoveTreeItem,
-  } = useNotesPageController({ initialSelectedNoteId })
-
-  if (isInitialLoading) {
-    return (
-      <div className="flex h-full items-center justify-center bg-background">
-        <span className="text-sm text-muted-foreground">
-          {t('notes.loading')}
-        </span>
-      </div>
-    )
-  }
+  const emptyTitle = search.trim()
+    ? t('notes.empty.search', { query: search })
+    : t(`notes.empty.${workspaceView}`)
 
   return (
-    <div className="notes-paper-workspace flex h-full flex-col">
-      <div className="notes-paper-shell flex flex-1 overflow-hidden">
-        <Sidebar
-          allNotes={notes}
-          notes={displayedNotes}
-          tree={tree}
-          selectedNoteId={effectiveSelectedNoteId}
-          workspaceView={workspaceView}
-          searchQuery={searchQuery}
-          selectedTag={selectedTag}
-          onSelectNote={selectNoteForActivePane}
-          onWorkspaceChange={setWorkspaceView}
-          onSelectTag={setSelectedTag}
-          onCreateNote={handleCreateNote}
-          onContextAction={(action, item) => {
-            if (item.kind === 'note') {
-              if (action === 'open-beside') {
-                openNoteBeside(item.id)
-                return
-              }
-              if (action === 'archive') {
-                void handleArchiveNote(item.id).catch(() => undefined)
-                return
-              }
-              if (action === 'trash') {
-                void handleMoveNoteToTrash(item.id).catch(() => undefined)
-                return
-              }
-              if (action === 'restore') {
-                void handleRestoreNote(item.id).catch(() => undefined)
-                return
-              }
-            }
-            onTreeContextAction(action, item)
-          }}
-          onMoveTreeItem={onMoveTreeItem}
-          onSearchChange={setSearchQuery}
-          onClearFilters={handleClearFilters}
-        />
-        {contextDialog}
+    <div className="h-full overflow-y-auto bg-background">
+      <div className="mx-auto w-full max-w-(--axis-content-max) px-(--axis-page-gutter) pb-12 pt-6 sm:pt-8">
+        <header className="flex flex-wrap items-start justify-between gap-5">
+          <div className="space-y-1">
+            <div className="flex items-baseline gap-3">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                {t('notes.pageTitle')}
+              </h1>
+              <span className="text-sm tabular-nums text-muted-foreground">
+                {t('notes.noteCount', { count: notes.length })}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t('notes.pageDescription')}
+            </p>
+          </div>
 
-        <NotesSplitEditorWorkspace
-          primaryNote={primaryNote}
-          secondaryNote={secondaryNote}
-          activeNoteId={activeNote?.id ?? null}
-          splitOpen={splitOpen}
-          currentActivePaneId={currentActivePaneId}
-          currentVisibleSplitPane={currentVisibleSplitPane}
-          workspaceView={workspaceView}
-          editorModes={editorModes}
-          isSaving={isSaving}
-          annotations={annotations}
-          activeSelection={activeSelection}
-          annotationsPanelOpen={annotationsPanelOpen}
-          onActivatePane={activatePane}
-          onArchiveNote={handleArchiveNote}
-          onMoveNoteToTrash={handleMoveNoteToTrash}
-          onRestoreNote={handleRestoreNote}
-          onOpenNoteBeside={openNoteBeside}
-          onCloseSecondaryPane={closeSecondaryPane}
-          getNextNoteBeside={nextNoteBeside}
-          onContentChange={handleContentChange}
-          onRename={handleRenameNote}
-          onCreateNote={handleCreateNote}
-          onImportNote={handleImportNote}
-          onEditorModeChange={setPaneEditorMode}
-          onCreateAnnotation={handleCreateAnnotation}
-          onSelectionChange={handleSelectionChange}
-          onSelectAnnotation={handleSelectAnnotation}
-          onAnnotationsChange={handleAnnotationsChange}
-          onOpenAnnotationsPanel={() => setAnnotationsPanelOpen(true)}
-        />
-        {activeNote && annotationsPanelOpen && (
-          <NotesAnnotationsPanel
-            noteId={activeNote.id}
-            annotations={annotations}
-            selectedAnnotationId={selectedAnnotationId}
-            activeSelection={activeSelection}
-            onClose={() => setAnnotationsPanelOpen(false)}
-            onSelect={handleSelectAnnotation}
-            onUpdateText={updateAnnotationText}
-            onResolve={resolveAnnotation}
-            onReopen={reopenAnnotation}
-            onDelete={deleteAnnotation}
-            onReposition={repositionAnnotation}
+          <label className="flex h-10 w-full max-w-sm items-center gap-2 rounded-xl border border-border-strong bg-surface-sunken px-3 text-muted-foreground shadow-neu-pressed focus-within:border-primary/60 focus-within:shadow-focus-input sm:w-80">
+            <Search className="size-4 shrink-0" />
+            <span className="sr-only">{t('notes.search.label')}</span>
+            <input
+              type="search"
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              placeholder={t('notes.search.placeholder')}
+              className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-foreground-disabled"
+            />
+          </label>
+        </header>
+
+        {editable ? <QuickNoteCapture onCreated={() => setSearch('')} /> : null}
+
+        <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
+          <SegmentedControl
+            value={workspaceView}
+            onValueChange={value =>
+              void changeWorkspace(value as NotesWorkspaceView)
+            }
+            options={viewOptions}
+            aria-label={t('notes.views.label')}
           />
+          {editable ? (
+            <p className="text-xs text-muted-foreground">
+              {t('notes.quickCapture.hint')}
+            </p>
+          ) : null}
+        </div>
+
+        {isLoading && notes.length === 0 ? (
+          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-44 animate-pulse rounded-2xl border border-border bg-surface shadow-neu-raised"
+              />
+            ))}
+          </div>
+        ) : visibleNotes.length > 0 ? (
+          <>
+            {editable ? (
+              <NotesSection
+                title={t('notes.sections.pinned')}
+                notes={pinned}
+                pinnedNoteIds={pinnedNoteIds}
+                selectedNoteId={selectedNoteId}
+                editable
+                onSelect={selectNote}
+                onTogglePinned={togglePinnedNote}
+              />
+            ) : null}
+            <NotesSection
+              title={t(
+                editable
+                  ? 'notes.sections.recent'
+                  : `notes.sections.${workspaceView}`
+              )}
+              notes={editable ? recent : visibleNotes}
+              pinnedNoteIds={pinnedNoteIds}
+              selectedNoteId={selectedNoteId}
+              editable={editable}
+              onSelect={selectNote}
+              onTogglePinned={togglePinnedNote}
+            />
+          </>
+        ) : (
+          <section className="mt-8 flex items-center gap-4 rounded-2xl border border-border bg-surface px-5 py-6 shadow-neu-raised">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-border-strong bg-surface-elevated text-muted-foreground shadow-neu-raised-sm">
+              <FileText className="size-5" />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">
+                {emptyTitle}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t(
+                  search.trim()
+                    ? 'notes.empty.clearSearchHint'
+                    : `notes.empty.${workspaceView}Hint`
+                )}
+              </p>
+            </div>
+          </section>
         )}
+
+        {selectedNote ? (
+          <NoteDetailsSheet
+            key={selectedNote.id}
+            note={selectedNote}
+            workspaceView={workspaceView}
+            isSaving={isSaving}
+            pinned={pinnedNoteIds.includes(selectedNote.id)}
+            onOpenChange={open => {
+              if (!open) selectNote(null)
+            }}
+            onContentChange={updateNote}
+            onTogglePinned={togglePinnedNote}
+            onArchive={handleArchive}
+            onMoveToTrash={handleMoveToTrash}
+            onRestore={handleRestore}
+          />
+        ) : null}
       </div>
     </div>
   )

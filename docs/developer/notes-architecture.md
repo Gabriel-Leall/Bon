@@ -237,8 +237,12 @@ Important store entrypoints:
 - `createNote()`, `updateNote()`, `archiveNote()`, `deleteNote()`, and
   `restoreNote()` wrap the backend lifecycle commands.
 - `createNote(content, folder?)` passes an optional existing Inbox folder to
-  the typed backend command and inserts the returned note into that physical
-  tree location.
+  the typed backend command, infers a concise file-backed title from the first
+  non-empty content line, and inserts the returned note into that physical tree
+  location.
+- `pinnedNoteIds` and `togglePinnedNote()` hold the first post-it metadata slice.
+  Pins currently persist as device-local UI state under `axis.notes.pinned`;
+  they do not mutate Markdown or the vault tree.
 
 Components should use store actions rather than calling notes vault commands
 directly, except for isolated quick-entry flows that intentionally only create a
@@ -248,44 +252,23 @@ new note.
 
 Notes Page:
 
-- Provides the full notes workspace.
-- Lets the user navigate inbox, archive, and trash.
-- Keeps inbox notes editable.
+- Provides immediate short-form capture and an automatically ordered post-it
+  mural instead of presenting the vault structure as the product model.
+- Shows pinned Inbox notes before recent notes and supports local filtering.
+- Lets the user navigate Inbox, Archive, and Trash as compact lifecycle views.
+- Opens the selected note in a focused side sheet. Inbox content is editable;
+  Archive and Trash remain read-only until restored.
 - Treats archive and trash as lifecycle views, not normal editing surfaces.
 - Owns empty states, filter-aware feedback, and snackbar actions for note
   lifecycle operations.
-- Offers the user-facing action to open the vault folder.
-- Uses one imperative CodeMirror `EditorView` for the active writing surface.
-  React does not control the document on every keystroke: document changes are
-  sent to the store through the editor update listener, and note navigation
-  replaces the document inside the existing view.
-- Edit mode applies Markdown syntax-tree decorations only to visible ranges.
-  Closed markers are hidden away from the active selection while semantic
-  formatting remains visible. Preview is a strict read-only rendering path and
-  has no editor save callback.
-- Markdown command transformations emit ordinary persisted Markdown. The
-  CodeMirror command extension provides matching keyboard shortcuts and slash
-  commands for inline formatting, blocks, links, and local dates. Toast UI is
-  used only to render the read-only Preview surface.
-- External document replacement keeps the existing cursor or selection when
-  its positions remain valid, otherwise clamps them to the replacement content.
-  Such replacements never invoke the user-edit callback or create a save.
-- Private annotations are stored outside Markdown in the note sidecar. Edit
-  mode decorates anchored ranges in CodeMirror and maps them through local
-  document transactions. When the debounced note save is flushed, Axis syncs
-  the mapped anchored ranges back to the sidecar using the same durable command
-  path as manual repositioning. Preview remains read-only and does not create
-  or edit annotations.
-- The annotations panel is closed by default. Creating an annotation from a
-  non-empty editor selection or selecting an annotation highlight opens the
-  panel. Lost anchors remain recoverable: the user selects a new range and
-  repositions the existing annotation, preserving its ID and comment text.
-- The split workspace is session-only UI state. A normal tree click targets the
-  active pane; "Open beside" explicitly opens a secondary note pane for
-  comparison or parallel editing. The annotations panel remains singular and
-  follows the active pane. On narrow layouts, the open panes collapse into a
-  left/right switch so the secondary note stays open without squeezing the
-  writing surface.
+- Keeps Markdown files and the physical vault as storage details behind typed
+  commands. Folder navigation, annotations, rich Markdown preview, and split
+  editing are no longer part of the primary Notes Page experience. Their legacy
+  modules remain isolated until the planned frontend consolidation removes or
+  relocates them safely.
+- Defers note reminders and Calendar linkage until the reminder metadata has a
+  durable sidecar contract. This avoids encoding product metadata in Markdown
+  or creating a second unsynchronized source of truth.
 
 Dashboard notes widget:
 

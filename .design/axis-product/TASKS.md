@@ -382,7 +382,7 @@ ou uma data específica. O padrão acompanha o filtro ativo e a tarefa recém-cr
 abre na lista correspondente; o conjunto de captura foi compactado para manter
 data e ação próximas ao título.
 
-### [ ] P3. Transformar Notas em post-its rápidos
+### [~] P3. Transformar Notas em post-its rápidos
 
 **Objetivo:** substituir vault/editor por captura, fixação, lembrete e arquivo.
 
@@ -393,6 +393,15 @@ data e ação próximas ao título.
 - A referência visual contribui somente com o reconhecimento de post-it.
 - Nota usa superfície do tema ativo; não existe paper cream fixo no dark.
 - Pastas, split view, Markdown preview e glassmorphism saem da experiência principal.
+
+**Rodada 1 em 2026-09-08:** a página principal deixou de expor vault,
+pastas, editor/preview e split view. A experiência agora começa pela captura
+curta, organiza fixadas antes do mural recente e abre edição em painel lateral.
+Busca, Arquivo e Lixeira foram preservados como recursos de apoio. A dobra do
+post-it e seus marcadores usam superfícies e accent sem substituir a base do
+tema. Fixação é persistida localmente no dispositivo nesta rodada; lembrete,
+edição do marcador e vínculo temporal com Calendário seguem para a próxima
+rodada funcional.
 
 ### [ ] P4. Construir Calendário unificado
 
