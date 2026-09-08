@@ -436,7 +436,7 @@ configurações e histórico não mudaram. Segmentos internos orbitam lentamente
 conforme o próprio relógio avança, pausam com o timer e permanecem estáticos sob
 redução de movimento.
 
-### [ ] P7. Reestruturar Análise
+### [~] P7. Reestruturar Análise
 
 **Objetivo:** trocar métricas soltas por diagnóstico explicável e acionável.
 
@@ -447,6 +447,27 @@ redução de movimento.
 - Indicadores cobrem foco, hábitos, tarefas, calendário e recuperação.
 - Gráficos usam tokens estáveis e não dependem apenas de cor.
 - Não existem gradientes aleatórios ou fundos de card baseados em dados.
+
+**Rodada 1:** a página agora começa por uma leitura textual do período, seguida
+do sinal que sustentou o ritmo, do ponto que merece atenção e de um próximo
+ajuste derivado dos dados existentes. A nota deixa de julgar períodos sem base;
+indicadores e gráficos passam a funcionar como evidências secundárias em
+superfícies sem gradientes. O buddy permanece como habitat textual nesta rodada.
+O painel deslizante de explicação e os sinais de calendário e recuperação ficam
+para as próximas rodadas.
+
+**Ajuste da Rodada 1 em 2026-09-08:** o mapa anual de consistência foi removido
+de Análise por repetir uma leitura que já pertence a Hábitos. A atividade de
+tarefas agora ocupa uma seção única e larga, com pilhas de blocos que comparam
+criações e conclusões, resumo da taxa de conclusão e diferenciação por forma,
+contorno e preenchimento — não apenas por cor.
+
+**Segundo ajuste da Rodada 1 em 2026-09-08:** a composição deixou de empilhar
+cards dentro de cards. Diagnóstico e sinais agora ficam diretamente no fluxo da
+página, enquanto pontuação, próximo ajuste e indicadores assumem profundidades
+independentes. As pilhas usam blocos retangulares mais largos; as sparklines sem
+escala dos indicadores foram removidas. Comparações sem período anterior agora
+aparecem como “Novo neste período” ou “Sem atividade”, em vez de “Sem base”.
 
 ### [ ] P8. Implementar encerramento diário e lembretes
 

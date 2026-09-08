@@ -1,29 +1,28 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Activity, Minus, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
-import {
+  completionRate,
   fillMissingDays,
   formatDuration,
   getPeriodRange,
   type AnalyticsPeriod,
 } from '@/lib/analytics-domain'
+import {
+  buildAnalyticsInsight,
+  compareAnalyticsPeriods,
+  type AnalyticsInsight,
+  type AnalyticsSignal,
+  type AnalyticsSignalKey,
+  type PeriodComparison,
+} from '@/lib/analytics-insight'
+import {
+  buildTaskActivityBuckets,
+  scaleTaskActivityPile,
+  type TaskActivityBucket,
+} from '@/lib/analytics-task-activity'
 import { cn } from '@/lib/utils'
 import { useAnalyticsStore } from '@/store/analytics-store'
-
-function toISODate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
 function comparisonLabel(
   period: AnalyticsPeriod,
@@ -43,11 +42,6 @@ function comparisonLabel(
   }
 }
 
-function percentDelta(current: number, previous: number): number | null {
-  if (previous === 0) return current === 0 ? 0 : null
-  return ((current - previous) / previous) * 100
-}
-
 function gradeFromScore(score: number): string {
   if (score >= 92) return 'A+'
   if (score >= 85) return 'A'
@@ -58,72 +52,40 @@ function gradeFromScore(score: number): string {
   return 'D'
 }
 
-function Sparkline({ data, stroke }: { data: number[]; stroke?: string }) {
-  if (data.length < 2) {
-    return <div className="h-full w-full bg-muted/20" />
-  }
-
-  const max = Math.max(...data)
-  const min = Math.min(...data)
-  const range = max - min || 1
-
-  const points = data
-    .map((value, index) => {
-      const x = (index / (data.length - 1)) * 100
-      const y = 100 - ((value - min) / range) * 100
-      return `${x},${y}`
-    })
-    .join(' ')
-
-  const area = `0,100 ${points} 100,100`
-
-  return (
-    <svg
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      className="h-full w-full"
-      aria-hidden
-    >
-      <polygon
-        points={area}
-        fill="color-mix(in oklab, var(--primary) 24%, transparent)"
-      />
-      <polyline
-        points={points}
-        fill="none"
-        stroke={stroke ?? 'var(--primary)'}
-        strokeWidth={3}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function TrendDelta({ delta, label }: { delta: number | null; label: string }) {
+function TrendDelta({
+  comparison,
+  label,
+}: {
+  comparison: PeriodComparison
+  label: string
+}) {
   const { t } = useTranslation()
-  if (delta === null) {
+  if (comparison.kind === 'empty') {
     return (
-      <span className="inline-flex w-fit rounded-md border border-border/45 bg-card/85 px-2 py-1 text-xs font-medium text-muted-foreground/85 backdrop-blur-sm">
-        {t('analytics.stat.noBaseline', { label })}
+      <span className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <Minus className="size-3" aria-hidden />
+        {t('analytics.stat.noActivity')}
       </span>
     )
   }
 
-  const positive = delta >= 0
-  const value = Math.min(999, Math.round(Math.abs(delta)))
-  const arrow = positive ? '▲' : '▼'
+  if (comparison.kind === 'new') {
+    return (
+      <span className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-primary">
+        <TrendingUp className="size-3" aria-hidden />
+        {t('analytics.stat.newInPeriod')}
+      </span>
+    )
+  }
+
+  const positive = comparison.value >= 0
+  const value = Math.min(999, Math.round(Math.abs(comparison.value)))
+  const TrendIcon = positive ? TrendingUp : TrendingDown
 
   return (
-    <span
-      className={cn(
-        'inline-flex w-fit rounded-md border border-border/45 bg-card/85 px-2 py-1 text-xs font-semibold backdrop-blur-sm',
-        positive
-          ? 'text-emerald-600 dark:text-emerald-400'
-          : 'text-rose-600 dark:text-rose-400'
-      )}
-    >
-      {arrow} {value}% {label}
+    <span className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+      <TrendIcon className="size-3" aria-hidden />
+      {value}% {label}
     </span>
   )
 }
@@ -132,40 +94,31 @@ function StatBox({
   title,
   value,
   subtitle,
-  delta,
+  comparison,
   deltaLabel,
-  sparklineData,
 }: {
   title: string
   value: string | number
   subtitle?: string
-  delta: number | null
+  comparison: PeriodComparison
   deltaLabel: string
-  sparklineData: number[]
 }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border/30 bg-card/15 p-6 transition-all duration-300 hover:border-border/60 hover:bg-card/25">
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-18 opacity-50">
-        <Sparkline data={sparklineData} />
-      </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-linear-to-t from-background/95 via-background/70 to-transparent" />
+    <article className="flex min-h-38 flex-col justify-between gap-5 rounded-2xl border border-border bg-surface-elevated p-5 shadow-neu-raised-sm">
+      <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {title}
+      </h3>
 
-      <div className="relative z-10 flex min-h-29.5 flex-col justify-between gap-5">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground/75">
-          {title}
-        </h3>
-
-        <div className="flex flex-col gap-1.5">
-          <span className="text-3xl font-semibold tracking-normal tabular-nums text-foreground">
-            {value}
-          </span>
-          <span className="text-xs font-medium text-muted-foreground h-4">
-            {subtitle ?? ''}
-          </span>
-          <TrendDelta delta={delta} label={deltaLabel} />
-        </div>
+      <div className="flex flex-col gap-2">
+        <span className="text-3xl font-semibold tracking-tight tabular-nums text-foreground">
+          {value}
+        </span>
+        <span className="min-h-4 text-xs font-medium text-muted-foreground">
+          {subtitle ?? ''}
+        </span>
+        <TrendDelta comparison={comparison} label={deltaLabel} />
       </div>
-    </div>
+    </article>
   )
 }
 
@@ -182,16 +135,18 @@ function PeriodToggle() {
   ]
 
   return (
-    <div className="flex gap-1 rounded-md border border-border/40 bg-muted/10 p-1 backdrop-blur-sm">
+    <div className="flex flex-wrap gap-1.5 rounded-xl border border-border bg-surface-sunken p-1.5 shadow-neu-pressed">
       {periods.map(p => (
         <button
+          type="button"
           key={p.value}
           onClick={() => setPeriod(p.value)}
+          aria-pressed={period === p.value}
           className={cn(
-            'rounded-sm px-4 py-1.5 text-xs font-medium transition-all duration-200',
+            'rounded-lg border px-3.5 py-2 text-xs font-semibold transition-[background-color,color,border-color,box-shadow,transform] active:translate-y-px active:shadow-neu-pressed motion-reduce:transform-none',
             period === p.value
-              ? 'bg-card text-foreground shadow-sm ring-1 ring-border/60'
-              : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'
+              ? 'border-border-strong bg-surface-elevated text-foreground shadow-neu-raised-sm'
+              : 'border-transparent text-muted-foreground hover:bg-surface hover:text-foreground'
           )}
         >
           {p.label}
@@ -202,6 +157,7 @@ function PeriodToggle() {
 }
 
 function ScoreRing({ score, grade }: { score: number; grade: string }) {
+  const { t } = useTranslation()
   const radius = 84
   const strokeWidth = 14
   const circumference = 2 * Math.PI * radius
@@ -209,12 +165,16 @@ function ScoreRing({ score, grade }: { score: number; grade: string }) {
   const offset = circumference - (clamped / 100) * circumference
 
   return (
-    <div className="relative mx-auto size-55">
+    <div className="relative mx-auto size-48 rounded-full border border-border bg-surface-sunken p-3 shadow-neu-pressed">
       <svg
         className="size-full -rotate-90"
         viewBox="0 0 220 220"
         role="img"
-        aria-label={`Focus score ${score}`}
+        aria-label={
+          grade === '—'
+            ? t('analytics.focusScore.noData')
+            : t('analytics.focusScore.aria', { score })
+        }
       >
         <circle
           cx="110"
@@ -246,144 +206,261 @@ function ScoreRing({ score, grade }: { score: number; grade: string }) {
           {grade}
         </span>
         <span className="font-mono text-sm text-muted-foreground">
-          {score}%
+          {grade === '—' ? t('analytics.focusScore.noData') : `${score}%`}
         </span>
       </div>
     </div>
   )
 }
 
-interface ContributionDay {
-  dateISO: string
-  count: number
-  outside: boolean
+function signalLabel(
+  key: AnalyticsSignalKey,
+  t: (key: string) => string
+): string {
+  return t(`analytics.focusScore.${key}`)
 }
 
-interface ContributionWeek {
-  monthLabel: string
-  days: ContributionDay[]
-}
-
-function buildContributionWeeks(logs: string[]): {
-  weeks: ContributionWeek[]
-  maxCount: number
-  totalContributions: number
-} {
-  const counts = new Map<string, number>()
-  for (const date of logs) {
-    counts.set(date, (counts.get(date) ?? 0) + 1)
-  }
-
-  const today = new Date()
-  today.setHours(12, 0, 0, 0)
-  const start = new Date(today)
-  start.setDate(start.getDate() - 364)
-
-  const gridStart = new Date(start)
-  gridStart.setDate(gridStart.getDate() - gridStart.getDay())
-
-  const seenMonths = new Set<string>()
-  const weeks: ContributionWeek[] = []
-  let maxCount = 0
-  let totalContributions = 0
-
-  for (
-    let cursor = new Date(gridStart);
-    cursor <= today;
-    cursor.setDate(cursor.getDate() + 7)
-  ) {
-    let monthLabel = ''
-    const days: ContributionDay[] = []
-
-    for (let weekday = 0; weekday < 7; weekday += 1) {
-      const day = new Date(cursor)
-      day.setDate(cursor.getDate() + weekday)
-      const dateISO = toISODate(day)
-      const outside = day < start || day > today
-      const count = outside ? 0 : (counts.get(dateISO) ?? 0)
-      if (!outside) {
-        maxCount = Math.max(maxCount, count)
-        totalContributions += count
-      }
-
-      const monthKey = `${day.getFullYear()}-${day.getMonth()}`
-      if (!outside && day.getDate() <= 7 && !seenMonths.has(monthKey)) {
-        monthLabel = day.toLocaleDateString('en-US', { month: 'short' })
-        seenMonths.add(monthKey)
-      }
-
-      days.push({ dateISO, count, outside })
-    }
-
-    weeks.push({ monthLabel, days })
-  }
-
-  return { weeks, maxCount, totalContributions }
-}
-
-function contributionLevel(count: number, maxCount: number): 0 | 1 | 2 | 3 | 4 {
-  if (count <= 0 || maxCount <= 0) return 0
-  const ratio = count / maxCount
-  if (ratio >= 0.75) return 4
-  if (ratio >= 0.5) return 3
-  if (ratio >= 0.25) return 2
-  return 1
-}
-
-function contributionColor(level: 0 | 1 | 2 | 3 | 4): string {
-  switch (level) {
-    case 4:
-      return 'color-mix(in oklab, var(--primary) 92%, var(--background))'
-    case 3:
-      return 'color-mix(in oklab, var(--primary) 72%, var(--background))'
-    case 2:
-      return 'color-mix(in oklab, var(--primary) 52%, var(--background))'
-    case 1:
-      return 'color-mix(in oklab, var(--primary) 32%, var(--background))'
-    default:
-      return 'color-mix(in oklab, var(--primary) 12%, var(--background))'
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload || payload.length === 0) return null
-
-  const formattedDate = new Date(`${label}T12:00:00Z`).toLocaleDateString(
-    undefined,
-    {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-    }
-  )
+function AnalysisSummary({
+  insight,
+  score,
+  grade,
+  signals,
+}: {
+  insight: AnalyticsInsight
+  score: number
+  grade: string
+  signals: AnalyticsSignal[]
+}) {
+  const { t } = useTranslation()
+  const strongest = insight.strongest
+  const weakest = insight.weakest
+  const hasEvidence = strongest !== null && weakest !== null
+  const recommendationKey = weakest
+    ? `analytics.insight.recommendation.${weakest.key}`
+    : 'analytics.insight.recommendation.empty'
 
   return (
-    <div className="rounded-lg border border-border/60 bg-popover/95 p-4 shadow-xl backdrop-blur-md">
-      <p className="mb-3 text-xs font-medium text-muted-foreground">
-        {formattedDate}
-      </p>
-      <div className="flex flex-col gap-2">
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div
-                className="size-2 rounded-full"
-                style={{
-                  backgroundColor:
-                    entry.color || entry.fill || 'var(--primary)',
-                }}
-              />
-              <span className="text-sm text-foreground/90">{entry.name}</span>
+    <section className="grid gap-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)] lg:items-start">
+      <div className="px-1 py-3 sm:px-2 sm:py-5">
+        <div className="flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-full border border-border-strong bg-surface-elevated text-primary shadow-neu-raised-sm">
+            <Activity className="size-5" aria-hidden />
+          </span>
+          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            {t('analytics.insight.heading')}
+          </span>
+        </div>
+
+        <h2 className="mt-6 max-w-2xl text-2xl font-semibold tracking-tight text-foreground sm:text-[1.75rem]">
+          {t(`analytics.insight.level.${insight.level}.title`)}
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+          {t(`analytics.insight.level.${insight.level}.body`, { score })}
+        </p>
+
+        {hasEvidence ? (
+          <div className="mt-7 grid border-y border-border sm:grid-cols-2 sm:divide-x sm:divide-border">
+            <div className="py-4 sm:pe-5">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                <TrendingUp className="size-4 text-primary" aria-hidden />
+                {t('analytics.insight.supportedBy')}
+              </div>
+              <p className="mt-3 font-semibold text-foreground">
+                {signalLabel(strongest.key, t)}
+              </p>
+              <p className="mt-1 font-mono text-sm text-muted-foreground">
+                {strongest.percentage}%
+              </p>
             </div>
-            <span className="font-mono text-sm font-semibold text-foreground">
-              {entry.value}
-            </span>
+            <div className="py-4 sm:ps-5">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                <TrendingDown
+                  className="size-4 text-muted-foreground"
+                  aria-hidden
+                />
+                {t('analytics.insight.needsAttention')}
+              </div>
+              <p className="mt-3 font-semibold text-foreground">
+                {signalLabel(weakest.key, t)}
+              </p>
+              <p className="mt-1 font-mono text-sm text-muted-foreground">
+                {weakest.percentage}%
+              </p>
+            </div>
           </div>
-        ))}
+        ) : null}
+
+        <div className="mt-7 flex gap-3 rounded-2xl border border-border-strong bg-surface-elevated p-4 shadow-neu-raised-sm">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-primary shadow-neu-raised-sm">
+            <Target className="size-4" aria-hidden />
+          </span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              {t('analytics.insight.nextAdjustment')}
+            </p>
+            <p className="mt-1.5 text-sm leading-6 text-foreground">
+              {t(recommendationKey)}
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <aside className="rounded-[2rem] border border-border bg-surface p-6 shadow-neu-raised lg:p-8">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-foreground">
+            {t('analytics.focusScore.title')}
+          </h3>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            {t('analytics.focusScore.weightedIndex')}
+          </span>
+        </div>
+
+        <div className="mt-6">
+          <ScoreRing score={score} grade={grade} />
+        </div>
+
+        <p className="mt-6 text-xs leading-5 text-muted-foreground">
+          {t('analytics.insight.scoreExplanation')}
+        </p>
+        {hasEvidence ? (
+          <div className="mt-4 divide-y divide-border border-y border-border">
+            {signals.map(signal => (
+              <div
+                key={signal.key}
+                className="flex items-center justify-between gap-3 py-2.5 text-sm"
+              >
+                <span className="text-muted-foreground">
+                  {signalLabel(signal.key, t)}
+                </span>
+                <span className="font-mono font-semibold text-foreground">
+                  {Math.round(signal.ratio * 100)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-4 rounded-xl border border-border bg-surface-sunken px-4 py-5 text-center text-sm font-medium text-muted-foreground shadow-neu-pressed">
+            {t('analytics.focusScore.noData')}
+          </div>
+        )}
+      </aside>
+    </section>
+  )
+}
+
+function TaskActivityStack({
+  buckets,
+  rate,
+}: {
+  buckets: TaskActivityBucket[]
+  rate: number
+}) {
+  const { t } = useTranslation()
+  const maxTotal = Math.max(
+    ...buckets.map(bucket => bucket.created + bucket.completed),
+    0
+  )
+  const hasActivity = maxTotal > 0
+
+  return (
+    <section>
+      <div className="flex flex-col gap-4 px-1 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">
+            {t('analytics.taskActivity.title')}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t('analytics.taskActivity.description')}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-5 rounded-[3px] border border-primary bg-primary shadow-neu-raised-sm" />
+            {t('analytics.taskActivity.completed')}
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-5 rounded-[3px] border border-border-strong bg-surface shadow-neu-raised-sm" />
+            {t('analytics.taskActivity.created')}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-5 overflow-hidden rounded-2xl border border-border bg-surface shadow-neu-raised">
+        <div className="px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
+          {hasActivity ? (
+            <div className="flex min-h-64 items-end gap-5 overflow-x-auto pb-1 sm:justify-around sm:gap-7">
+              {buckets.map(bucket => {
+                const pile = scaleTaskActivityPile({
+                  created: bucket.created,
+                  completed: bucket.completed,
+                  maxTotal,
+                })
+                const total = bucket.created + bucket.completed
+
+                return (
+                  <div
+                    key={bucket.day}
+                    role="img"
+                    tabIndex={0}
+                    aria-label={t('analytics.taskActivity.pileAria', {
+                      label: bucket.label,
+                      created: bucket.created,
+                      completed: bucket.completed,
+                    })}
+                    className="group flex min-w-16 flex-1 flex-col items-center rounded-lg px-2 py-2 outline-none transition-[background-color,box-shadow] hover:bg-surface-elevated focus-visible:bg-surface-elevated focus-visible:shadow-focus-ring"
+                  >
+                    <span className="mb-3 font-mono text-xs font-semibold tabular-nums text-muted-foreground">
+                      {total}
+                    </span>
+                    <span className="flex h-54 flex-col-reverse justify-start gap-1">
+                      {Array.from(
+                        { length: pile.completedBlocks },
+                        (_, index) => (
+                          <span
+                            key={`completed-${index}`}
+                            className="h-3 w-9 shrink-0 rounded-[3px] border border-primary bg-primary shadow-neu-raised-sm transition-transform group-hover:-translate-y-0.5 group-focus-visible:-translate-y-0.5 motion-reduce:transform-none"
+                          />
+                        )
+                      )}
+                      {Array.from(
+                        { length: pile.createdBlocks },
+                        (_, index) => (
+                          <span
+                            key={`created-${index}`}
+                            className="h-3 w-9 shrink-0 rounded-[3px] border border-border-strong bg-surface-elevated shadow-neu-raised-sm transition-transform group-hover:-translate-y-0.5 group-focus-visible:-translate-y-0.5 motion-reduce:transform-none"
+                          />
+                        )
+                      )}
+                    </span>
+                    <span className="mt-3 max-w-18 truncate text-xs font-medium text-muted-foreground">
+                      {bucket.label}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="grid min-h-64 place-items-center text-center text-sm text-muted-foreground">
+              {t('analytics.taskActivity.empty')}
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-4 border-t border-border bg-surface-elevated px-5 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+          <div>
+            <p className="font-mono text-3xl font-semibold tracking-tight tabular-nums text-primary">
+              {rate}%
+            </p>
+            <p className="mt-1 text-xs font-medium text-muted-foreground">
+              {t('analytics.taskActivity.completionRate')}
+            </p>
+          </div>
+          <p className="max-w-md text-xs leading-5 text-muted-foreground sm:text-end">
+            {t('analytics.taskActivity.rateExplanation')}
+          </p>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -430,45 +507,19 @@ export default function AnalyticsPage() {
     }))
   }, [periodRange.end, periodRange.start, taskCountData])
 
-  const focusSparkline = filledFocusData.map(item => item.total_seconds)
-  const taskSparkline = filledTaskData.map(item => item.completed)
-
-  const pomodoroSparkline = filledFocusData.map(item =>
-    Math.max(0, Math.round(item.total_seconds / (25 * 60)))
-  )
-
-  const dayTaskMap = new Map(filledTaskData.map(item => [item.day, item]))
-  const dayHabitMap = new Map<string, number>()
-  for (const log of habitLogs) {
-    dayHabitMap.set(
-      log.completed_date,
-      (dayHabitMap.get(log.completed_date) ?? 0) + 1
-    )
-  }
-  const activeDaysSparkline = filledFocusData.map(item => {
-    const task = dayTaskMap.get(item.day)
-    const habitCount = dayHabitMap.get(item.day) ?? 0
-    const isActive =
-      item.total_seconds > 0 ||
-      (task?.created ?? 0) > 0 ||
-      (task?.completed ?? 0) > 0 ||
-      habitCount > 0
-    return isActive ? 1 : 0
-  })
-
-  const focusDelta = percentDelta(
+  const focusComparison = compareAnalyticsPeriods(
     summary?.total_focus_seconds ?? 0,
     previousSummary?.total_focus_seconds ?? 0
   )
-  const taskDelta = percentDelta(
+  const taskComparison = compareAnalyticsPeriods(
     summary?.tasks_completed ?? 0,
     previousSummary?.tasks_completed ?? 0
   )
-  const pomodoroDelta = percentDelta(
+  const pomodoroComparison = compareAnalyticsPeriods(
     summary?.pomodoros_completed ?? 0,
     previousSummary?.pomodoros_completed ?? 0
   )
-  const activeDaysDelta = percentDelta(
+  const activeDaysComparison = compareAnalyticsPeriods(
     summary?.days_active ?? 0,
     previousSummary?.days_active ?? 0
   )
@@ -504,30 +555,47 @@ export default function AnalyticsPage() {
       activeCadenceRatio * 20 +
       habitStreakRatio * 15
   )
-  const focusGrade = gradeFromScore(focusScore)
+  const hasRecordedActivity =
+    (summary?.total_focus_seconds ?? 0) > 0 ||
+    (summary?.tasks_created ?? 0) > 0 ||
+    (summary?.tasks_completed ?? 0) > 0 ||
+    (summary?.pomodoros_completed ?? 0) > 0 ||
+    (summary?.days_active ?? 0) > 0 ||
+    habitLogs.length > 0
+
+  const analyticsSignals = [
+    { key: 'focusDepth', ratio: focusTargetRatio },
+    { key: 'taskFlow', ratio: taskFlowRatio },
+    { key: 'activeCadence', ratio: activeCadenceRatio },
+    { key: 'habitMomentum', ratio: habitStreakRatio },
+  ] satisfies AnalyticsSignal[]
+  const insight = buildAnalyticsInsight({
+    score: focusScore,
+    signals: analyticsSignals,
+    hasData: hasRecordedActivity,
+  })
+  const focusGrade = hasRecordedActivity ? gradeFromScore(focusScore) : '—'
 
   const compLabel = comparisonLabel(period, t)
-
-  const contribution = useMemo(
-    () => buildContributionWeeks(habitLogs.map(log => log.completed_date)),
-    [habitLogs]
+  const taskActivityBuckets = buildTaskActivityBuckets({
+    data: filledTaskData,
+    period,
+    locale: i18n.language,
+  })
+  const taskCompletionRate = Math.min(
+    100,
+    completionRate(summary?.tasks_created ?? 0, summary?.tasks_completed ?? 0)
   )
-  const [hoveredContribution, setHoveredContribution] = useState<{
-    dateISO: string
-    count: number
-    x: number
-    y: number
-  } | null>(null)
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-background p-8 lg:p-12">
-      <div className="mx-auto w-full max-w-350 space-y-12">
-        <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+    <div className="h-full overflow-y-auto bg-background">
+      <div className="mx-auto w-full max-w-(--axis-content-max)">
+        <header className="flex flex-col gap-5 px-5 pb-2 pt-7 md:flex-row md:items-end md:justify-between md:px-8 md:pt-9">
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-[2rem]">
               {t('analytics.pageTitle')}
             </h1>
-            <p className="text-sm text-muted-foreground/80">
+            <p className="text-sm text-muted-foreground">
               {t('analytics.description')}
             </p>
           </div>
@@ -536,303 +604,83 @@ export default function AnalyticsPage() {
 
         <div
           className={cn(
-            'flex flex-col gap-8 transition-opacity duration-500',
+            'flex flex-col gap-6 px-4 pb-10 pt-5 transition-opacity duration-300 md:px-8',
             isLoading ? 'pointer-events-none opacity-40' : 'opacity-100'
           )}
         >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-            <StatBox
-              title={t('analytics.stat.focusTime')}
-              value={formatDuration(summary?.total_focus_seconds ?? 0)}
-              subtitle={
-                summary?.top_productivity_day
-                  ? t('analytics.stat.peak', {
-                      day: new Date(
-                        summary.top_productivity_day
-                      ).toLocaleDateString(i18n.language, { weekday: 'long' }),
-                    })
-                  : undefined
-              }
-              delta={focusDelta}
-              deltaLabel={compLabel}
-              sparklineData={focusSparkline}
-            />
+          <AnalysisSummary
+            insight={insight}
+            score={focusScore}
+            grade={focusGrade}
+            signals={analyticsSignals}
+          />
 
-            <StatBox
-              title={t('analytics.stat.tasksCompleted')}
-              value={summary?.tasks_completed ?? 0}
-              subtitle={t('analytics.stat.itemsCreated', {
-                count: summary?.tasks_created ?? 0,
-              })}
-              delta={taskDelta}
-              deltaLabel={compLabel}
-              sparklineData={taskSparkline}
-            />
-
-            <StatBox
-              title={t('analytics.stat.pomodoros')}
-              value={summary?.pomodoros_completed ?? 0}
-              subtitle={
-                avgSessionMinutes > 0
-                  ? t('analytics.stat.avgSession', {
-                      minutes: avgSessionMinutes,
-                    })
-                  : undefined
-              }
-              delta={pomodoroDelta}
-              deltaLabel={compLabel}
-              sparklineData={pomodoroSparkline}
-            />
-
-            <StatBox
-              title={t('analytics.stat.daysActive')}
-              value={summary?.days_active ?? 0}
-              subtitle={t('analytics.stat.daysActiveSubtitle')}
-              delta={activeDaysDelta}
-              deltaLabel={compLabel}
-              sparklineData={activeDaysSparkline}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(320px,1fr)_minmax(0,1.35fr)]">
-            <div className="rounded-2xl border border-border/30 bg-card/5 p-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-medium text-foreground">
-                  {t('analytics.focusScore.title')}
-                </h2>
-                <span className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                  {t('analytics.focusScore.weightedIndex')}
-                </span>
-              </div>
-
-              <div className="mt-6 grid gap-6 xl:grid-cols-[auto_1fr] xl:items-center">
-                <ScoreRing score={focusScore} grade={focusGrade} />
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground">
-                    {t('analytics.focusScore.composition')}
-                  </p>
-                  <div className="space-y-2 text-sm text-foreground/90">
-                    <div className="flex items-center justify-between">
-                      <span>{t('analytics.focusScore.focusDepth')}</span>
-                      <span className="font-mono">
-                        {Math.round(focusTargetRatio * 100)}%
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>{t('analytics.focusScore.taskFlow')}</span>
-                      <span className="font-mono">
-                        {Math.round(taskFlowRatio * 100)}%
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>{t('analytics.focusScore.activeCadence')}</span>
-                      <span className="font-mono">
-                        {Math.round(activeCadenceRatio * 100)}%
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>{t('analytics.focusScore.habitMomentum')}</span>
-                      <span className="font-mono">
-                        {Math.round(habitStreakRatio * 100)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border/30 bg-card/5 p-6">
-              <h2 className="text-sm font-medium text-foreground">
-                {t('analytics.taskActivity.title')}
+          <section className="py-2">
+            <div className="px-1">
+              <h2 className="text-base font-semibold text-foreground">
+                {t('analytics.details.title')}
               </h2>
-              <div className="mt-4 h-75 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={filledTaskData}
-                    barCategoryGap="34%"
-                    barGap={4}
-                  >
-                    <CartesianGrid
-                      stroke="color-mix(in oklab, var(--border) 70%, transparent)"
-                      strokeDasharray="3 3"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="day"
-                      tickFormatter={val =>
-                        new Date(`${val}T12:00:00Z`).toLocaleDateString(
-                          undefined,
-                          {
-                            weekday: 'short',
-                          }
-                        )
-                      }
-                      stroke="var(--muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      dy={14}
-                    />
-                    <YAxis
-                      stroke="var(--muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      allowDecimals={false}
-                      dx={-8}
-                    />
-                    <Tooltip
-                      content={<CustomTooltip />}
-                      cursor={{ fill: 'var(--muted)', opacity: 0.16 }}
-                    />
-                    <Bar
-                      dataKey="created"
-                      name={t('analytics.taskActivity.created')}
-                      fill="color-mix(in oklab, var(--chart-4) 88%, transparent)"
-                      radius={[5, 5, 0, 0]}
-                      maxBarSize={22}
-                    />
-                    <Bar
-                      dataKey="completed"
-                      name={t('analytics.taskActivity.completed')}
-                      fill="color-mix(in oklab, var(--chart-2) 92%, transparent)"
-                      radius={[5, 5, 0, 0]}
-                      maxBarSize={22}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t('analytics.details.description')}
+              </p>
             </div>
-          </div>
+            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <StatBox
+                title={t('analytics.stat.focusTime')}
+                value={formatDuration(summary?.total_focus_seconds ?? 0)}
+                subtitle={
+                  summary?.top_productivity_day
+                    ? t('analytics.stat.peak', {
+                        day: new Date(
+                          summary.top_productivity_day
+                        ).toLocaleDateString(i18n.language, {
+                          weekday: 'long',
+                        }),
+                      })
+                    : undefined
+                }
+                comparison={focusComparison}
+                deltaLabel={compLabel}
+              />
 
-          <div className="rounded-2xl border border-border/30 bg-card/5 p-6">
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-              <h2 className="text-sm font-medium text-foreground">
-                {t('analytics.consistency.title')}
-              </h2>
-              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                <span>
-                  {t('analytics.consistency.contributions', {
-                    count: contribution.totalContributions,
-                  })}
-                </span>
-                <div className="flex items-center gap-1">
-                  <span>{t('analytics.consistency.less')}</span>
-                  {[0, 1, 2, 3, 4].map(level => (
-                    <span
-                      key={level}
-                      className="size-2.5 rounded-[3px] border border-border/50"
-                      style={{
-                        backgroundColor: contributionColor(
-                          level as 0 | 1 | 2 | 3 | 4
-                        ),
-                      }}
-                    />
-                  ))}
-                  <span>{t('analytics.consistency.more')}</span>
-                </div>
-              </div>
+              <StatBox
+                title={t('analytics.stat.tasksCompleted')}
+                value={summary?.tasks_completed ?? 0}
+                subtitle={t('analytics.stat.itemsCreated', {
+                  count: summary?.tasks_created ?? 0,
+                })}
+                comparison={taskComparison}
+                deltaLabel={compLabel}
+              />
+
+              <StatBox
+                title={t('analytics.stat.pomodoros')}
+                value={summary?.pomodoros_completed ?? 0}
+                subtitle={
+                  avgSessionMinutes > 0
+                    ? t('analytics.stat.avgSession', {
+                        minutes: avgSessionMinutes,
+                      })
+                    : undefined
+                }
+                comparison={pomodoroComparison}
+                deltaLabel={compLabel}
+              />
+
+              <StatBox
+                title={t('analytics.stat.daysActive')}
+                value={summary?.days_active ?? 0}
+                subtitle={t('analytics.stat.daysActiveSubtitle')}
+                comparison={activeDaysComparison}
+                deltaLabel={compLabel}
+              />
             </div>
+          </section>
 
-            <div className="overflow-x-auto pb-1">
-              <div className="relative inline-flex min-w-max gap-2">
-                <div className="mt-6 grid grid-rows-7 gap-1 text-[10px] text-muted-foreground/80">
-                  <span />
-                  <span>{t('analytics.consistency.dayLabels.mon')}</span>
-                  <span />
-                  <span>{t('analytics.consistency.dayLabels.wed')}</span>
-                  <span />
-                  <span>{t('analytics.consistency.dayLabels.fri')}</span>
-                  <span />
-                </div>
-
-                <div>
-                  <div
-                    className="mb-2 grid gap-1"
-                    style={{
-                      gridTemplateColumns: `repeat(${contribution.weeks.length}, 12px)`,
-                    }}
-                  >
-                    {contribution.weeks.map((week, index) => (
-                      <span
-                        key={`month-${index}`}
-                        className="text-[10px] text-muted-foreground/80"
-                      >
-                        {week.monthLabel}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div
-                    className="grid gap-1"
-                    style={{
-                      gridTemplateColumns: `repeat(${contribution.weeks.length}, 12px)`,
-                    }}
-                  >
-                    {contribution.weeks.map((week, weekIndex) => (
-                      <div
-                        key={`week-${weekIndex}`}
-                        className="grid grid-rows-7 gap-1"
-                      >
-                        {week.days.map(day => {
-                          const level = contributionLevel(
-                            day.count,
-                            contribution.maxCount
-                          )
-                          return (
-                            <div
-                              key={day.dateISO}
-                              className={cn(
-                                'size-3 rounded-[3px] border border-border/55 transition-[transform,filter,background-color,border-color] duration-100 ease-out hover:scale-110 hover:brightness-110',
-                                day.outside && 'opacity-20'
-                              )}
-                              style={{
-                                backgroundColor: contributionColor(level),
-                              }}
-                              onMouseEnter={event => {
-                                const rect =
-                                  event.currentTarget.getBoundingClientRect()
-                                setHoveredContribution({
-                                  dateISO: day.dateISO,
-                                  count: day.count,
-                                  x: rect.left + rect.width / 2,
-                                  y: rect.top,
-                                })
-                              }}
-                              onMouseLeave={() => setHoveredContribution(null)}
-                            />
-                          )
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {hoveredContribution && (
-                <div
-                  className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-2 rounded-md border border-border/70 bg-popover/95 px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-lg backdrop-blur-sm"
-                  style={{
-                    left: hoveredContribution.x,
-                    top: hoveredContribution.y,
-                  }}
-                >
-                  {t('analytics.consistency.tooltip', {
-                    count: hoveredContribution.count,
-                    date: new Date(
-                      `${hoveredContribution.dateISO}T12:00:00Z`
-                    ).toLocaleDateString(i18n.language, {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    }),
-                    defaultValue_one: '{{count}} completion on {{date}}',
-                    defaultValue_other: '{{count}} completions on {{date}}',
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
+          <TaskActivityStack
+            buckets={taskActivityBuckets}
+            rate={taskCompletionRate}
+          />
         </div>
       </div>
     </div>
