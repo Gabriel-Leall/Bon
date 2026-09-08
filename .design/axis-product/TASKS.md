@@ -407,7 +407,7 @@ recuperação passou a usar controles compactos, enquanto a legenda e as
 explicações dos estados foram movidas para uma ajuda sob demanda ao lado de
 "Novo Hábito". O resumo redundante foi removido deste contexto.
 
-### [ ] P6. Reestruturar Foco
+### [~] P6. Reestruturar Foco
 
 **Objetivo:** manter Foco como destino próprio e Pomodoro como técnica interna.
 
@@ -419,6 +419,22 @@ explicações dos estados foram movidas para uma ajuda sob demanda ao lado de
 - Contexto pode ser alterado sem reiniciar a sessão.
 - Controle compacto permanece disponível em todas as páginas.
 - Histórico detalhado fica em Análise.
+
+**Rodada 1 em 2026-09-07:** a página deixou de se apresentar como um timer
+isolado e passou a organizar a sessão de Foco em três níveis: relógio e
+controles como núcleo, contexto e configuração como suporte, e sessões de hoje
+como informação terciária. Pomodoro agora é identificado como técnica dentro
+de Foco. Gradientes, vidro, azul fixo e sombras fora da fundação foram removidos
+em favor de superfícies semânticas e profundidade neumórfica. Cronômetro livre,
+duração definida e a troca de contexto entre tarefa, evento e hábito permanecem
+para as próximas rodadas funcionais.
+
+**Ajuste da Rodada 1 em 2026-09-07:** o visor retangular e a barra linear foram
+substituídos por um relógio circular rebaixado. O progresso agora percorre o
+perímetro do mostrador, enquanto tempo e ciclos permanecem no centro; contexto,
+configurações e histórico não mudaram. Segmentos internos orbitam lentamente
+conforme o próprio relógio avança, pausam com o timer e permanecem estáticos sob
+redução de movimento.
 
 ### [ ] P7. Reestruturar Análise
 

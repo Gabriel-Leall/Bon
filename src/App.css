@@ -446,9 +446,28 @@
   }
 }
 
+.timer-progress-orbit {
+  transform-origin: center;
+  transform: rotate(var(--timer-orbit-angle, 0deg));
+  transition: transform 1s linear;
+}
+
+.timer-progress-orbit[data-running='true'] {
+  will-change: transform;
+}
+
+.timer-progress-orbit[data-running='false'] {
+  transition-duration: 0ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   [class*='onboarding-'] {
     animation: none !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .timer-progress-orbit {
+    transform: none;
+    transition: none;
   }
 }
