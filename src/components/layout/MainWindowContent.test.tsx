@@ -14,13 +14,8 @@ vi.mock('@/components/layout/PageWrapper', () => ({
   ),
 }))
 
-vi.mock('@/components/grid', () => ({
-  BentoGrid: () => <div data-testid="today-page" />,
-  WidgetToggleMenu: () => <button type="button">Widgets</button>,
-}))
-
-vi.mock('@/components/daily-axis/DailyAxisBanner', () => ({
-  DailyAxisBanner: () => <div data-testid="daily-axis-banner" />,
+vi.mock('@/pages/TodayPage', () => ({
+  TodayPage: () => <div data-testid="today-page" />,
 }))
 
 vi.mock('@/pages/TasksPage', () => ({

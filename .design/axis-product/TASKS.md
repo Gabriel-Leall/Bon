@@ -335,7 +335,7 @@ capturas previstas acima.
 
 Só iniciar após S8. Cada página deve reutilizar shell, controles, painel e tokens; nenhuma cria um design system próprio.
 
-### [ ] P1. Construir Hoje como superfície principal
+### [~] P1. Construir Hoje como superfície principal
 
 **Objetivo:** substituir a grade livre por uma página contínua e priorizada.
 
@@ -347,6 +347,15 @@ Só iniciar após S8. Cada página deve reutilizar shell, controles, painel e to
 - Eventos, tarefas e lembretes mantêm identidade própria na linha temporal.
 - Áreas secundárias podem recolher sem alterar a hierarquia essencial.
 - Nenhum widget usa gradiente ou dimensão aleatória.
+
+**Rodada 1:** grade livre e seletor de widgets substituídos pela hierarquia fixa
+`Agora → Seu dia → Hábitos de hoje → Captura rápida → Encerrar o dia`. Ações
+existentes de foco, tarefas, eventos, hábitos, captura global e encerramento foram
+reaproveitadas; refinamento visual e validação pelo usuário permanecem abertos.
+
+**Rodada 1.1:** cabeçalho diário estabilizado no topo, estados vazios de agenda e
+compromisso compactados e captura rápida passou a comunicar explicitamente a
+abertura do compositor.
 
 ### [ ] P2. Simplificar Tarefas
 
