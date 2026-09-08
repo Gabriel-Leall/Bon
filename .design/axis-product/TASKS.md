@@ -357,7 +357,7 @@ reaproveitadas; refinamento visual e validação pelo usuário permanecem aberto
 compromisso compactados e captura rápida passou a comunicar explicitamente a
 abertura do compositor.
 
-### [ ] P2. Simplificar Tarefas
+### [~] P2. Simplificar Tarefas
 
 **Objetivo:** entregar execução simples com filtros Hoje, Próximas, Sem data e Concluídas.
 
@@ -368,6 +368,19 @@ abertura do compositor.
 - Data, horário, lembrete e nota são opcionais.
 - Iniciar foco herda a tarefa sem nova digitação.
 - Kanban, projetos complexos e múltiplos status não aparecem.
+
+**Rodada 1 em 2026-09-08:** criação reduzida a um título na própria página,
+busca mantida visível e navegação local consolidada nos quatro filtros canônicos:
+Hoje, Próximas, Sem data e Concluídas. O Kanban e o modal de criação detalhada
+saíram da experiência principal; título, nota, prioridade, data, etapas e ação
+Iniciar foco ficam no painel contextual. Horário, lembrete, origem GitHub e
+vínculo persistente entram nas rodadas funcionais seguintes.
+
+**Ajuste da Rodada 1 em 2026-09-08:** a captura rápida passou a exibir e
+permitir escolher o destino temporal antes da criação: Hoje, Amanhã, Sem data
+ou uma data específica. O padrão acompanha o filtro ativo e a tarefa recém-criada
+abre na lista correspondente; o conjunto de captura foi compactado para manter
+data e ação próximas ao título.
 
 ### [ ] P3. Transformar Notas em post-its rápidos
 

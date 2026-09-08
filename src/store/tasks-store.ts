@@ -38,6 +38,12 @@ export interface TaskFilters {
   search: string
 }
 
+export interface AddTaskOptions {
+  priority?: Priority
+  due_date?: string | null
+  description?: string
+}
+
 // ─── Store Shape ───────────────────────────────────────────────────────────────
 
 interface TasksState {
@@ -49,10 +55,7 @@ interface TasksState {
 
   // Actions
   loadTasks: () => Promise<void>
-  addTask: (
-    title: string,
-    options?: Partial<Pick<Task, 'priority' | 'due_date' | 'description'>>
-  ) => Promise<Task>
+  addTask: (title: string, options?: AddTaskOptions) => Promise<Task>
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
   toggleComplete: (id: string) => Promise<void>
@@ -163,7 +166,10 @@ export const useTasksStore = create<TasksState>()(
           description: options.description,
           priority: options.priority ?? 'medium',
           status: 'todo',
-          due_date: options.due_date ?? todayISO(),
+          due_date:
+            options.due_date === null
+              ? undefined
+              : (options.due_date ?? todayISO()),
           created_at: now,
           updated_at: now,
           sort_order: sortOrder,
