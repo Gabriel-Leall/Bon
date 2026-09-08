@@ -80,6 +80,23 @@ describe('CalendarStore', () => {
     )
   })
 
+  it('loads an explicit visible range for week and month views', async () => {
+    vi.mocked(commands.getEventsRange).mockResolvedValue({
+      status: 'ok',
+      data: [],
+    })
+
+    await useCalendarStore
+      .getState()
+      .loadEventsRange('2026-08-31', '2026-10-11')
+
+    expect(commands.getEventsRange).toHaveBeenCalledWith(
+      '2026-08-31',
+      '2026-10-11'
+    )
+    expect(useCalendarStore.getState().isLoading).toBe(false)
+  })
+
   it('creates an event', async () => {
     const mockEvent: CalendarEvent = {
       id: '2',

@@ -21,6 +21,7 @@ interface CalendarState {
   isLoading: boolean
 
   loadEvents: (date: Date) => Promise<void>
+  loadEventsRange: (start: string, end: string) => Promise<void>
   createEvent: (
     input: Omit<CreateEventInput, 'id' | 'created_at' | 'updated_at'>
   ) => Promise<CalendarEvent>
@@ -64,9 +65,13 @@ export const useCalendarStore = create<CalendarState>()(
       isLoading: false,
 
       loadEvents: async (date: Date) => {
+        const { start, end } = getMonthRange(date)
+        await useCalendarStore.getState().loadEventsRange(start, end)
+      },
+
+      loadEventsRange: async (start, end) => {
         set({ isLoading: true }, undefined, 'loadEvents/start')
         try {
-          const { start, end } = getMonthRange(date)
           const events = unwrapResult(await commands.getEventsRange(start, end))
           set({ events, isLoading: false }, undefined, 'loadEvents/done')
           logger.debug(`Loaded ${events.length} calendar events`)

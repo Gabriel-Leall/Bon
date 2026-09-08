@@ -403,7 +403,7 @@ tema. Fixação é persistida localmente no dispositivo nesta rodada; lembrete,
 edição do marcador e vínculo temporal com Calendário seguem para a próxima
 rodada funcional.
 
-### [ ] P4. Construir Calendário unificado
+### [~] P4. Construir Calendário unificado
 
 **Objetivo:** oferecer Semana como padrão e Mês como visão geral.
 
@@ -414,6 +414,11 @@ rodada funcional.
 - Eventos Google, eventos locais, tarefas datadas e notas com lembrete mantêm distinção.
 - Agenda não vira uma terceira visualização inicial.
 - Falha externa não bloqueia leitura ou criação local.
+
+**Rodada visual concluída em 2026-09-08:** Semana virou a visão padrão,
+Mês permanece como visão geral, tarefas datadas foram integradas à grade e a
+criação temporal abre preenchida em painel lateral. Permanecem pendentes a
+sobreposição de notas com lembrete e a sincronização Google da I1.
 
 ### [~] P5. Reestruturar Hábitos
 
