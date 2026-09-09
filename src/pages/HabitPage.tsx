@@ -1266,7 +1266,7 @@ function HabitStatsPanel({ context }: { context: HabitPanelContext }) {
                 <span className="text-muted-foreground">{label}</span>
                 <div className="h-2 overflow-hidden rounded-full bg-surface-sunken shadow-neu-pressed">
                   <div
-                    className="h-full rounded-full bg-primary transition-all duration-300"
+                    className="h-full rounded-full bg-primary transition-[width] duration-300"
                     style={{ width }}
                   />
                 </div>
@@ -1453,9 +1453,9 @@ function HabitPageHeader({
               className="mt-3 h-3 overflow-hidden rounded-full bg-surface-sunken shadow-neu-pressed"
             >
               <m.div
-                className="h-full rounded-full bg-primary"
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPercent}%` }}
+                className="h-full w-full origin-left rounded-full bg-primary"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: progressPercent / 100 }}
                 transition={transition}
               />
             </div>
@@ -1489,9 +1489,9 @@ function HabitPageHeader({
               className="mt-3 h-3 overflow-hidden rounded-full bg-surface-sunken shadow-neu-pressed"
             >
               <m.div
-                className="h-full rounded-full bg-primary/80"
-                initial={{ width: 0 }}
-                animate={{ width: `${stats.monthRate.percentage}%` }}
+                className="h-full w-full origin-left rounded-full bg-primary/80"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: stats.monthRate.percentage / 100 }}
                 transition={transition}
               />
             </div>
@@ -1544,6 +1544,149 @@ function HabitTabList({ activeTab, t, onChange }: HabitTabListProps) {
   )
 }
 
+function HabitActivePanel({
+  activeTab,
+  context,
+}: {
+  activeTab: 'today' | 'overview' | 'stats'
+  context: HabitPanelContext
+}) {
+  switch (activeTab) {
+    case 'today':
+      return <HabitTodayPanel context={context} />
+    case 'overview':
+      return <HabitOverviewPanel context={context} />
+    case 'stats':
+      return <HabitStatsPanel context={context} />
+  }
+}
+
+async function saveHabitForm({
+  canSubmit,
+  form,
+  editingHabitId,
+  updateHabit,
+  addHabit,
+  dispatch,
+  t,
+}: {
+  canSubmit: boolean
+  form: HabitFormState
+  editingHabitId: string | null
+  updateHabit: ReturnType<typeof useHabitsStore.getState>['updateHabit']
+  addHabit: ReturnType<typeof useHabitsStore.getState>['addHabit']
+  dispatch: (action: HabitModalAction) => void
+  t: TFunction
+}) {
+  if (!canSubmit) return
+  const payload = toHabitInput(form)
+  dispatch({ type: 'set-error', error: null })
+
+  try {
+    if (editingHabitId) await updateHabit(editingHabitId, payload)
+    else await addHabit(payload)
+    dispatch({ type: 'saved' })
+  } catch {
+    dispatch({
+      type: 'set-error',
+      error: editingHabitId
+        ? t('habits.modal.updateFailed')
+        : t('habits.modal.createFailed'),
+    })
+  }
+}
+
+function buildHabitPageViewModel({
+  habits,
+  todayLogs,
+  monthLogs,
+  selectedHabitId,
+  isLoading,
+  locale,
+  reduceMotion,
+  t,
+  onCreateHabit,
+  onEditHabit,
+  onSelectHabit,
+  onSetHabitLogState,
+}: {
+  habits: Habit[]
+  todayLogs: HabitLog[]
+  monthLogs: HabitLog[]
+  selectedHabitId: string | null
+  isLoading: boolean
+  locale: string
+  reduceMotion: boolean
+  t: TFunction
+  onCreateHabit: () => void
+  onEditHabit: (habit: Habit) => void
+  onSelectHabit: (habitId: string) => void
+  onSetHabitLogState: SetHabitLogState
+}) {
+  const todayHabits = selectSortedTodayHabits(habits, todayLogs)
+  const todayLogMap = selectTodayLogMap(todayLogs)
+  const progress = selectTodayProgress(habits, todayLogs)
+  const stats = selectHabitStats(habits, monthLogs)
+  const focusedHabit =
+    habits.find(habit => habit.id === selectedHabitId) ??
+    todayHabits[0] ??
+    habits[0] ??
+    null
+  const weekdayCounts = weekdayDistribution(monthLogs)
+  const transition = {
+    duration: reduceMotion ? 0 : 0.32,
+    ease: [0.22, 1, 0.36, 1],
+  } as const
+
+  const panelContext: HabitPanelContext = {
+    focusedHabit,
+    focusCompletionDates: focusedHabit
+      ? selectHabitCompletionDates(monthLogs, focusedHabit.id)
+      : [],
+    focusRecoverableDates: focusedHabit
+      ? selectRecoverableDatesForHabit(focusedHabit, monthLogs)
+      : [],
+    focusStateMap: focusedHabit
+      ? selectHabitLogStateMap(monthLogs, focusedHabit.id)
+      : {},
+    focusStreak: focusedHabit
+      ? selectStreakByHabit(monthLogs, focusedHabit.id)
+      : 0,
+    habits,
+    heatMapStateLabels: {
+      done: t('habits.logState.done'),
+      minimal: t('habits.logState.minimal'),
+      paused: t('habits.logState.paused'),
+      recovered: t('habits.logState.recovered'),
+      missed: t('habits.logState.missed'),
+    },
+    isLoading,
+    locale,
+    monthLogs,
+    reduceMotion,
+    stats,
+    t,
+    todayHabits,
+    todayLogMap,
+    transition,
+    weekdayCounts,
+    weekdayPeak: Math.max(1, ...weekdayCounts),
+    onCreateHabit,
+    onEditHabit,
+    onSelectHabit,
+    onSetHabitLogState,
+  }
+
+  return {
+    focusedHabit,
+    panelContext,
+    progress,
+    progressPercent: Math.round(progress.ratio * 100),
+    stats,
+    transition,
+  }
+}
+
 export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
   const { t, i18n } = useTranslation()
   const [modalState, dispatchModal] = useReducer(
@@ -1585,50 +1728,9 @@ export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
     void Promise.all([loadHabits(), loadTodayLogs(), loadMonthLogs()])
   }, [loadHabits, loadMonthLogs, loadTodayLogs])
 
-  const todayHabits = selectSortedTodayHabits(habits, todayLogs)
-  const todayLogMap = selectTodayLogMap(todayLogs)
-  const progress = selectTodayProgress(habits, todayLogs)
-  const stats = selectHabitStats(habits, monthLogs)
-
-  const progressPercent = Math.round(progress.ratio * 100)
-  const heatMapStateLabels = {
-    done: t('habits.logState.done'),
-    minimal: t('habits.logState.minimal'),
-    paused: t('habits.logState.paused'),
-    recovered: t('habits.logState.recovered'),
-    missed: t('habits.logState.missed'),
-  }
-
-  const focusedHabit =
-    habits.find(habit => habit.id === selectedHabitId) ??
-    todayHabits[0] ??
-    habits[0] ??
-    null
-
-  const focusCompletionDates = focusedHabit
-    ? selectHabitCompletionDates(monthLogs, focusedHabit.id)
-    : []
-  const focusStateMap = focusedHabit
-    ? selectHabitLogStateMap(monthLogs, focusedHabit.id)
-    : {}
-  const focusStreak = focusedHabit
-    ? selectStreakByHabit(monthLogs, focusedHabit.id)
-    : 0
-  const focusRecoverableDates = focusedHabit
-    ? selectRecoverableDatesForHabit(focusedHabit, monthLogs)
-    : []
-
-  const weekdayCounts = weekdayDistribution(monthLogs)
-  const weekdayPeak = Math.max(1, ...weekdayCounts)
-
   const canSubmit =
     form.name.trim().length > 0 &&
     (form.frequency !== 'custom' || form.frequencyDays.length > 0)
-
-  const transition = {
-    duration: reduceMotion ? 0 : 0.32,
-    ease: [0.22, 1, 0.36, 1],
-  } as const
 
   const openCreate = () => {
     dispatchModal({ type: 'open-create' })
@@ -1639,53 +1741,27 @@ export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
     dispatchModal({ type: 'open-edit', habit })
   }
 
-  const submitForm = async () => {
-    if (!canSubmit) return
-
-    const payload = toHabitInput(form)
-    dispatchModal({ type: 'set-error', error: null })
-    try {
-      if (editingHabitId) {
-        await updateHabit(editingHabitId, payload)
-      } else {
-        await addHabit(payload)
-      }
-
-      dispatchModal({ type: 'saved' })
-    } catch {
-      dispatchModal({
-        type: 'set-error',
-        error: editingHabitId
-          ? t('habits.modal.updateFailed')
-          : t('habits.modal.createFailed'),
-      })
-    }
-  }
-
-  const panelContext: HabitPanelContext = {
+  const {
     focusedHabit,
-    focusCompletionDates,
-    focusRecoverableDates,
-    focusStateMap,
-    focusStreak,
+    panelContext,
+    progress,
+    progressPercent,
+    stats,
+    transition,
+  } = buildHabitPageViewModel({
     habits,
-    heatMapStateLabels,
+    todayLogs,
+    monthLogs,
+    selectedHabitId,
     isLoading,
     locale,
-    monthLogs,
     reduceMotion,
-    stats,
     t,
-    todayHabits,
-    todayLogMap,
-    transition,
-    weekdayCounts,
-    weekdayPeak,
     onCreateHabit: openCreate,
     onEditHabit: openEdit,
     onSelectHabit: setSelectedHabit,
     onSetHabitLogState: setHabitLogState,
-  }
+  })
 
   return (
     <LazyMotion features={domAnimation}>
@@ -1714,13 +1790,7 @@ export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
               </Alert>
             ) : null}
             <AnimatePresence mode="wait">
-              {activeTab === 'today' ? (
-                <HabitTodayPanel context={panelContext} />
-              ) : activeTab === 'overview' ? (
-                <HabitOverviewPanel context={panelContext} />
-              ) : (
-                <HabitStatsPanel context={panelContext} />
-              )}
+              <HabitActivePanel activeTab={activeTab} context={panelContext} />
             </AnimatePresence>
           </div>
         </div>
@@ -1733,7 +1803,15 @@ export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
           t={t}
           onDispatch={dispatchModal}
           onSubmit={() => {
-            void submitForm()
+            void saveHabitForm({
+              canSubmit,
+              form,
+              editingHabitId,
+              updateHabit,
+              addHabit,
+              dispatch: dispatchModal,
+              t,
+            })
           }}
         />
 

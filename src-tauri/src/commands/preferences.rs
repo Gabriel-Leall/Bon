@@ -7,7 +7,7 @@ use tauri::{AppHandle, Manager};
 
 use crate::types::{
     validate_accent, validate_dashboard_adaptation_mode, validate_string_input, validate_theme,
-    AppPreferences,
+    validate_time_of_day, AppPreferences,
 };
 
 /// Gets the path to the preferences file.
@@ -40,6 +40,9 @@ pub fn load_preferences_from_disk(app: &AppHandle) -> Result<AppPreferences, Str
     if preferences.normalize_appearance() {
         log::info!("Migrated appearance preferences in memory");
     }
+    if preferences.normalize_reminders() {
+        log::info!("Migrated reminder preferences in memory");
+    }
 
     Ok(preferences)
 }
@@ -50,9 +53,11 @@ pub fn save_preferences_to_disk(
 ) -> Result<(), String> {
     let mut normalized_preferences = preferences.clone();
     normalized_preferences.normalize_appearance();
+    normalized_preferences.normalize_reminders();
 
     validate_theme(&normalized_preferences.theme)?;
     validate_accent(&normalized_preferences.accent)?;
+    validate_time_of_day(&normalized_preferences.daily_wrap_up_reminder_time)?;
     if let Some(mode) = &normalized_preferences.adaptive_dashboard_mode {
         validate_dashboard_adaptation_mode(mode)?;
     }

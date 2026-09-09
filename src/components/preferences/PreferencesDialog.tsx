@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import {
+  BellRing,
   CalendarCheck2,
   Download,
   NotebookPen,
@@ -38,12 +39,14 @@ import { HabitsPane } from './panes/HabitsPane'
 import { NotesPane } from './panes/NotesPane'
 import { UserPane } from './panes/UserPane'
 import { UpdatesPane } from './panes/UpdatesPane'
+import { NotificationsPane } from './panes/NotificationsPane'
 
 type PreferencePane =
   | 'general'
   | 'focusTimer'
   | 'habits'
   | 'notes'
+  | 'notifications'
   | 'user'
   | 'updates'
 
@@ -67,6 +70,11 @@ const navigationItems = [
     id: 'notes' as const,
     labelKey: 'preferences.notes',
     icon: NotebookPen,
+  },
+  {
+    id: 'notifications' as const,
+    labelKey: 'preferences.notifications',
+    icon: BellRing,
   },
   {
     id: 'user' as const,
@@ -157,6 +165,7 @@ export function PreferencesDialog() {
               {activePane === 'focusTimer' && <FocusTimerPane />}
               {activePane === 'habits' && <HabitsPane />}
               {activePane === 'notes' && <NotesPane />}
+              {activePane === 'notifications' && <NotificationsPane />}
               {activePane === 'user' && <UserPane />}
               {activePane === 'updates' && <UpdatesPane />}
             </div>

@@ -6,10 +6,7 @@ import { initializeLanguage } from './i18n/language-init'
 import { logger } from './lib/logger'
 import { cleanupOldFiles } from './lib/recovery'
 import { commands } from './lib/tauri-bindings'
-import { registerDeepLinkHandler } from './lib/oauth-handler'
-import { useGitHubStore } from './store/github-store'
 import { useGoogleStore } from './store/google-store'
-import { useSlackStore } from './store/slack-store'
 import { useOnboardingStore } from './store/onboarding-store'
 import { useUIStore } from './store/ui-store'
 import { useDailyPlanStore } from './store/daily-plan-store'
@@ -109,13 +106,8 @@ function App() {
     initLanguageAndMenu()
 
     const backgroundStartupTimer = window.setTimeout(() => {
-      // Register deep link handler for OAuth callbacks (axis:// scheme)
-      void registerDeepLinkHandler()
-
       // Initialize integration stores after the first render path is interactive.
-      void useGitHubStore.getState().initialize()
       void useGoogleStore.getState().initialize()
-      void useSlackStore.getState().initialize()
 
       cleanupOldFiles().catch(error => {
         logger.warn('Failed to cleanup old recovery files', { error })

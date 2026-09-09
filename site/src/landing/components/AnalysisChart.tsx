@@ -1,5 +1,7 @@
-import { EvilLineChart } from '@/components/evilcharts/charts/line-chart'
-import type { ChartConfig } from '@/components/evilcharts/ui/chart'
+import {
+  EvilLineChart,
+  type ChartConfig,
+} from '@/components/evilcharts/charts/line-chart'
 import { useTranslation } from 'react-i18next'
 import type { MomentumComparisonPoint } from '../types'
 
@@ -46,10 +48,9 @@ export function AnalysisChart({
           className="h-full w-full aspect-auto"
           data={data}
           chartConfig={analysisChartConfig}
-          isAnimationActive={shouldAnimate}
+          animationMode={shouldAnimate ? 'enabled' : 'disabled'}
           xDataKey="point"
           curveType="natural"
-          strokeVariant="solid"
           strokeWidthByDataKey={{
             pastMonth: 2.4,
             currentMonth: 9,
@@ -89,9 +90,6 @@ export function AnalysisChart({
               formatter: value => `${Math.round(Number(value ?? 0))}`,
             },
           }}
-          hideLegend={true}
-          hideTooltip={true}
-          hideCursorLine={true}
           tickGap={20}
           chartProps={{
             margin: { top: 20, right: 90, left: 10, bottom: 6 },

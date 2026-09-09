@@ -4,17 +4,49 @@
 
 import { toast } from 'sonner'
 import { logger } from './logger'
+import { sendTargetedNativeNotification } from './native-notification'
+import type { AxisNotificationTarget } from './notification-target'
+import { shouldAxisNotifyForCalendarEvent } from './calendar-notification-policy'
 import { commands } from './tauri-bindings'
 
 type NotificationType = 'success' | 'error' | 'info' | 'warning'
 
-interface NotificationOptions {
+export interface NotificationOptions {
   /** Type of notification (affects styling) */
   type?: NotificationType
   /** Send as native system notification instead of toast */
   native?: boolean
   /** Duration in milliseconds for toasts (0 = no auto-dismiss) */
   duration?: number
+  /** Context opened when the user activates a native notification. */
+  target?: AxisNotificationTarget
+  /** Explicit opt-in for alerts owned by a connected calendar provider. */
+  allowExternalCalendarNotification?: boolean
+}
+
+function showToast(
+  title: string,
+  message: string | undefined,
+  type: NotificationType,
+  duration: number | undefined
+) {
+  const toastContent = message ? `${title}: ${message}` : title
+  const toastOptions = duration !== undefined ? { duration } : {}
+
+  switch (type) {
+    case 'success':
+      toast.success(toastContent, toastOptions)
+      break
+    case 'error':
+      toast.error(toastContent, toastOptions)
+      break
+    case 'warning':
+      toast.warning(toastContent, toastOptions)
+      break
+    case 'info':
+      toast.info(toastContent, toastOptions)
+      break
+  }
 }
 
 /**
@@ -41,47 +73,62 @@ export async function notify(
   message?: string,
   options: NotificationOptions = {}
 ): Promise<void> {
-  const { type = 'info', native = false, duration } = options
+  const {
+    type = 'info',
+    native = false,
+    duration,
+    target,
+    allowExternalCalendarNotification = false,
+  } = options
+
+  if (
+    native &&
+    target?.kind === 'calendar-event' &&
+    !shouldAxisNotifyForCalendarEvent(
+      target.owner,
+      allowExternalCalendarNotification
+    )
+  ) {
+    logger.debug('Skipped notification owned by an external calendar', {
+      target,
+    })
+    return
+  }
 
   try {
     if (native) {
       // Send native system notification via Tauri
-      logger.debug('Sending native notification', { title, message, type })
-      const result = await commands.sendNativeNotification(
+      logger.debug('Sending native notification', {
         title,
-        message ?? null
-      )
-      if (result.status === 'error') {
-        throw new Error(result.error)
+        message,
+        type,
+        target,
+      })
+      if (target) {
+        await sendTargetedNativeNotification({
+          title,
+          body: message,
+          target,
+        })
+      } else {
+        const result = await commands.sendNativeNotification(
+          title,
+          message ?? null
+        )
+        if (result.status === 'error') {
+          throw new Error(result.error)
+        }
       }
     } else {
       // Send in-app toast notification
       logger.debug('Sending toast notification', { title, message, type })
-
-      const toastContent = message ? `${title}: ${message}` : title
-      const toastOptions = duration !== undefined ? { duration } : {}
-
-      switch (type) {
-        case 'success':
-          toast.success(toastContent, toastOptions)
-          break
-        case 'error':
-          toast.error(toastContent, toastOptions)
-          break
-        case 'warning':
-          toast.warning(toastContent, toastOptions)
-          break
-        case 'info':
-        default:
-          toast.info(toastContent, toastOptions)
-          break
-      }
+      showToast(title, message, type, duration)
     }
   } catch (error) {
     logger.error('Failed to send notification', { title, message, error })
     // Fallback to toast if native notification fails
     if (native) {
-      toast.error(`${title}${message ? `: ${message}` : ''}`)
+      showToast(title, message, type, duration)
     }
   }
 }

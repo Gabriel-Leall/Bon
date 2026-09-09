@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 import {
   CalendarDays,
   CheckSquare2,
@@ -9,6 +9,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -53,6 +54,44 @@ import { useUIStore } from '@/store/ui-store'
 
 type ComposerKind = 'event' | 'task'
 
+interface ComposerState {
+  open: boolean
+  kind: ComposerKind
+  editingEvent: CalendarEvent | null
+  title: string
+  description: string
+  startValue: string
+  endValue: string
+  allDay: boolean
+  isSaving: boolean
+}
+
+type ComposerAction =
+  | { type: 'patch'; patch: Partial<ComposerState> }
+  | { type: 'reset'; dateISO: string }
+
+function createComposerState(dateISO: string): ComposerState {
+  return {
+    open: false,
+    kind: 'event',
+    editingEvent: null,
+    title: '',
+    description: '',
+    startValue: dateISO,
+    endValue: dateISO,
+    allDay: true,
+    isSaving: false,
+  }
+}
+
+function composerReducer(
+  state: ComposerState,
+  action: ComposerAction
+): ComposerState {
+  if (action.type === 'reset') return createComposerState(action.dateISO)
+  return { ...state, ...action.patch }
+}
+
 type CalendarItem =
   | { kind: 'event'; id: string; title: string; event: CalendarEvent }
   | { kind: 'task'; id: string; title: string; task: Task }
@@ -64,6 +103,26 @@ const timelineHours = Array.from(
 )
 const dateFormatters = new Map<string, Intl.DateTimeFormat>()
 const timeFormatters = new Map<string, Intl.DateTimeFormat>()
+
+type CalendarStoreSnapshot = ReturnType<typeof useCalendarStore.getState>
+
+function readRequestedCalendarDate() {
+  return useCalendarStore.getState().selectedDate
+}
+
+function readCalendarStoreSnapshot() {
+  return useCalendarStore.getState()
+}
+
+function subscribeToCalendarStore(
+  listener: (state: CalendarStoreSnapshot) => void
+) {
+  return useCalendarStore.subscribe(listener)
+}
+
+function clearRequestedCalendarContext() {
+  useCalendarStore.getState().clearSelectedContext()
+}
 
 function getEventDateISO(event: CalendarEvent) {
   if (event.all_day) return event.start_date.slice(0, 10)
@@ -84,14 +143,11 @@ function getItemsForDate(
       event,
     }))
 
-  const taskItems: CalendarItem[] = tasks
-    .filter(task => task.due_date === dateISO && task.status !== 'done')
-    .map(task => ({
-      kind: 'task',
-      id: task.id,
-      title: task.title,
-      task,
-    }))
+  const taskItems: CalendarItem[] = tasks.flatMap(task =>
+    task.due_date === dateISO && task.status !== 'done'
+      ? [{ kind: 'task' as const, id: task.id, title: task.title, task }]
+      : []
+  )
 
   return [...eventItems, ...taskItems]
 }
@@ -612,6 +668,649 @@ function WeekCalendar({
   )
 }
 
+function CalendarWorkspace({
+  events,
+  isLoading,
+  locale,
+  periodLabel,
+  selectedDate,
+  selectedItems,
+  tasks,
+  todayISO,
+  view,
+  visibleDays,
+  onCreateAllDay,
+  onCreateAtTime,
+  onMovePeriod,
+  onOpenItem,
+  onReturnToToday,
+  onViewChange,
+}: {
+  events: CalendarEvent[]
+  isLoading: boolean
+  locale: string
+  periodLabel: string
+  selectedDate: string
+  selectedItems: CalendarItem[]
+  tasks: Task[]
+  todayISO: string
+  view: CalendarView
+  visibleDays: CalendarDateCell[]
+  onCreateAllDay: (dateISO: string) => void
+  onCreateAtTime: (dateISO: string, hour: number) => void
+  onMovePeriod: (direction: -1 | 1) => void
+  onOpenItem: (item: CalendarItem) => void
+  onReturnToToday: () => void
+  onViewChange: (view: CalendarView) => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="mx-auto flex min-h-full w-full max-w-(--axis-content-max) flex-col px-(--axis-page-gutter) pb-10 pt-6 sm:pt-8">
+      <header className="flex flex-wrap items-start justify-between gap-5">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t('calendar.pageTitle')}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t('calendar.description')}
+          </p>
+        </div>
+        <Button
+          type="button"
+          size="lg"
+          onClick={() => onCreateAllDay(selectedDate)}
+        >
+          <Plus className="size-4" />
+          {t('calendar.addEvent')}
+        </Button>
+      </header>
+
+      <section
+        className="mt-7 grid min-h-[690px] flex-1 overflow-hidden rounded-3xl border border-border bg-surface shadow-neu-raised xl:grid-cols-[17rem_minmax(0,1fr)]"
+        aria-label={t('calendar.pageTitle')}
+        aria-busy={isLoading}
+      >
+        <SelectedDayRail
+          dateISO={selectedDate}
+          items={selectedItems}
+          locale={locale}
+          onAdd={() => onCreateAllDay(selectedDate)}
+          onOpenItem={onOpenItem}
+        />
+
+        <div className="min-w-0 bg-surface">
+          <CalendarToolbar
+            label={periodLabel}
+            view={view}
+            onViewChange={onViewChange}
+            onToday={onReturnToToday}
+            onPrevious={() => onMovePeriod(-1)}
+            onNext={() => onMovePeriod(1)}
+          />
+
+          <div className="max-h-[calc(100vh-14rem)] min-h-[610px] overflow-auto bg-surface-sunken shadow-neu-pressed">
+            {view === 'month' ? (
+              <MonthCalendar
+                days={visibleDays}
+                selectedDate={selectedDate}
+                todayISO={todayISO}
+                events={events}
+                tasks={tasks}
+                locale={locale}
+                onCreate={onCreateAllDay}
+                onOpenItem={onOpenItem}
+              />
+            ) : (
+              <WeekCalendar
+                days={visibleDays}
+                selectedDate={selectedDate}
+                todayISO={todayISO}
+                events={events}
+                tasks={tasks}
+                locale={locale}
+                onCreateAllDay={onCreateAllDay}
+                onCreateAtTime={onCreateAtTime}
+                onOpenItem={onOpenItem}
+              />
+            )}
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function CalendarComposerDetails({
+  description,
+  editingEvent,
+  kind,
+  title,
+  onDescriptionChange,
+  onKindChange,
+  onTitleChange,
+}: {
+  description: string
+  editingEvent: CalendarEvent | null
+  kind: ComposerKind
+  title: string
+  onDescriptionChange: (value: string) => void
+  onKindChange: (kind: ComposerKind) => void
+  onTitleChange: (value: string) => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <>
+      {!editingEvent ? (
+        <div>
+          <p className="mb-2 text-sm font-medium text-foreground">
+            {t('calendar.itemType')}
+          </p>
+          <SegmentedControl
+            value={kind}
+            onValueChange={value => onKindChange(value as ComposerKind)}
+            options={[
+              {
+                value: 'event',
+                label: t('calendar.types.event'),
+                icon: CalendarDays,
+              },
+              {
+                value: 'task',
+                label: t('calendar.types.task'),
+                icon: CheckSquare2,
+              },
+            ]}
+            aria-label={t('calendar.itemType')}
+          />
+        </div>
+      ) : null}
+
+      <div>
+        <label
+          htmlFor="calendar-item-title"
+          className="mb-2 block text-sm font-medium text-foreground"
+        >
+          {t('calendar.title')}
+        </label>
+        <Input
+          id="calendar-item-title"
+          value={title}
+          onChange={event => onTitleChange(event.target.value)}
+          placeholder={
+            kind === 'task'
+              ? t('calendar.taskTitlePlaceholder')
+              : t('calendar.titlePlaceholder')
+          }
+          autoFocus
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="calendar-item-description"
+          className="mb-2 block text-sm font-medium text-foreground"
+        >
+          {t('calendar.notes')}
+        </label>
+        <textarea
+          id="calendar-item-description"
+          value={description}
+          onChange={event => onDescriptionChange(event.target.value)}
+          placeholder={t('calendar.notesPlaceholder')}
+          rows={4}
+          className="w-full resize-none rounded-xl border border-border bg-surface-sunken px-3 py-2.5 text-sm leading-6 text-foreground shadow-neu-pressed outline-none placeholder:text-foreground-disabled focus-visible:border-primary/60 focus-visible:shadow-focus-input"
+        />
+      </div>
+    </>
+  )
+}
+
+function CalendarComposerSchedule({
+  allDay,
+  endValue,
+  kind,
+  rangeIsInvalid,
+  selectedDate,
+  startDate,
+  startValue,
+  onAllDayChange,
+  onEndValueChange,
+  onStartValueChange,
+}: {
+  allDay: boolean
+  endValue: string
+  kind: ComposerKind
+  rangeIsInvalid: boolean
+  selectedDate: string
+  startDate: string
+  startValue: string
+  onAllDayChange: (allDay: boolean) => void
+  onEndValueChange: (value: string) => void
+  onStartValueChange: (value: string) => void
+}) {
+  const { t } = useTranslation()
+  const inputType = allDay || kind === 'task' ? 'date' : 'datetime-local'
+
+  const toggleAllDay = (checked: boolean) => {
+    onAllDayChange(checked)
+    if (checked) {
+      onStartValueChange(startValue.slice(0, 10))
+      onEndValueChange(endValue.slice(0, 10))
+      return
+    }
+    const date = startValue.slice(0, 10) || selectedDate
+    const start = new Date(`${date}T09:00:00`)
+    const end = new Date(start.getTime() + 60 * 60 * 1000)
+    onStartValueChange(toDateTimeLocalValue(start.toISOString()))
+    onEndValueChange(toDateTimeLocalValue(end.toISOString()))
+  }
+
+  return (
+    <>
+      {kind === 'event' ? (
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-surface-elevated px-3 py-3 shadow-neu-raised-sm">
+          <Checkbox
+            id="calendar-all-day"
+            checked={allDay}
+            onCheckedChange={checked => toggleAllDay(Boolean(checked))}
+          />
+          <label
+            htmlFor="calendar-all-day"
+            className="text-sm font-medium text-foreground"
+          >
+            {t('calendar.allDay')}
+          </label>
+        </div>
+      ) : null}
+
+      <div className={cn('grid gap-4', kind === 'event' && 'sm:grid-cols-2')}>
+        <div>
+          <label
+            htmlFor="calendar-start"
+            className="mb-2 block text-sm font-medium text-foreground"
+          >
+            {kind === 'task' ? t('calendar.date') : t('calendar.start')}
+          </label>
+          <Input
+            id="calendar-start"
+            type={inputType}
+            value={kind === 'task' ? startDate : startValue}
+            onChange={event => onStartValueChange(event.target.value)}
+          />
+        </div>
+
+        {kind === 'event' ? (
+          <div>
+            <label
+              htmlFor="calendar-end"
+              className="mb-2 block text-sm font-medium text-foreground"
+            >
+              {t('calendar.end')}
+            </label>
+            <Input
+              id="calendar-end"
+              type={allDay ? 'date' : 'datetime-local'}
+              value={endValue}
+              min={startValue}
+              onChange={event => onEndValueChange(event.target.value)}
+              aria-invalid={rangeIsInvalid}
+              aria-describedby={
+                rangeIsInvalid ? 'calendar-range-error' : undefined
+              }
+            />
+            {rangeIsInvalid ? (
+              <p
+                id="calendar-range-error"
+                role="alert"
+                className="mt-2 text-xs text-destructive"
+              >
+                {t('calendar.invalidRange')}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </>
+  )
+}
+
+function CalendarComposerActions({
+  composerIsValid,
+  editingEvent,
+  isSaving,
+  onClose,
+  onDelete,
+  onSave,
+}: {
+  composerIsValid: boolean
+  editingEvent: CalendarEvent | null
+  isSaving: boolean
+  onClose: () => void
+  onDelete: () => void
+  onSave: () => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <SheetFooter className="flex-row justify-between border-t border-border px-6 py-5">
+      <div>
+        {editingEvent ? (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={onDelete}
+            disabled={isSaving}
+          >
+            <Trash2 className="size-4" />
+            {t('common.delete')}
+          </Button>
+        ) : null}
+      </div>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          disabled={isSaving}
+        >
+          {t('common.cancel')}
+        </Button>
+        <Button
+          type="button"
+          onClick={onSave}
+          disabled={!composerIsValid || isSaving}
+        >
+          {isSaving ? t('calendar.saving') : t('common.save')}
+        </Button>
+      </div>
+    </SheetFooter>
+  )
+}
+
+function CalendarComposerSheet({
+  allDay,
+  composerIsValid,
+  description,
+  editingEvent,
+  endValue,
+  isOpen,
+  isSaving,
+  kind,
+  rangeIsInvalid,
+  selectedDate,
+  startDate,
+  startValue,
+  title,
+  onAllDayChange,
+  onClose,
+  onDelete,
+  onDescriptionChange,
+  onEndValueChange,
+  onKindChange,
+  onOpenChange,
+  onSave,
+  onStartValueChange,
+  onTitleChange,
+}: {
+  allDay: boolean
+  composerIsValid: boolean
+  description: string
+  editingEvent: CalendarEvent | null
+  endValue: string
+  isOpen: boolean
+  isSaving: boolean
+  kind: ComposerKind
+  rangeIsInvalid: boolean
+  selectedDate: string
+  startDate: string
+  startValue: string
+  title: string
+  onAllDayChange: (allDay: boolean) => void
+  onClose: () => void
+  onDelete: () => void
+  onDescriptionChange: (value: string) => void
+  onEndValueChange: (value: string) => void
+  onKindChange: (kind: ComposerKind) => void
+  onOpenChange: (open: boolean) => void
+  onSave: () => void
+  onStartValueChange: (value: string) => void
+  onTitleChange: (value: string) => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent className="gap-0 border-border bg-surface p-0 sm:max-w-lg">
+        <SheetHeader className="border-b border-border px-6 py-5 pe-14">
+          <SheetTitle className="text-xl tracking-tight">
+            {editingEvent ? t('calendar.editEvent') : t('calendar.newItem')}
+          </SheetTitle>
+          <SheetDescription>
+            {editingEvent
+              ? t('calendar.editDescription')
+              : t('calendar.createDescription')}
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
+          <CalendarComposerDetails
+            description={description}
+            editingEvent={editingEvent}
+            kind={kind}
+            title={title}
+            onDescriptionChange={onDescriptionChange}
+            onKindChange={onKindChange}
+            onTitleChange={onTitleChange}
+          />
+          <CalendarComposerSchedule
+            allDay={allDay}
+            endValue={endValue}
+            kind={kind}
+            rangeIsInvalid={rangeIsInvalid}
+            selectedDate={selectedDate}
+            startDate={startDate}
+            startValue={startValue}
+            onAllDayChange={onAllDayChange}
+            onEndValueChange={onEndValueChange}
+            onStartValueChange={onStartValueChange}
+          />
+        </div>
+
+        <CalendarComposerActions
+          composerIsValid={composerIsValid}
+          editingEvent={editingEvent}
+          isSaving={isSaving}
+          onClose={onClose}
+          onDelete={onDelete}
+          onSave={onSave}
+        />
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+function useCalendarComposer({
+  addTask,
+  createEvent,
+  deleteEvent,
+  selectedDate,
+  setSelectedDate,
+  t,
+  todayISO,
+  updateEvent,
+}: {
+  addTask: ReturnType<typeof useTasksStore.getState>['addTask']
+  createEvent: ReturnType<typeof useCalendarStore.getState>['createEvent']
+  deleteEvent: ReturnType<typeof useCalendarStore.getState>['deleteEvent']
+  selectedDate: string
+  setSelectedDate: (dateISO: string) => void
+  t: TFunction
+  todayISO: string
+  updateEvent: ReturnType<typeof useCalendarStore.getState>['updateEvent']
+}) {
+  const [state, dispatch] = useReducer(
+    composerReducer,
+    todayISO,
+    createComposerState
+  )
+  const update = (patch: Partial<ComposerState>) => {
+    dispatch({ type: 'patch', patch })
+  }
+  const reset = () => dispatch({ type: 'reset', dateISO: selectedDate })
+
+  const openAllDay = (dateISO: string) => {
+    setSelectedDate(dateISO)
+    update({
+      open: true,
+      kind: 'event',
+      editingEvent: null,
+      title: '',
+      description: '',
+      startValue: dateISO,
+      endValue: dateISO,
+      allDay: true,
+      isSaving: false,
+    })
+  }
+
+  const openAtTime = (dateISO: string, hour: number) => {
+    const start = new Date(`${dateISO}T${String(hour).padStart(2, '0')}:00:00`)
+    const end = new Date(start.getTime() + 60 * 60 * 1000)
+    setSelectedDate(dateISO)
+    update({
+      open: true,
+      kind: 'event',
+      editingEvent: null,
+      title: '',
+      description: '',
+      startValue: toDateTimeLocalValue(start.toISOString()),
+      endValue: toDateTimeLocalValue(end.toISOString()),
+      allDay: false,
+      isSaving: false,
+    })
+  }
+
+  const openEvent = (event: CalendarEvent) => {
+    const dateISO = getEventDateISO(event)
+    const allDayEnd =
+      event.end_date > event.start_date
+        ? getDisplayedAllDayEnd(event.end_date.slice(0, 10))
+        : event.start_date.slice(0, 10)
+    setSelectedDate(dateISO)
+    update({
+      open: true,
+      kind: 'event',
+      editingEvent: event,
+      title: event.title,
+      description: event.description ?? '',
+      startValue: event.all_day
+        ? event.start_date.slice(0, 10)
+        : toDateTimeLocalValue(event.start_date),
+      endValue: event.all_day
+        ? allDayEnd
+        : toDateTimeLocalValue(event.end_date),
+      allDay: event.all_day,
+      isSaving: false,
+    })
+  }
+
+  const startDate = state.startValue.slice(0, 10)
+  const endDate = state.endValue.slice(0, 10)
+  const rangeIsInvalid =
+    state.kind === 'event' &&
+    state.startValue.length > 0 &&
+    state.endValue.length > 0 &&
+    (state.allDay
+      ? endDate < startDate
+      : new Date(state.endValue).getTime() <=
+        new Date(state.startValue).getTime())
+  const isValid =
+    state.title.trim().length > 0 &&
+    state.startValue.length > 0 &&
+    (state.kind === 'task' || (state.endValue.length > 0 && !rangeIsInvalid))
+
+  const save = async () => {
+    if (!isValid) return
+    update({ isSaving: true })
+
+    try {
+      if (state.kind === 'task') {
+        await addTask(state.title, {
+          due_date: startDate,
+          description: state.description.trim() || undefined,
+        })
+      } else {
+        const start = state.allDay
+          ? startDate
+          : toStoredDateTime(state.startValue)
+        const end = state.allDay
+          ? getStoredAllDayEnd(endDate)
+          : toStoredDateTime(state.endValue)
+        if (state.editingEvent) {
+          await updateEvent({
+            id: state.editingEvent.id,
+            title: state.title.trim(),
+            description: state.description.trim() || undefined,
+            start_date: start,
+            end_date: end,
+            all_day: state.allDay,
+            color: state.editingEvent.color ?? undefined,
+            updated_at: new Date().toISOString(),
+          })
+        } else {
+          await createEvent({
+            title: state.title.trim(),
+            description: state.description.trim() || undefined,
+            start_date: start,
+            end_date: end,
+            all_day: state.allDay,
+            color: undefined,
+          })
+        }
+      }
+      setSelectedDate(startDate)
+      dispatch({ type: 'reset', dateISO: startDate })
+    } catch {
+      update({ isSaving: false })
+      void notifications.error(
+        t('calendar.feedback.saveFailed'),
+        t('calendar.feedback.tryAgain')
+      )
+    }
+  }
+
+  const remove = async () => {
+    if (!state.editingEvent) return
+    update({ isSaving: true })
+    try {
+      await deleteEvent(state.editingEvent.id)
+      reset()
+    } catch {
+      update({ isSaving: false })
+      void notifications.error(
+        t('calendar.feedback.deleteFailed'),
+        t('calendar.feedback.tryAgain')
+      )
+    }
+  }
+
+  return {
+    state,
+    startDate,
+    rangeIsInvalid,
+    isValid,
+    update,
+    reset,
+    openAllDay,
+    openAtTime,
+    openEvent,
+    save,
+    remove,
+  }
+}
+
 export function CalendarPage() {
   const { t, i18n } = useTranslation()
   const events = useCalendarStore(state => state.events)
@@ -627,21 +1326,38 @@ export function CalendarPage() {
 
   const today = new Date()
   const todayISO = getLocalISODate(today)
+  const initialRequestedDate = readRequestedCalendarDate()
+  const initialDateISO = initialRequestedDate ?? todayISO
   const weekStartsOn: 0 | 1 = i18n.language.startsWith('pt') ? 1 : 0
   const [view, setView] = useState<CalendarView>(() =>
     readStoredCalendarView(window.localStorage)
   )
-  const [currentDate, setCurrentDate] = useState(today)
-  const [selectedDate, setSelectedDate] = useState(todayISO)
-  const [composerOpen, setComposerOpen] = useState(false)
-  const [composerKind, setComposerKind] = useState<ComposerKind>('event')
-  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [startValue, setStartValue] = useState(todayISO)
-  const [endValue, setEndValue] = useState(todayISO)
-  const [allDay, setAllDay] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
+  const [currentDate, setCurrentDate] = useState(() =>
+    parseISODate(initialDateISO)
+  )
+  const [selectedDate, setSelectedDate] = useState(initialDateISO)
+  const composer = useCalendarComposer({
+    addTask,
+    createEvent,
+    deleteEvent,
+    selectedDate,
+    setSelectedDate,
+    t,
+    todayISO,
+    updateEvent,
+  })
+  const openCalendarEvent = composer.openEvent
+  const {
+    open: composerOpen,
+    kind: composerKind,
+    editingEvent,
+    title,
+    description,
+    startValue,
+    endValue,
+    allDay,
+    isSaving,
+  } = composer.state
 
   const visibleDays =
     view === 'week'
@@ -680,67 +1396,44 @@ export function CalendarPage() {
     window.localStorage.setItem(CALENDAR_VIEW_STORAGE_KEY, view)
   }, [view])
 
-  const resetComposer = () => {
-    setComposerKind('event')
-    setEditingEvent(null)
-    setTitle('')
-    setDescription('')
-    setStartValue(selectedDate)
-    setEndValue(selectedDate)
-    setAllDay(true)
-    setIsSaving(false)
-  }
+  useEffect(() => {
+    let isMounted = true
+    let lastRequestedDate: string | null = null
 
-  const openAllDayComposer = (dateISO: string) => {
-    setSelectedDate(dateISO)
-    setComposerKind('event')
-    setEditingEvent(null)
-    setTitle('')
-    setDescription('')
-    setStartValue(dateISO)
-    setEndValue(dateISO)
-    setAllDay(true)
-    setComposerOpen(true)
-  }
+    const openRequestedCalendarContext = (state: CalendarStoreSnapshot) => {
+      if (!isMounted) return
 
-  const openTimedComposer = (dateISO: string, hour: number) => {
-    const start = new Date(`${dateISO}T${String(hour).padStart(2, '0')}:00:00`)
-    const end = new Date(start.getTime() + 60 * 60 * 1000)
-    setSelectedDate(dateISO)
-    setComposerKind('event')
-    setEditingEvent(null)
-    setTitle('')
-    setDescription('')
-    setStartValue(toDateTimeLocalValue(start.toISOString()))
-    setEndValue(toDateTimeLocalValue(end.toISOString()))
-    setAllDay(false)
-    setComposerOpen(true)
-  }
+      if (state.selectedDate && state.selectedDate !== lastRequestedDate) {
+        lastRequestedDate = state.selectedDate
+        setSelectedDate(state.selectedDate)
+        setCurrentDate(parseISODate(state.selectedDate))
+      } else if (!state.selectedDate) {
+        lastRequestedDate = null
+      }
 
-  const openEvent = (event: CalendarEvent) => {
-    setSelectedDate(getEventDateISO(event))
-    setComposerKind('event')
-    setEditingEvent(event)
-    setTitle(event.title)
-    setDescription(event.description ?? '')
-    setAllDay(event.all_day)
-    if (event.all_day) {
-      setStartValue(event.start_date.slice(0, 10))
-      setEndValue(
-        event.end_date > event.start_date
-          ? getDisplayedAllDayEnd(event.end_date.slice(0, 10))
-          : event.start_date.slice(0, 10)
-      )
-    } else {
-      setStartValue(toDateTimeLocalValue(event.start_date))
-      setEndValue(toDateTimeLocalValue(event.end_date))
+      if (!state.selectedEventId) return
+      const event = state.events.find(item => item.id === state.selectedEventId)
+      if (!event) return
+
+      openCalendarEvent(event)
+      clearRequestedCalendarContext()
     }
-    setComposerOpen(true)
-  }
+
+    const unsubscribe = subscribeToCalendarStore(openRequestedCalendarContext)
+    const initialContext = window.setTimeout(() => {
+      openRequestedCalendarContext(readCalendarStoreSnapshot())
+    }, 0)
+
+    return () => {
+      isMounted = false
+      window.clearTimeout(initialContext)
+      unsubscribe()
+    }
+  }, [openCalendarEvent])
 
   const openItem = (item: CalendarItem) => {
     if (item.kind === 'event') {
-      openEvent(item.event)
+      composer.openEvent(item.event)
       return
     }
     navigateTo('tasks', { selectedTaskId: item.task.id })
@@ -763,371 +1456,62 @@ export function CalendarPage() {
     setSelectedDate(getLocalISODate(now))
   }
 
-  const startDate = startValue.slice(0, 10)
-  const endDate = endValue.slice(0, 10)
-  const rangeIsInvalid =
-    composerKind === 'event' &&
-    startValue.length > 0 &&
-    endValue.length > 0 &&
-    (allDay
-      ? endDate < startDate
-      : new Date(endValue).getTime() <= new Date(startValue).getTime())
-  const composerIsValid =
-    title.trim().length > 0 &&
-    startValue.length > 0 &&
-    (composerKind === 'task' || (endValue.length > 0 && !rangeIsInvalid))
-
-  const handleSave = async () => {
-    if (!composerIsValid) return
-    setIsSaving(true)
-
-    try {
-      if (composerKind === 'task') {
-        await addTask(title, {
-          due_date: startDate,
-          description: description.trim() || undefined,
-        })
-      } else {
-        const start = allDay ? startDate : toStoredDateTime(startValue)
-        const end = allDay
-          ? getStoredAllDayEnd(endDate)
-          : toStoredDateTime(endValue)
-
-        if (editingEvent) {
-          await updateEvent({
-            id: editingEvent.id,
-            title: title.trim(),
-            description: description.trim() || undefined,
-            start_date: start,
-            end_date: end,
-            all_day: allDay,
-            color: editingEvent.color ?? undefined,
-            updated_at: new Date().toISOString(),
-          })
-        } else {
-          await createEvent({
-            title: title.trim(),
-            description: description.trim() || undefined,
-            start_date: start,
-            end_date: end,
-            all_day: allDay,
-            color: undefined,
-          })
-        }
-      }
-
-      setSelectedDate(startDate)
-      setComposerOpen(false)
-      resetComposer()
-    } catch {
-      setIsSaving(false)
-      void notifications.error(
-        t('calendar.feedback.saveFailed'),
-        t('calendar.feedback.tryAgain')
-      )
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!editingEvent) return
-    setIsSaving(true)
-    try {
-      await deleteEvent(editingEvent.id)
-      setComposerOpen(false)
-      resetComposer()
-    } catch {
-      setIsSaving(false)
-      void notifications.error(
-        t('calendar.feedback.deleteFailed'),
-        t('calendar.feedback.tryAgain')
-      )
-    }
-  }
+  const { startDate, rangeIsInvalid, isValid: composerIsValid } = composer
 
   return (
     <div className="h-full overflow-y-auto bg-background">
-      <div className="mx-auto flex min-h-full w-full max-w-(--axis-content-max) flex-col px-(--axis-page-gutter) pb-10 pt-6 sm:pt-8">
-        <header className="flex flex-wrap items-start justify-between gap-5">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              {t('calendar.pageTitle')}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {t('calendar.description')}
-            </p>
-          </div>
-          <Button
-            type="button"
-            size="lg"
-            onClick={() => openAllDayComposer(selectedDate)}
-          >
-            <Plus className="size-4" />
-            {t('calendar.addEvent')}
-          </Button>
-        </header>
+      <CalendarWorkspace
+        events={events}
+        isLoading={isLoading}
+        locale={i18n.language}
+        periodLabel={periodLabel}
+        selectedDate={selectedDate}
+        selectedItems={selectedItems}
+        tasks={tasks}
+        todayISO={todayISO}
+        view={view}
+        visibleDays={visibleDays}
+        onCreateAllDay={composer.openAllDay}
+        onCreateAtTime={composer.openAtTime}
+        onMovePeriod={movePeriod}
+        onOpenItem={openItem}
+        onReturnToToday={returnToToday}
+        onViewChange={handleViewChange}
+      />
 
-        <section
-          className="mt-7 grid min-h-[690px] flex-1 overflow-hidden rounded-3xl border border-border bg-surface shadow-neu-raised xl:grid-cols-[17rem_minmax(0,1fr)]"
-          aria-label={t('calendar.pageTitle')}
-          aria-busy={isLoading}
-        >
-          <SelectedDayRail
-            dateISO={selectedDate}
-            items={selectedItems}
-            locale={i18n.language}
-            onAdd={() => openAllDayComposer(selectedDate)}
-            onOpenItem={openItem}
-          />
-
-          <div className="min-w-0 bg-surface">
-            <CalendarToolbar
-              label={periodLabel}
-              view={view}
-              onViewChange={handleViewChange}
-              onToday={returnToToday}
-              onPrevious={() => movePeriod(-1)}
-              onNext={() => movePeriod(1)}
-            />
-
-            <div className="max-h-[calc(100vh-14rem)] min-h-[610px] overflow-auto bg-surface-sunken shadow-neu-pressed">
-              {view === 'month' ? (
-                <MonthCalendar
-                  days={visibleDays}
-                  selectedDate={selectedDate}
-                  todayISO={todayISO}
-                  events={events}
-                  tasks={tasks}
-                  locale={i18n.language}
-                  onCreate={openAllDayComposer}
-                  onOpenItem={openItem}
-                />
-              ) : (
-                <WeekCalendar
-                  days={visibleDays}
-                  selectedDate={selectedDate}
-                  todayISO={todayISO}
-                  events={events}
-                  tasks={tasks}
-                  locale={i18n.language}
-                  onCreateAllDay={openAllDayComposer}
-                  onCreateAtTime={openTimedComposer}
-                  onOpenItem={openItem}
-                />
-              )}
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <Sheet
-        open={composerOpen}
-        onOpenChange={open => {
-          setComposerOpen(open)
-          if (!open) resetComposer()
+      <CalendarComposerSheet
+        allDay={allDay}
+        composerIsValid={composerIsValid}
+        description={description}
+        editingEvent={editingEvent}
+        endValue={endValue}
+        isOpen={composerOpen}
+        isSaving={isSaving}
+        kind={composerKind}
+        rangeIsInvalid={rangeIsInvalid}
+        selectedDate={selectedDate}
+        startDate={startDate}
+        startValue={startValue}
+        title={title}
+        onAllDayChange={value => composer.update({ allDay: value })}
+        onClose={() => composer.update({ open: false })}
+        onDelete={() => void composer.remove()}
+        onDescriptionChange={value => composer.update({ description: value })}
+        onEndValueChange={value => composer.update({ endValue: value })}
+        onKindChange={nextKind => {
+          composer.update({
+            kind: nextKind,
+            allDay: nextKind === 'task' ? true : allDay,
+          })
         }}
-      >
-        <SheetContent className="gap-0 border-border bg-surface p-0 sm:max-w-lg">
-          <SheetHeader className="border-b border-border px-6 py-5 pe-14">
-            <SheetTitle className="text-xl tracking-tight">
-              {editingEvent ? t('calendar.editEvent') : t('calendar.newItem')}
-            </SheetTitle>
-            <SheetDescription>
-              {editingEvent
-                ? t('calendar.editDescription')
-                : t('calendar.createDescription')}
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
-            {!editingEvent ? (
-              <div>
-                <p className="mb-2 text-sm font-medium text-foreground">
-                  {t('calendar.itemType')}
-                </p>
-                <SegmentedControl
-                  value={composerKind}
-                  onValueChange={value => {
-                    const nextKind = value as ComposerKind
-                    setComposerKind(nextKind)
-                    if (nextKind === 'task') setAllDay(true)
-                  }}
-                  options={[
-                    {
-                      value: 'event',
-                      label: t('calendar.types.event'),
-                      icon: CalendarDays,
-                    },
-                    {
-                      value: 'task',
-                      label: t('calendar.types.task'),
-                      icon: CheckSquare2,
-                    },
-                  ]}
-                  aria-label={t('calendar.itemType')}
-                />
-              </div>
-            ) : null}
-
-            <div>
-              <label
-                htmlFor="calendar-item-title"
-                className="mb-2 block text-sm font-medium text-foreground"
-              >
-                {t('calendar.title')}
-              </label>
-              <Input
-                id="calendar-item-title"
-                value={title}
-                onChange={event => setTitle(event.target.value)}
-                placeholder={
-                  composerKind === 'task'
-                    ? t('calendar.taskTitlePlaceholder')
-                    : t('calendar.titlePlaceholder')
-                }
-                autoFocus
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="calendar-item-description"
-                className="mb-2 block text-sm font-medium text-foreground"
-              >
-                {t('calendar.notes')}
-              </label>
-              <textarea
-                id="calendar-item-description"
-                value={description}
-                onChange={event => setDescription(event.target.value)}
-                placeholder={t('calendar.notesPlaceholder')}
-                rows={4}
-                className="w-full resize-none rounded-xl border border-border bg-surface-sunken px-3 py-2.5 text-sm leading-6 text-foreground shadow-neu-pressed outline-none placeholder:text-foreground-disabled focus-visible:border-primary/60 focus-visible:shadow-focus-input"
-              />
-            </div>
-
-            {composerKind === 'event' ? (
-              <div className="flex items-center gap-3 rounded-xl border border-border bg-surface-elevated px-3 py-3 shadow-neu-raised-sm">
-                <Checkbox
-                  id="calendar-all-day"
-                  checked={allDay}
-                  onCheckedChange={checked => {
-                    const nextAllDay = Boolean(checked)
-                    setAllDay(nextAllDay)
-                    if (nextAllDay) {
-                      setStartValue(startValue.slice(0, 10))
-                      setEndValue(endValue.slice(0, 10))
-                    } else {
-                      const date = startValue.slice(0, 10) || selectedDate
-                      const start = new Date(`${date}T09:00:00`)
-                      const end = new Date(start.getTime() + 60 * 60 * 1000)
-                      setStartValue(toDateTimeLocalValue(start.toISOString()))
-                      setEndValue(toDateTimeLocalValue(end.toISOString()))
-                    }
-                  }}
-                />
-                <label
-                  htmlFor="calendar-all-day"
-                  className="text-sm font-medium text-foreground"
-                >
-                  {t('calendar.allDay')}
-                </label>
-              </div>
-            ) : null}
-
-            <div
-              className={cn(
-                'grid gap-4',
-                composerKind === 'event' && 'sm:grid-cols-2'
-              )}
-            >
-              <div>
-                <label
-                  htmlFor="calendar-start"
-                  className="mb-2 block text-sm font-medium text-foreground"
-                >
-                  {composerKind === 'task'
-                    ? t('calendar.date')
-                    : t('calendar.start')}
-                </label>
-                <Input
-                  id="calendar-start"
-                  type={
-                    allDay || composerKind === 'task'
-                      ? 'date'
-                      : 'datetime-local'
-                  }
-                  value={composerKind === 'task' ? startDate : startValue}
-                  onChange={event => setStartValue(event.target.value)}
-                />
-              </div>
-
-              {composerKind === 'event' ? (
-                <div>
-                  <label
-                    htmlFor="calendar-end"
-                    className="mb-2 block text-sm font-medium text-foreground"
-                  >
-                    {t('calendar.end')}
-                  </label>
-                  <Input
-                    id="calendar-end"
-                    type={allDay ? 'date' : 'datetime-local'}
-                    value={endValue}
-                    min={startValue}
-                    onChange={event => setEndValue(event.target.value)}
-                    aria-invalid={rangeIsInvalid}
-                    aria-describedby={
-                      rangeIsInvalid ? 'calendar-range-error' : undefined
-                    }
-                  />
-                  {rangeIsInvalid ? (
-                    <p
-                      id="calendar-range-error"
-                      role="alert"
-                      className="mt-2 text-xs text-destructive"
-                    >
-                      {t('calendar.invalidRange')}
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          <SheetFooter className="flex-row justify-between border-t border-border px-6 py-5">
-            <div>
-              {editingEvent ? (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => void handleDelete()}
-                  disabled={isSaving}
-                >
-                  <Trash2 className="size-4" />
-                  {t('common.delete')}
-                </Button>
-              ) : null}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setComposerOpen(false)}
-                disabled={isSaving}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                type="button"
-                onClick={() => void handleSave()}
-                disabled={!composerIsValid || isSaving}
-              >
-                {isSaving ? t('calendar.saving') : t('common.save')}
-              </Button>
-            </div>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+        onOpenChange={open => {
+          if (open) composer.update({ open: true })
+          else composer.reset()
+        }}
+        onSave={() => void composer.save()}
+        onStartValueChange={value => composer.update({ startValue: value })}
+        onTitleChange={value => composer.update({ title: value })}
+      />
     </div>
   )
 }

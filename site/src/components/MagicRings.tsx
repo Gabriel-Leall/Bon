@@ -33,7 +33,8 @@ float ring(vec2 p, float ri, float cut, float t0, float px) {
   float a = atan(abs(p.y), abs(p.x)) / HP;
   float th = max(1.0 - a, 0.5) * px * uLineThickness;
   float h = (1.0 - smoothstep(th, th * 1.5, d)) + 1.0;
-  d += pow(cut * a, 3.0) * r;
+  float shapedCut = cut * a;
+  d += shapedCut * shapedCut * shapedCut * r;
   return h * exp(-uAttenuation * d) * fade(t);
 }
 
@@ -115,29 +116,53 @@ export default function MagicRings({
     null
   )
 
-  propsRef.current = {
+  useEffect(() => {
+    propsRef.current = {
+      color,
+      colorTwo,
+      speed,
+      ringCount,
+      attenuation,
+      lineThickness,
+      baseRadius,
+      radiusStep,
+      scaleRate,
+      opacity,
+      blur,
+      noiseAmount,
+      rotation,
+      ringGap,
+      fadeIn,
+      fadeOut,
+      followMouse,
+      mouseInfluence,
+      hoverScale,
+      parallax,
+      clickBurst,
+    }
+  }, [
+    attenuation,
+    baseRadius,
+    blur,
+    clickBurst,
     color,
     colorTwo,
-    speed,
-    ringCount,
-    attenuation,
-    lineThickness,
-    baseRadius,
-    radiusStep,
-    scaleRate,
-    opacity,
-    blur,
-    noiseAmount,
-    rotation,
-    ringGap,
     fadeIn,
     fadeOut,
     followMouse,
-    mouseInfluence,
     hoverScale,
+    lineThickness,
+    mouseInfluence,
+    noiseAmount,
+    opacity,
     parallax,
-    clickBurst,
-  }
+    radiusStep,
+    ringCount,
+    ringGap,
+    rotation,
+    scaleRate,
+    speed,
+  ])
 
   useEffect(() => {
     const mount = mountRef.current
@@ -206,9 +231,7 @@ export default function MagicRings({
     const ro = new ResizeObserver(resize)
     ro.observe(mount)
 
-    let frameId = 0
     const animate = (t: number) => {
-      frameId = requestAnimationFrame(animate)
       const p = propsRef.current
       if (!p) return
 
@@ -231,10 +254,10 @@ export default function MagicRings({
       renderer.render(scene, camera)
     }
 
-    frameId = requestAnimationFrame(animate)
+    renderer.setAnimationLoop(animate)
 
     return () => {
-      cancelAnimationFrame(frameId)
+      renderer.setAnimationLoop(null)
       window.removeEventListener('resize', resize)
       ro.disconnect()
       mount.removeChild(renderer.domElement)

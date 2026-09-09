@@ -32,9 +32,9 @@ export function UpdatesPane() {
     } catch (error) {
       logger.error('Update check failed', { error })
       toast.error(t('updates.checkFailed'))
-    } finally {
-      setChecking(false)
     }
+
+    setChecking(false)
   }
 
   const installUpdate = async () => {

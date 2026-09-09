@@ -85,18 +85,6 @@ export type {
 // OAuth domain
 export type { OAuthLoopbackResult } from './bindings'
 
-// Kanban domain
-export type {
-  KanbanBoard,
-  KanbanColumn,
-  KanbanCard,
-  KanbanSubtask,
-  FullBoard,
-  KanbanColumnWithCards,
-  CardOrderUpdate,
-  ColumnOrderUpdate,
-} from './bindings'
-
 // Analytics domain
 export type {
   AnalyticsSummary,

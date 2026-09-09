@@ -29,6 +29,7 @@ interface CalendarState {
   deleteEvent: (id: string) => Promise<void>
   setSelectedDate: (date: string | null) => void
   setSelectedEvent: (id: string | null) => void
+  clearSelectedContext: () => void
 }
 
 function toPersistedCreateEventInput(
@@ -136,6 +137,12 @@ export const useCalendarStore = create<CalendarState>()(
         set({ selectedDate: date }, undefined, 'setSelectedDate'),
       setSelectedEvent: id =>
         set({ selectedEventId: id }, undefined, 'setSelectedEvent'),
+      clearSelectedContext: () =>
+        set(
+          { selectedDate: null, selectedEventId: null },
+          undefined,
+          'clearSelectedContext'
+        ),
     }),
     { name: 'calendar-store' }
   )

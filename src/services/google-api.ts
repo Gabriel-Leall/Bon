@@ -25,14 +25,12 @@ export async function createCodeChallenge(verifier: string): Promise<string> {
 
 export async function exchangeGoogleCodeForToken(
   clientId: string,
-  clientSecret: string,
   code: string,
   codeVerifier: string,
   redirectUri: string
 ): Promise<GoogleTokenResponse> {
   const body = new URLSearchParams({
     client_id: clientId,
-    client_secret: clientSecret,
     code,
     code_verifier: codeVerifier,
     grant_type: 'authorization_code',
@@ -62,12 +60,10 @@ export async function exchangeGoogleCodeForToken(
 
 export async function refreshGoogleAccessToken(
   clientId: string,
-  clientSecret: string,
   refreshToken: string
 ): Promise<GoogleTokenResponse> {
   const body = new URLSearchParams({
     client_id: clientId,
-    client_secret: clientSecret,
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
   })

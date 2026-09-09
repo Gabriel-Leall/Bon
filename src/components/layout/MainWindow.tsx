@@ -15,6 +15,7 @@ import { useUIStore } from '@/store/ui-store'
 import { useMainWindowEventListeners } from '@/hooks/useMainWindowEventListeners'
 import { cn } from '@/lib/utils'
 import { WrapUpDialog } from '@/components/wrap-up/WrapUpDialog'
+import { useDailyWrapUpReminder } from '@/hooks/useDailyWrapUpReminder'
 
 /**
  * Layout sizing configuration for resizable panels.
@@ -33,6 +34,7 @@ export function MainWindow() {
 
   // Set up global event listeners (keyboard shortcuts, etc.)
   useMainWindowEventListeners()
+  useDailyWrapUpReminder()
 
   return (
     <div className="relative flex h-screen w-full flex-col overflow-hidden bg-background">

@@ -22,7 +22,7 @@ import {
   subWeeks,
   subYears,
 } from 'date-fns'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Button } from '@/components/button-1'
 import { Material } from '@/components/material-1'
 import { Input } from '@/components/input'
@@ -38,7 +38,7 @@ const ClockIcon = () => (
     <path
       fillRule="evenodd"
       clipRule="evenodd"
-      d="M14.5 8C14.5 11.5899 11.5899 14.5 8 14.5C4.41015 14.5 1.5 11.5899 1.5 8C1.5 4.41015 4.41015 1.5 8 1.5C11.5899 1.5 14.5 4.41015 14.5 8ZM16 8C16 12.4183 12.4183 16 8 16C3.58172 16 0 12.4183 0 8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8ZM8.75 4.75V4H7.25V4.75V7.875C7.25 8.18976 7.39819 8.48615 7.65 8.675L9.55 10.1L10.15 10.55L11.05 9.35L10.45 8.9L8.75 7.625V4.75Z"
+      d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm.75 4h-1.5v4.25l3.3 2.47.9-1.2-2.7-2.02V4Z"
       className="fill-gray-1000"
     />
   </svg>
@@ -55,7 +55,7 @@ const ArrowBottomIcon = ({ className }: { className?: string }) => (
     <path
       fillRule="evenodd"
       clipRule="evenodd"
-      d="M14.0607 5.49999L13.5303 6.03032L8.7071 10.8535C8.31658 11.2441 7.68341 11.2441 7.29289 10.8535L2.46966 6.03032L1.93933 5.49999L2.99999 4.43933L3.53032 4.96966L7.99999 9.43933L12.4697 4.96966L13 4.43933L14.0607 5.49999Z"
+      d="m2 5 6 6 6-6-1-1-5 5-5-5-1 1Z"
     />
   </svg>
 )
@@ -65,7 +65,7 @@ const ArrowLeftIcon = () => (
     <path
       fillRule="evenodd"
       clipRule="evenodd"
-      d="M10.5 14.0607L9.96966 13.5303L5.14644 8.7071C4.75592 8.31658 4.75592 7.68341 5.14644 7.29289L9.96966 2.46966L10.5 1.93933L11.5607 2.99999L11.0303 3.53032L6.56065 7.99999L11.0303 12.4697L11.5607 13L10.5 14.0607Z"
+      d="m11 2-6 6 6 6 1-1-5-5 5-5-1-1Z"
       className="fill-gray-700"
     />
   </svg>
@@ -76,7 +76,7 @@ const ArrowRightIcon = () => (
     <path
       fillRule="evenodd"
       clipRule="evenodd"
-      d="M5.50001 1.93933L6.03034 2.46966L10.8536 7.29288C11.2441 7.68341 11.2441 8.31657 10.8536 8.7071L6.03034 13.5303L5.50001 14.0607L4.43935 13L4.96968 12.4697L9.43935 7.99999L4.96968 3.53032L4.43935 2.99999L5.50001 1.93933Z"
+      d="m5 2 6 6-6 6-1-1 5-5-5-5 1-1Z"
       className="fill-gray-700"
     />
   </svg>
@@ -87,7 +87,7 @@ const CalendarIcon = () => (
     <path
       fillRule="evenodd"
       clipRule="evenodd"
-      d="M5.5 0.5V1.25V2H10.5V1.25V0.5H12V1.25V2H14H15.5V3.5V13.5C15.5 14.8807 14.3807 16 13 16H3C1.61929 16 0.5 14.8807 0.5 13.5V3.5V2H2H4V1.25V0.5H5.5ZM2 3.5H14V6H2V3.5ZM2 7.5V13.5C2 14.0523 2.44772 14.5 3 14.5H13C13.5523 14.5 14 14.0523 14 13.5V7.5H2Z"
+      d="M5.5.5V2h5V.5H12V2h3.5v11.5A2.5 2.5 0 0 1 13 16H3a2.5 2.5 0 0 1-2.5-2.5V2H4V.5h1.5ZM2 3.5V6h12V3.5H2Zm0 4v6c0 .6.4 1 1 1h10c.6 0 1-.4 1-1v-6H2Z"
     />
   </svg>
 )
@@ -97,7 +97,7 @@ const ClearIcon = () => (
     <path
       fillRule="evenodd"
       clipRule="evenodd"
-      d="M12.4697 13.5303L13 14.0607L14.0607 13L13.5303 12.4697L9.06065 7.99999L13.5303 3.53032L14.0607 2.99999L13 1.93933L12.4697 2.46966L7.99999 6.93933L3.53032 2.46966L2.99999 1.93933L1.93933 2.99999L2.46966 3.53032L6.93933 7.99999L2.46966 12.4697L1.93933 13L2.99999 14.0607L3.53032 13.5303L7.99999 9.06065L12.4697 13.5303Z"
+      d="m3 2 5 5 5-5 1 1-5 5 5 5-1 1-5-5-5 5-1-1 5-5-5-5 1-1Z"
     />
   </svg>
 )
@@ -389,6 +389,150 @@ interface CalendarComboboxProps {
   presetIndex?: number
 }
 
+interface CalendarPreset {
+  text: string
+  start: Date
+  end: Date
+}
+
+function rangesMatch(value: RangeValue | null, preset: CalendarPreset | null) {
+  return Boolean(
+    value?.start &&
+    value.end &&
+    preset &&
+    preset.start.getTime() === value.start.getTime() &&
+    preset.end.getTime() === value.end.getTime()
+  )
+}
+
+function findCurrentPreset(
+  value: RangeValue | null,
+  presets: Record<string, CalendarPreset>
+) {
+  if (!value?.start || !value.end) return null
+  return (
+    Object.values(presets).find(preset => rangesMatch(value, preset)) ?? null
+  )
+}
+
+function CalendarPresetMenu({
+  compact,
+  filteredPresets,
+  inputValue,
+  isOpen,
+  onSelect,
+}: {
+  compact: boolean
+  filteredPresets: Record<string, CalendarPreset>
+  inputValue: string
+  isOpen: boolean
+  onSelect: (preset: CalendarPreset) => void
+}) {
+  const entries = Object.entries(filteredPresets)
+
+  return (
+    <Material
+      type="menu"
+      className={clsx(
+        'absolute z-50 top-12 left-0',
+        compact ? 'w-full' : 'grid grid-cols-2 w-[200%]',
+        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none duration-200'
+      )}
+    >
+      <ul className="p-2 border-r border-r-gray-200">
+        {entries.length ? (
+          entries.map(([key, preset]) => (
+            <li key={key}>
+              <button
+                type="button"
+                className="flex h-9 w-full cursor-pointer items-center rounded-md px-2 font-sans text-sm text-gray-1000 hover:bg-gray-alpha-300 active:bg-gray-alpha-300"
+                onClick={() => onSelect(preset)}
+              >
+                {preset.text}
+              </button>
+            </li>
+          ))
+        ) : (
+          <li className="flex items-center cursor-pointer px-2 w-full h-9 rounded-md hover:bg-gray-alpha-300 active:bg-gray-alpha-300 font-sans text-sm text-gray-1000">
+            {inputValue}
+          </li>
+        )}
+      </ul>
+      {!compact ? (
+        <div className="p-4 pr-7.5">
+          <div className="font-sans text-gray-900 text-sm">
+            Type relative times
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {typeRelativeTimes.map(preset => (
+              <button
+                type="button"
+                key={preset.text}
+                className="font-mono text-[13px] text-gray-1000 px-1.5 h-5 inline-flex items-center bg-accents-2 border-none rounded cursor-pointer"
+                onClick={() => onSelect(preset)}
+              >
+                {preset.text}
+              </button>
+            ))}
+          </div>
+          <div className="font-sans text-gray-900 text-sm mt-4">
+            Type fixed times
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {typeFixedTimes.map(preset => (
+              <button
+                type="button"
+                key={preset.text}
+                className="font-mono text-[13px] text-gray-1000 px-1.5 h-5 inline-flex items-center bg-accents-2 border-none rounded cursor-pointer"
+                onClick={() => onSelect(preset)}
+              >
+                {preset.text}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </Material>
+  )
+}
+
+function getCalendarComboboxClasses({
+  collapseInput,
+  compact,
+  currentPresetIsValue,
+  isOpen,
+  stacked,
+}: {
+  collapseInput: boolean
+  compact: boolean
+  currentPresetIsValue: boolean
+  isOpen: boolean
+  stacked: boolean
+}) {
+  return {
+    root: twMerge(
+      clsx(
+        'inline-block text-sm font-sans',
+        compact ? 'w-45 absolute left-9.5' : 'w-62.5 relative',
+        compact && !isOpen && 'pl-35',
+        compact && (isOpen || currentPresetIsValue) && 'pl-0'
+      )
+    ),
+    input: clsx(
+      'pl-2 placeholder:text-gray-1000! placeholder:opacity-100!',
+      collapseInput && 'w-0! px-0!'
+    ),
+    suffix: clsx('cursor-pointer', collapseInput && 'w-10 !px-0'),
+    wrapper: clsx(
+      'hover:z-10',
+      stacked && !compact && 'rounded-b-none',
+      !stacked && !compact && 'rounded-r-none',
+      compact && 'rounded-l-none',
+      (isOpen || (compact && currentPresetIsValue)) && 'z-10'
+    ),
+  }
+}
+
 const CalendarCombobox = ({
   stacked,
   compact,
@@ -401,16 +545,16 @@ const CalendarCombobox = ({
   const [inputValue, setInputValue] = useState<string>('')
   const ref = useRef<HTMLDivElement>(null)
 
-  const currentPreset = useMemo(() => {
-    if (!value?.start || !value?.end) return null
-    return (
-      Object.values(presets).find(
-        p =>
-          p.start.getTime() === value.start?.getTime() &&
-          p.end.getTime() === value.end?.getTime()
-      ) || null
-    )
-  }, [value, presets])
+  const currentPreset = findCurrentPreset(value, presets)
+  const currentPresetIsValue = rangesMatch(value, currentPreset)
+  const collapseInput = compact && !isOpen && !currentPresetIsValue
+  const classes = getCalendarComboboxClasses({
+    collapseInput,
+    compact,
+    currentPresetIsValue,
+    isOpen,
+    stacked,
+  })
 
   // Synchronize input value when value prop changes
   const [prevValue, setPrevValue] = useState(value)
@@ -458,17 +602,7 @@ const CalendarCombobox = ({
   }, [presetIndex, presets, onChange])
 
   return (
-    <div
-      ref={ref}
-      className={twMerge(
-        clsx(
-          'inline-block text-sm font-sans',
-          compact ? 'w-45 absolute left-9.5' : 'w-62.5 relative',
-          compact && !isOpen && 'pl-35',
-          compact && (isOpen || !!currentPreset) && 'pl-0'
-        )
-      )}
-    >
+    <div ref={ref} className={classes.root}>
       <Input
         prefix={compact ? undefined : <ClockIcon />}
         prefixStyling={'pl-2.5'}
@@ -477,99 +611,21 @@ const CalendarCombobox = ({
             className={clsx('duration-200', isOpen && 'rotate-180')}
           />
         }
-        suffixStyling={clsx(
-          'cursor-pointer',
-          compact &&
-            !isOpen &&
-            (!currentPreset ||
-              (currentPreset?.start !== value?.start &&
-                currentPreset?.end !== value?.end)) &&
-            'w-10 !px-0'
-        )}
+        suffixStyling={classes.suffix}
         placeholder="Select Period"
         onFocus={onFocus}
         value={inputValue}
         onChange={onChangeInputValue}
-        wrapperClassName={clsx(
-          'hover:z-10',
-          stacked && !compact && 'rounded-b-none',
-          !stacked && !compact && 'rounded-r-none',
-          compact && 'rounded-l-none',
-          (isOpen ||
-            (compact &&
-              currentPreset &&
-              currentPreset?.start === value?.start &&
-              currentPreset?.end === value?.end)) &&
-            'z-10'
-        )}
-        className={clsx(
-          'pl-2 placeholder:text-gray-1000! placeholder:opacity-100!',
-          compact &&
-            !isOpen &&
-            (!currentPreset ||
-              (currentPreset?.start !== value?.start &&
-                currentPreset?.end !== value?.end)) &&
-            'w-0! px-0!'
-        )}
+        wrapperClassName={classes.wrapper}
+        className={classes.input}
       />
-      <Material
-        type="menu"
-        className={clsx(
-          'absolute z-50 top-12 left-0',
-          compact ? 'w-full' : 'grid grid-cols-2 w-[200%]',
-          isOpen && 'opacity-100',
-          !isOpen && 'opacity-0 pointer-events-none duration-200'
-        )}
-      >
-        <ul className="p-2 border-r border-r-gray-200">
-          {Object.entries(filteredPresets).length > 0 ? (
-            Object.entries(filteredPresets).map(([key, value]) => (
-              <li
-                key={key}
-                className="flex items-center cursor-pointer px-2 w-full h-9 rounded-md hover:bg-gray-alpha-300 active:bg-gray-alpha-300 font-sans text-sm text-gray-1000"
-                onClick={() => onClick(value)}
-              >
-                {value.text}
-              </li>
-            ))
-          ) : (
-            <li className="flex items-center cursor-pointer px-2 w-full h-9 rounded-md hover:bg-gray-alpha-300 active:bg-gray-alpha-300 font-sans text-sm text-gray-1000">
-              {inputValue}
-            </li>
-          )}
-        </ul>
-        {!compact && (
-          <div className="p-4 pr-7.5">
-            <div className="font-sans text-gray-900 text-sm">
-              Type relative times
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1">
-              {typeRelativeTimes.map(value => (
-                <button
-                  key={value.text}
-                  className="font-mono text-[13px] text-gray-1000 px-1.5 h-5 inline-flex items-center bg-accents-2 border-none rounded cursor-pointer"
-                  onClick={() => onClick(value)}
-                >
-                  {value.text}
-                </button>
-              ))}
-            </div>
-            <div className="font-sans text-gray-900 text-sm mt-4">
-              Type fixed times
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1">
-              {typeFixedTimes.map(value => (
-                <button
-                  key={value.text}
-                  className="font-mono text-[13px] text-gray-1000 px-1.5 h-5 inline-flex items-center bg-accents-2 border-none rounded cursor-pointer"
-                >
-                  {value.text}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </Material>
+      <CalendarPresetMenu
+        compact={compact}
+        filteredPresets={filteredPresets}
+        inputValue={inputValue}
+        isOpen={isOpen}
+        onSelect={onClick}
+      />
     </div>
   )
 }
@@ -602,6 +658,743 @@ interface CalendarProps {
   maxValue?: Date
 }
 
+function orderRange(
+  first: Date | null | undefined,
+  second: Date | null | undefined
+) {
+  if (!first || !second) return { start: null, end: null }
+  return first <= second
+    ? { start: first, end: second }
+    : { start: second, end: first }
+}
+
+function CalendarMonthGrid({
+  currentDate,
+  days,
+  hoverDate,
+  isSelecting,
+  maxValue,
+  minValue,
+  value,
+  onDateClick,
+  onDateHover,
+}: {
+  currentDate: Date
+  days: Date[]
+  hoverDate: Date | null
+  isSelecting: boolean
+  maxValue: Date | null
+  minValue: Date | null
+  value: RangeValue | null
+  onDateClick: (day: Date) => void
+  onDateHover: (day: Date) => void
+}) {
+  const committedRange = orderRange(value?.start, value?.end)
+  const hoverRange = orderRange(value?.start, hoverDate)
+
+  return (
+    <>
+      <div className="grid grid-cols-7 text-center text-xs text-gray-900 uppercase mb-2">
+        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((label, index) => (
+          <div key={`${label}-${index}`}>{label}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 items-center gap-y-2">
+        {days.map(day => {
+          const isStart = Boolean(value?.start && isSameDay(day, value.start))
+          const isEnd = Boolean(value?.end && isSameDay(day, value.end))
+          const currentHover = Boolean(
+            hoverDate && isSelecting && isSameDay(day, hoverDate)
+          )
+          const isInCommittedRange = Boolean(
+            committedRange.start &&
+            committedRange.end &&
+            isWithinInterval(day, committedRange as { start: Date; end: Date })
+          )
+          const isInHoverRange = Boolean(
+            isSelecting &&
+            hoverRange.start &&
+            hoverRange.end &&
+            isWithinInterval(day, hoverRange as { start: Date; end: Date })
+          )
+          const isInRange = isInCommittedRange || isInHoverRange
+          const isAllowedDate =
+            (!minValue || day >= minValue) && (!maxValue || day <= maxValue)
+
+          return (
+            <button
+              type="button"
+              key={day.toString()}
+              disabled={!isAllowedDate}
+              className={clsx(
+                'flex items-center justify-center text-sm text-center rounded transition',
+                isSameMonth(day, currentDate) && isAllowedDate
+                  ? 'bg-background-100 text-gray-1000'
+                  : 'bg-background-100 text-gray-700',
+                !isAllowedDate && 'opacity-30 grayscale',
+                isInRange &&
+                  !isStart &&
+                  !isEnd &&
+                  !currentHover &&
+                  'bg-accents-2! rounded-none',
+                isAllowedDate ? 'cursor-pointer' : 'cursor-not-allowed'
+              )}
+              onMouseEnter={() => isAllowedDate && onDateHover(day)}
+              onClick={() => isAllowedDate && onDateClick(day)}
+            >
+              <span
+                className={clsx(
+                  'h-8 w-8 flex items-center justify-center rounded',
+                  (isStart || isEnd || currentHover) &&
+                    isAllowedDate &&
+                    ' bg-gray-1000! text-background-100!',
+                  !isStart &&
+                    !isEnd &&
+                    !currentHover &&
+                    isAllowedDate &&
+                    'hover:text-gray-1000 hover:border hover:border-gray-alpha-500',
+                  currentHover &&
+                    isAllowedDate &&
+                    ' shadow-focus-calendar-date!'
+                )}
+              >
+                {format(day, 'd')}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
+function CalendarDateTimeControls({
+  endDate,
+  endDateError,
+  endTime,
+  endTimeError,
+  horizontalLayout,
+  selectedTimezone,
+  showTimeInput,
+  startDate,
+  startDateError,
+  startTime,
+  startTimeError,
+  timezones,
+  onApply,
+  onEndDateChange,
+  onEndTimeChange,
+  onStartDateChange,
+  onStartTimeChange,
+  onTimezoneChange,
+}: {
+  endDate: string
+  endDateError: boolean
+  endTime: string
+  endTimeError: boolean
+  horizontalLayout: boolean
+  selectedTimezone: string
+  showTimeInput: boolean
+  startDate: string
+  startDateError: boolean
+  startTime: string
+  startTimeError: boolean
+  timezones: { value: string; label: string }[]
+  onApply: () => void
+  onEndDateChange: (value: string) => void
+  onEndTimeChange: (value: string) => void
+  onStartDateChange: (value: string) => void
+  onStartTimeChange: (value: string) => void
+  onTimezoneChange: (value: string) => void
+}) {
+  return (
+    <div
+      className={clsx(
+        'flex flex-col gap-2',
+        horizontalLayout
+          ? 'justify-between'
+          : 'mt-3 -mx-3 px-3 pt-2.5 border-t border-gray-alpha-100'
+      )}
+    >
+      <div className="flex flex-col gap-2">
+        <CalendarDateTimeField
+          label="Start"
+          date={startDate}
+          dateError={startDateError}
+          time={startTime}
+          timeError={startTimeError}
+          showTimeInput={showTimeInput}
+          onDateChange={onStartDateChange}
+          onTimeChange={onStartTimeChange}
+        />
+        <CalendarDateTimeField
+          label="End"
+          date={endDate}
+          dateError={endDateError}
+          time={endTime}
+          timeError={endTimeError}
+          showTimeInput={showTimeInput}
+          onDateChange={onEndDateChange}
+          onTimeChange={onEndTimeChange}
+        />
+      </div>
+      <div className="flex flex-col gap-2">
+        <div className="font-medium flex flex-col">
+          <Button
+            type="secondary"
+            size="small"
+            suffix={<span className="mt-1 text-xs">↵</span>}
+            onClick={onApply}
+          >
+            Apply
+          </Button>
+        </div>
+        <div className="w-fit self-center">
+          <Select
+            size="xsmall"
+            variant="ghost"
+            options={timezones}
+            value={selectedTimezone}
+            onChange={event => onTimezoneChange(event.target.value)}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CalendarDateTimeField({
+  label,
+  date,
+  dateError,
+  time,
+  timeError,
+  showTimeInput,
+  onDateChange,
+  onTimeChange,
+}: {
+  label: string
+  date: string
+  dateError: boolean
+  time: string
+  timeError: boolean
+  showTimeInput: boolean
+  onDateChange: (value: string) => void
+  onTimeChange: (value: string) => void
+}) {
+  return (
+    <div>
+      <div className="text-[13px] text-gray-900 capitalize">{label}</div>
+      <div className="grid grid-cols-3 gap-2 mt-1">
+        <div className={showTimeInput ? 'col-span-2' : 'col-span-3'}>
+          <Input
+            size="small"
+            value={date}
+            onChange={onDateChange}
+            error={dateError}
+          />
+        </div>
+        {showTimeInput ? (
+          <Input
+            size="small"
+            value={time}
+            onChange={onTimeChange}
+            error={timeError}
+          />
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function getCalendarPresentationClasses({
+  compact,
+  horizontalLayout,
+  popoverAlignment,
+  presets,
+  stacked,
+}: {
+  compact: boolean
+  horizontalLayout: boolean
+  popoverAlignment: 'start' | 'center' | 'end'
+  presets: boolean
+  stacked: boolean
+}) {
+  return {
+    controls: clsx(
+      presets && 'flex',
+      presets && stacked && 'flex-col',
+      compact && 'w-55'
+    ),
+    trigger: clsx(
+      'justify-start! focus:border-transparent! focus:shadow-focus-input!',
+      presets && !stacked && !compact && 'rounded-l-none -ml-px',
+      presets && stacked && !compact && 'rounded-t-none -mt-px',
+      presets && compact && 'rounded-r-none -mr-px',
+      compact ? 'w-45 gap-1.5' : 'w-62.5'
+    ),
+    popover: twMerge(
+      clsx(
+        'p-3 font-sans absolute top-12 z-10',
+        horizontalLayout ? 'w-115.5' : 'w-70',
+        presets && !stacked && !compact && 'left-62.5',
+        presets && stacked && 'top-22',
+        popoverAlignment === 'center' && 'left-31.25 -translate-x-1/2',
+        popoverAlignment === 'end' && 'left-62.5 -translate-x-full'
+      )
+    ),
+    popoverContent: clsx(horizontalLayout && 'flex gap-5'),
+  }
+}
+
+function CalendarTrigger({
+  allowClear,
+  classes,
+  compact,
+  presets,
+  presetIndex,
+  selectedTimezone,
+  stacked,
+  value,
+  onChange,
+  onOpenChange,
+}: Pick<
+  CalendarProps,
+  | 'allowClear'
+  | 'compact'
+  | 'presets'
+  | 'presetIndex'
+  | 'stacked'
+  | 'value'
+  | 'onChange'
+> & {
+  classes: ReturnType<typeof getCalendarPresentationClasses>
+  selectedTimezone: string
+  onOpenChange: () => void
+}) {
+  return (
+    <div className={classes.controls}>
+      {presets ? (
+        <CalendarCombobox
+          stacked={stacked ?? false}
+          compact={compact ?? false}
+          presets={presets}
+          value={value}
+          onChange={onChange}
+          presetIndex={presetIndex}
+        />
+      ) : null}
+      <div className="flex justify-between items-center">
+        <div className="relative">
+          <Button
+            className={classes.trigger}
+            prefix={<CalendarIcon />}
+            type="secondary"
+            onClick={onOpenChange}
+          >
+            <div className="truncate pr-4">
+              {value?.start
+                ? formatDateRange(
+                    value.start,
+                    value.end ?? value.start,
+                    selectedTimezone
+                  )
+                : 'Select Date Range'}
+            </div>
+          </Button>
+          {allowClear && value?.start ? (
+            <Button
+              aria-label="Clear input value"
+              svgOnly
+              variant="unstyled"
+              className="absolute right-0 top-1/2 -translate-y-1/2 fill-gray-700 hover:fill-gray-1000"
+              onClick={() => onChange(null)}
+            >
+              <ClearIcon />
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CalendarPopover({
+  calendarRef,
+  classes,
+  currentDate,
+  days,
+  endDate,
+  endDateError,
+  endTime,
+  endTimeError,
+  horizontalLayout,
+  hoverDate,
+  isSelecting,
+  maxValue,
+  minValue,
+  selectedTimezone,
+  showTimeInput,
+  startDate,
+  startDateError,
+  startTime,
+  startTimeError,
+  timezones,
+  value,
+  onApply,
+  onDateClick,
+  onDateHover,
+  onEndDateChange,
+  onEndTimeChange,
+  onNextMonth,
+  onPreviousMonth,
+  onStartDateChange,
+  onStartTimeChange,
+  onTimezoneChange,
+}: {
+  calendarRef: RefObject<HTMLDivElement | null>
+  classes: ReturnType<typeof getCalendarPresentationClasses>
+  currentDate: Date
+  days: Date[]
+  endDate: string
+  endDateError: boolean
+  endTime: string
+  endTimeError: boolean
+  horizontalLayout: boolean
+  hoverDate: Date | null
+  isSelecting: boolean
+  maxValue: Date | null
+  minValue: Date | null
+  selectedTimezone: string
+  showTimeInput: boolean
+  startDate: string
+  startDateError: boolean
+  startTime: string
+  startTimeError: boolean
+  timezones: { value: string; label: string }[]
+  value: RangeValue | null
+  onApply: () => void
+  onDateClick: (day: Date) => void
+  onDateHover: (day: Date) => void
+  onEndDateChange: (value: string) => void
+  onEndTimeChange: (value: string) => void
+  onNextMonth: () => void
+  onPreviousMonth: () => void
+  onStartDateChange: (value: string) => void
+  onStartTimeChange: (value: string) => void
+  onTimezoneChange: (value: string) => void
+}) {
+  return (
+    <Material ref={calendarRef} type="menu" className={classes.popover}>
+      <div className={classes.popoverContent}>
+        <div>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-sm text-gray-1000 font-medium">
+              {formatInTimeZone(currentDate, selectedTimezone, 'MMMM yyyy')}
+            </h2>
+            <div className="flex gap-0.5">
+              <Button variant="unstyled" onClick={onPreviousMonth}>
+                <ArrowLeftIcon />
+              </Button>
+              <Button variant="unstyled" onClick={onNextMonth}>
+                <ArrowRightIcon />
+              </Button>
+            </div>
+          </div>
+          <CalendarMonthGrid
+            currentDate={currentDate}
+            days={days}
+            hoverDate={hoverDate}
+            isSelecting={isSelecting}
+            maxValue={maxValue}
+            minValue={minValue}
+            value={value}
+            onDateClick={onDateClick}
+            onDateHover={onDateHover}
+          />
+        </div>
+        <CalendarDateTimeControls
+          endDate={endDate}
+          endDateError={endDateError}
+          endTime={endTime}
+          endTimeError={endTimeError}
+          horizontalLayout={horizontalLayout}
+          selectedTimezone={selectedTimezone}
+          showTimeInput={showTimeInput}
+          startDate={startDate}
+          startDateError={startDateError}
+          startTime={startTime}
+          startTimeError={startTimeError}
+          timezones={timezones}
+          onApply={onApply}
+          onEndDateChange={onEndDateChange}
+          onEndTimeChange={onEndTimeChange}
+          onStartDateChange={onStartDateChange}
+          onStartTimeChange={onStartTimeChange}
+          onTimezoneChange={onTimezoneChange}
+        />
+      </div>
+    </Material>
+  )
+}
+
+function CalendarPresentation({
+  allowClear,
+  compact,
+  currentDate,
+  days,
+  endDate,
+  endDateError,
+  endTime,
+  endTimeError,
+  horizontalLayout,
+  hoverDate,
+  isOpen,
+  isSelecting,
+  maxValue,
+  minValue,
+  popoverAlignment,
+  presets,
+  presetIndex,
+  selectedTimezone,
+  showTimeInput,
+  stacked,
+  startDate,
+  startDateError,
+  startTime,
+  startTimeError,
+  timezones,
+  value,
+  calendarRef,
+  onApply,
+  onChange,
+  onDateClick,
+  onDateHover,
+  onEndDateChange,
+  onEndTimeChange,
+  onNextMonth,
+  onOpenChange,
+  onPreviousMonth,
+  onStartDateChange,
+  onStartTimeChange,
+  onTimezoneChange,
+}: CalendarProps & {
+  currentDate: Date
+  days: Date[]
+  endDate: string
+  endDateError: boolean
+  endTime: string
+  endTimeError: boolean
+  hoverDate: Date | null
+  isOpen: boolean
+  isSelecting: boolean
+  selectedTimezone: string
+  startDate: string
+  startDateError: boolean
+  startTime: string
+  startTimeError: boolean
+  timezones: { value: string; label: string }[]
+  calendarRef: RefObject<HTMLDivElement | null>
+  onApply: () => void
+  onDateClick: (day: Date) => void
+  onDateHover: (day: Date) => void
+  onEndDateChange: (value: string) => void
+  onEndTimeChange: (value: string) => void
+  onNextMonth: () => void
+  onOpenChange: () => void
+  onPreviousMonth: () => void
+  onStartDateChange: (value: string) => void
+  onStartTimeChange: (value: string) => void
+  onTimezoneChange: (value: string) => void
+}) {
+  const normalizedMinValue = minValue ? startOfDay(minValue) : null
+  const normalizedMaxValue = maxValue ? endOfDay(maxValue) : null
+  const classes = getCalendarPresentationClasses({
+    compact: compact ?? false,
+    horizontalLayout: horizontalLayout ?? false,
+    popoverAlignment: popoverAlignment ?? 'start',
+    presets: Boolean(presets),
+    stacked: stacked ?? false,
+  })
+
+  return (
+    <div className="relative">
+      <CalendarTrigger
+        allowClear={allowClear}
+        classes={classes}
+        compact={compact}
+        presets={presets}
+        presetIndex={presetIndex}
+        selectedTimezone={selectedTimezone}
+        stacked={stacked}
+        value={value}
+        onChange={onChange}
+        onOpenChange={onOpenChange}
+      />
+      {isOpen ? (
+        <CalendarPopover
+          calendarRef={calendarRef}
+          classes={classes}
+          currentDate={currentDate}
+          days={days}
+          endDate={endDate}
+          endDateError={endDateError}
+          endTime={endTime}
+          endTimeError={endTimeError}
+          horizontalLayout={horizontalLayout ?? false}
+          hoverDate={hoverDate}
+          isSelecting={isSelecting}
+          maxValue={normalizedMaxValue}
+          minValue={normalizedMinValue}
+          selectedTimezone={selectedTimezone}
+          showTimeInput={showTimeInput ?? true}
+          startDate={startDate}
+          startDateError={startDateError}
+          startTime={startTime}
+          startTimeError={startTimeError}
+          timezones={timezones}
+          value={value}
+          onApply={onApply}
+          onDateClick={onDateClick}
+          onDateHover={onDateHover}
+          onEndDateChange={onEndDateChange}
+          onEndTimeChange={onEndTimeChange}
+          onNextMonth={onNextMonth}
+          onPreviousMonth={onPreviousMonth}
+          onStartDateChange={onStartDateChange}
+          onStartTimeChange={onStartTimeChange}
+          onTimezoneChange={onTimezoneChange}
+        />
+      ) : null}
+    </div>
+  )
+}
+
+function getCalendarMonthDays(currentDate: Date) {
+  const days: Date[] = []
+  let day = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 })
+  const finalDay = endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 })
+  while (day <= finalDay) {
+    days.push(day)
+    day = addDays(day, 1)
+  }
+  return days
+}
+
+function getDateSelection(
+  day: Date,
+  isSelecting: boolean,
+  value: RangeValue | null
+) {
+  if (!isSelecting || !value?.start) {
+    return {
+      value: { start: startOfDay(day), end: null },
+      selecting: true,
+    }
+  }
+
+  const range = orderRange(day, value.start)
+  return {
+    value: {
+      start: startOfDay(range.start ?? day),
+      end: endOfDay(range.end ?? day),
+    },
+    selecting: false,
+  }
+}
+
+function parseCalendarFields({
+  endDate,
+  endTime,
+  selectedTimezone,
+  startDate,
+  startTime,
+}: {
+  endDate: string
+  endTime: string
+  selectedTimezone: string
+  startDate: string
+  startTime: string
+}) {
+  const parsedFields = {
+    startDate: parse(startDate, 'MMM dd, yyyy', new Date()),
+    startTime: parse(startTime, 'HH:mm', new Date()),
+    endDate: parse(endDate, 'MMM dd, yyyy', new Date()),
+    endTime: parse(endTime, 'HH:mm', new Date()),
+  }
+  const errors = {
+    startDate: !isValid(parsedFields.startDate),
+    startTime: !isValid(parsedFields.startTime),
+    endDate: !isValid(parsedFields.endDate),
+    endTime: !isValid(parsedFields.endTime),
+  }
+  const hasError = Object.values(errors).some(Boolean)
+  if (hasError) return { errors, value: null }
+
+  return {
+    errors,
+    value: {
+      start: fromZonedTime(
+        parse(`${startDate} ${startTime}`, 'MMM d, yyyy HH:mm', new Date()),
+        selectedTimezone
+      ),
+      end: fromZonedTime(
+        parse(`${endDate} ${endTime}`, 'MMM d, yyyy HH:mm', new Date()),
+        selectedTimezone
+      ),
+    },
+  }
+}
+
+function getCalendarInputValues(
+  value: RangeValue | null,
+  selectedTimezone: string
+) {
+  const now = new Date()
+  return {
+    startDate: formatInTimeZone(
+      value?.start ?? now,
+      selectedTimezone,
+      'MMM dd, yyyy'
+    ),
+    startTime: formatInTimeZone(
+      value?.start ?? startOfDay(now),
+      selectedTimezone,
+      'HH:mm'
+    ),
+    endDate: formatInTimeZone(
+      value?.end ?? now,
+      selectedTimezone,
+      'MMM dd, yyyy'
+    ),
+    endTime: formatInTimeZone(
+      value?.end ?? endOfDay(now),
+      selectedTimezone,
+      'HH:mm'
+    ),
+  }
+}
+
+function calendarSyncChanged(
+  previous: {
+    value: RangeValue | null
+    selectedTimezone: string
+    isOpen: boolean
+  },
+  next: {
+    value: RangeValue | null
+    selectedTimezone: string
+    isOpen: boolean
+  }
+) {
+  return (
+    previous.value?.start?.getTime() !== next.value?.start?.getTime() ||
+    previous.value?.end?.getTime() !== next.value?.end?.getTime() ||
+    previous.selectedTimezone !== next.selectedTimezone ||
+    previous.isOpen !== next.isOpen
+  )
+}
+
 export const Calendar = ({
   allowClear = false,
   compact = false,
@@ -618,43 +1411,40 @@ export const Calendar = ({
   maxValue,
 }: CalendarProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
-  const [currentDate, setCurrentDate] = useState<Date>(new Date())
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date())
   const [hoverDate, setHoverDate] = useState<Date | null>(null)
   const [isSelecting, setIsSelecting] = useState<boolean>(false)
-  const timezones = useMemo(
-    () => [
-      {
-        value: 'UTC',
-        label: 'UTC',
-      },
-      {
-        value: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        label: `Local (${Intl.DateTimeFormat().resolvedOptions().timeZone})`,
-      },
-    ],
-    []
-  )
+  const timezones = [
+    {
+      value: 'UTC',
+      label: 'UTC',
+    },
+    {
+      value: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      label: `Local (${Intl.DateTimeFormat().resolvedOptions().timeZone})`,
+    },
+  ]
   const [selectedTimezone, setSelectedTimezone] = useState(
-    timezones[1]?.value ?? timezones[0]?.value ?? 'UTC'
+    () => timezones[1]?.value ?? timezones[0]?.value ?? 'UTC'
   )
-  const [startDate, setStartDate] = useState<string>(
+  const [startDate, setStartDate] = useState<string>(() =>
     formatInTimeZone(
       value?.start || new Date(),
       selectedTimezone,
       'MMM dd, yyyy'
     )
   )
-  const [startTime, setStartTime] = useState<string>(
+  const [startTime, setStartTime] = useState<string>(() =>
     formatInTimeZone(
       startOfDay(value?.start || new Date()),
       selectedTimezone,
       'HH:mm'
     )
   )
-  const [endDate, setEndDate] = useState<string>(
+  const [endDate, setEndDate] = useState<string>(() =>
     formatInTimeZone(value?.end || new Date(), selectedTimezone, 'MMM dd, yyyy')
   )
-  const [endTime, setEndTime] = useState<string>(
+  const [endTime, setEndTime] = useState<string>(() =>
     formatInTimeZone(
       endOfDay(value?.end || new Date()),
       selectedTimezone,
@@ -685,28 +1475,14 @@ export const Calendar = ({
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1))
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1))
 
-  const daysArray = []
-  let day = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 })
-  while (day <= endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 })) {
-    daysArray.push(day)
-    day = addDays(day, 1)
-  }
+  const daysArray = getCalendarMonthDays(currentDate)
 
   const handleDateClick = (day: Date) => {
-    if (!isSelecting) {
-      onChange({ start: startOfDay(day), end: null })
-      setHoverDate(day)
-      setIsSelecting(true)
-    } else if (value?.start) {
-      if (day > value.start) {
-        onChange({ ...value, end: endOfDay(day) })
-      } else {
-        onChange({ start: startOfDay(day), end: endOfDay(value.start) })
-      }
-      setIsSelecting(false)
-      setHoverDate(null)
-      setIsOpen(false)
-    }
+    const selection = getDateSelection(day, isSelecting, value)
+    onChange(selection.value)
+    setIsSelecting(selection.selecting)
+    setHoverDate(selection.selecting ? day : null)
+    if (!selection.selecting) setIsOpen(false)
   }
 
   const handleMouseEnter = (day: Date) => {
@@ -721,41 +1497,18 @@ export const Calendar = ({
   }
 
   const onApply = () => {
-    const parsedStartDate = parse(startDate, 'MMM dd, yyyy', new Date())
-    const parsedStartTime = parse(startTime || '', 'HH:mm', new Date())
-    const parsedEndDate = parse(endDate, 'MMM dd, yyyy', new Date())
-    const parsedEndTime = parse(endTime || '', 'HH:mm', new Date())
-
-    if (
-      parsedStartDate.toString() === 'Invalid Date' ||
-      parsedStartTime.toString() === 'Invalid Date' ||
-      parsedEndDate.toString() === 'Invalid Date' ||
-      parsedEndTime.toString() === 'Invalid Date'
-    ) {
-      setStartDateError(parsedStartDate.toString() === 'Invalid Date')
-      setStartTimeError(parsedStartTime.toString() === 'Invalid Date')
-      setEndDateError(parsedEndDate.toString() === 'Invalid Date')
-      setEndTimeError(parsedEndTime.toString() === 'Invalid Date')
-    } else {
-      setStartDateError(false)
-      setStartTimeError(false)
-      setEndDateError(false)
-      setEndTimeError(false)
-      const parsedStart = parse(
-        `${startDate} ${startTime}`,
-        'MMM d, yyyy HH:mm',
-        new Date()
-      )
-      const parsedEnd = parse(
-        `${endDate} ${endTime}`,
-        'MMM d, yyyy HH:mm',
-        new Date()
-      )
-      onChange({
-        start: fromZonedTime(parsedStart, selectedTimezone),
-        end: fromZonedTime(parsedEnd, selectedTimezone),
-      })
-    }
+    const result = parseCalendarFields({
+      endDate,
+      endTime,
+      selectedTimezone,
+      startDate,
+      startTime,
+    })
+    setStartDateError(result.errors.startDate)
+    setStartTimeError(result.errors.startTime)
+    setEndDateError(result.errors.endDate)
+    setEndTimeError(result.errors.endTime)
+    if (result.value) onChange(result.value)
   }
 
   const [prevValueSync, setPrevValueSync] = useState({
@@ -763,324 +1516,57 @@ export const Calendar = ({
     selectedTimezone,
     isOpen,
   })
-  if (
-    value?.start?.getTime() !== prevValueSync.value?.start?.getTime() ||
-    value?.end?.getTime() !== prevValueSync.value?.end?.getTime() ||
-    selectedTimezone !== prevValueSync.selectedTimezone ||
-    isOpen !== prevValueSync.isOpen
-  ) {
-    setPrevValueSync({ value, selectedTimezone, isOpen })
-    setStartDate(
-      formatInTimeZone(
-        value?.start || new Date(),
-        selectedTimezone,
-        'MMM dd, yyyy'
-      )
-    )
-    setStartTime(
-      formatInTimeZone(
-        value?.start || startOfDay(new Date()),
-        selectedTimezone,
-        'HH:mm'
-      )
-    )
-    setEndDate(
-      formatInTimeZone(
-        value?.end || new Date(),
-        selectedTimezone,
-        'MMM dd, yyyy'
-      )
-    )
-    setEndTime(
-      formatInTimeZone(
-        value?.end || endOfDay(new Date()),
-        selectedTimezone,
-        'HH:mm'
-      )
-    )
+  const nextSync = { value, selectedTimezone, isOpen }
+  if (calendarSyncChanged(prevValueSync, nextSync)) {
+    const inputs = getCalendarInputValues(value, selectedTimezone)
+    setPrevValueSync(nextSync)
+    setStartDate(inputs.startDate)
+    setStartTime(inputs.startTime)
+    setEndDate(inputs.endDate)
+    setEndTime(inputs.endTime)
   }
 
   return (
-    <div className="relative">
-      <div
-        className={clsx(
-          presets && 'flex',
-          presets && stacked && 'flex-col',
-          compact && 'w-55'
-        )}
-      >
-        {presets && (
-          <div>
-            <CalendarCombobox
-              stacked={stacked}
-              compact={compact}
-              presets={presets}
-              value={value}
-              onChange={onChange}
-              presetIndex={presetIndex}
-            />
-          </div>
-        )}
-        <div className="flex justify-between items-center">
-          <div className="relative">
-            <Button
-              className={clsx(
-                'justify-start! focus:border-transparent! focus:shadow-focus-input!',
-                presets && !stacked && !compact && 'rounded-l-none -ml-px',
-                presets && stacked && !compact && 'rounded-t-none -mt-px',
-                presets && compact && 'rounded-r-none -mr-px',
-                compact ? 'w-45 gap-1.5' : 'w-62.5'
-              )}
-              prefix={<CalendarIcon />}
-              type="secondary"
-              onClick={() => setIsOpen(prevState => !prevState)}
-            >
-              <div className="truncate pr-4">
-                {value?.start
-                  ? formatDateRange(
-                      value.start,
-                      value.end ?? value.start,
-                      selectedTimezone
-                    )
-                  : 'Select Date Range'}
-              </div>
-            </Button>
-            {allowClear && value?.start && (
-              <Button
-                aria-label="Clear input value"
-                svgOnly
-                variant="unstyled"
-                className="absolute right-0 top-1/2 -translate-y-1/2 fill-gray-700 hover:fill-gray-1000"
-                onClick={() => onChange(null)}
-              >
-                <ClearIcon />
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-      {isOpen && (
-        <Material
-          ref={calendarRef}
-          type="menu"
-          className={twMerge(
-            clsx(
-              'p-3 font-sans absolute top-12 z-10',
-              horizontalLayout ? 'w-115.5' : 'w-70',
-              presets && !stacked && !compact && 'left-62.5',
-              presets && stacked && 'top-22',
-              popoverAlignment === 'center' && 'left-31.25 -translate-x-1/2',
-              popoverAlignment === 'end' && 'left-62.5 -translate-x-full'
-            )
-          )}
-        >
-          <div className={clsx(horizontalLayout && 'flex gap-5')}>
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <h2 className="text-sm text-gray-1000 font-medium">
-                  {formatInTimeZone(currentDate, selectedTimezone, 'MMMM yyyy')}
-                </h2>
-                <div className="flex gap-0.5">
-                  <Button variant="unstyled" onClick={prevMonth}>
-                    <ArrowLeftIcon />
-                  </Button>
-                  <Button variant="unstyled" onClick={nextMonth}>
-                    <ArrowRightIcon />
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-7 text-center text-xs text-gray-900 uppercase mb-2">
-                <div>M</div>
-                <div>T</div>
-                <div>W</div>
-                <div>T</div>
-                <div>F</div>
-                <div>S</div>
-                <div>S</div>
-              </div>
-              <div className="grid grid-cols-7 items-center gap-y-2">
-                {daysArray.map(day => {
-                  const isStart = value?.start && isSameDay(day, value.start)
-                  const isEnd = value?.end && isSameDay(day, value.end)
-                  const currentHover =
-                    hoverDate && isSelecting && isSameDay(day, hoverDate)
-
-                  const committedRangeStart =
-                    value?.start && value?.end
-                      ? value.start <= value.end
-                        ? value.start
-                        : value.end
-                      : null
-                  const committedRangeEnd =
-                    value?.start && value?.end
-                      ? value.start <= value.end
-                        ? value.end
-                        : value.start
-                      : null
-
-                  const hoverRangeStart =
-                    value?.start && hoverDate
-                      ? value.start <= hoverDate
-                        ? value.start
-                        : hoverDate
-                      : null
-                  const hoverRangeEnd =
-                    value?.start && hoverDate
-                      ? value.start <= hoverDate
-                        ? hoverDate
-                        : value.start
-                      : null
-
-                  const isInCommittedRange =
-                    committedRangeStart && committedRangeEnd
-                      ? isWithinInterval(day, {
-                          start: committedRangeStart,
-                          end: committedRangeEnd,
-                        })
-                      : false
-
-                  const isInHoverRange =
-                    isSelecting && hoverRangeStart && hoverRangeEnd
-                      ? isWithinInterval(day, {
-                          start: hoverRangeStart,
-                          end: hoverRangeEnd,
-                        })
-                      : false
-
-                  const isInRange = isInCommittedRange || isInHoverRange
-                  const isAllowedDate =
-                    (normalizedMinValue ? day >= normalizedMinValue : true) &&
-                    (normalizedMaxValue ? day <= normalizedMaxValue : true)
-
-                  return (
-                    <div
-                      key={day.toString()}
-                      className={clsx(
-                        'flex items-center justify-center text-sm text-center rounded transition',
-                        isSameMonth(day, currentDate) && isAllowedDate
-                          ? 'bg-background-100 text-gray-1000'
-                          : 'bg-background-100 text-gray-700',
-                        !isAllowedDate && 'opacity-30 grayscale',
-                        isInRange &&
-                          !isStart &&
-                          !isEnd &&
-                          !currentHover &&
-                          'bg-accents-2! rounded-none',
-                        isAllowedDate ? 'cursor-pointer' : 'cursor-not-allowed'
-                      )}
-                      onMouseEnter={() =>
-                        isAllowedDate && handleMouseEnter(day)
-                      }
-                      onClick={() => isAllowedDate && handleDateClick(day)}
-                    >
-                      <div
-                        className={clsx(
-                          'h-8 w-8 flex items-center justify-center rounded',
-                          (isStart || isEnd || currentHover) &&
-                            isAllowedDate &&
-                            ' bg-gray-1000! text-background-100!',
-                          !isStart &&
-                            !isEnd &&
-                            !currentHover &&
-                            isAllowedDate &&
-                            'hover:text-gray-1000 hover:border hover:border-gray-alpha-500',
-                          currentHover &&
-                            isAllowedDate &&
-                            ' shadow-focus-calendar-date!'
-                        )}
-                      >
-                        {format(day, 'd')}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-            <div
-              className={clsx(
-                'flex flex-col gap-2',
-                horizontalLayout
-                  ? 'justify-between'
-                  : 'mt-3 -mx-3 px-3 pt-2.5 border-t border-gray-alpha-100'
-              )}
-            >
-              <div className="flex flex-col gap-2">
-                <div>
-                  <div className="text-[13px] text-gray-900 capitalize">
-                    Start
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 mt-1">
-                    <div
-                      className={showTimeInput ? 'col-span-2' : 'col-span-3'}
-                    >
-                      <Input
-                        size="small"
-                        value={startDate}
-                        onChange={value => setStartDate(value)}
-                        error={startDateError}
-                      />
-                    </div>
-                    {showTimeInput && (
-                      <Input
-                        size="small"
-                        value={startTime}
-                        onChange={value => setStartTime(value)}
-                        error={startTimeError}
-                      />
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[13px] text-gray-900 capitalize">
-                    End
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 mt-1">
-                    <div
-                      className={showTimeInput ? 'col-span-2' : 'col-span-3'}
-                    >
-                      <Input
-                        size="small"
-                        value={endDate}
-                        onChange={value => setEndDate(value)}
-                        error={endDateError}
-                      />
-                    </div>
-                    {showTimeInput && (
-                      <Input
-                        size="small"
-                        value={endTime}
-                        onChange={value => setEndTime(value)}
-                        error={endTimeError}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="font-medium flex flex-col">
-                  <Button
-                    type="secondary"
-                    size="small"
-                    suffix={<span className="mt-1 text-xs">↵</span>}
-                    onClick={onApply}
-                  >
-                    Apply
-                  </Button>
-                </div>
-                <div className="w-fit self-center">
-                  <Select
-                    size="xsmall"
-                    variant="ghost"
-                    options={timezones}
-                    value={selectedTimezone}
-                    onChange={event => setSelectedTimezone(event.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </Material>
-      )}
-    </div>
+    <CalendarPresentation
+      allowClear={allowClear}
+      compact={compact}
+      currentDate={currentDate}
+      days={daysArray}
+      endDate={endDate}
+      endDateError={endDateError}
+      endTime={endTime}
+      endTimeError={endTimeError}
+      horizontalLayout={horizontalLayout}
+      hoverDate={hoverDate}
+      isOpen={isOpen}
+      isSelecting={isSelecting}
+      maxValue={normalizedMaxValue ?? undefined}
+      minValue={normalizedMinValue ?? undefined}
+      popoverAlignment={popoverAlignment}
+      presets={presets}
+      presetIndex={presetIndex}
+      selectedTimezone={selectedTimezone}
+      showTimeInput={showTimeInput}
+      stacked={stacked}
+      startDate={startDate}
+      startDateError={startDateError}
+      startTime={startTime}
+      startTimeError={startTimeError}
+      timezones={timezones}
+      value={value}
+      calendarRef={calendarRef}
+      onApply={onApply}
+      onChange={onChange}
+      onDateClick={handleDateClick}
+      onDateHover={handleMouseEnter}
+      onEndDateChange={setEndDate}
+      onEndTimeChange={setEndTime}
+      onNextMonth={nextMonth}
+      onOpenChange={() => setIsOpen(previous => !previous)}
+      onPreviousMonth={prevMonth}
+      onStartDateChange={setStartDate}
+      onStartTimeChange={setStartTime}
+      onTimezoneChange={setSelectedTimezone}
+    />
   )
 }

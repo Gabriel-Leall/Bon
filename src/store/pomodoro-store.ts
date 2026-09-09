@@ -30,7 +30,7 @@ import { devtools } from 'zustand/middleware'
 import { commands } from '@/lib/tauri-bindings'
 import { logger } from '@/lib/logger'
 import { recordProductUsage } from '@/lib/product-usage'
-import { notifications } from '@/lib/notifications'
+import { notifications, notify } from '@/lib/notifications'
 import i18n from '@/i18n/config'
 
 import type {
@@ -542,7 +542,11 @@ export const usePomodoroStore = create<PomodoroStoreState>()(
               })
 
           // Send native notification for background support
-          void notifications.success(title, body, true)
+          void notify(title, body, {
+            type: 'success',
+            native: true,
+            target: { kind: 'focus' },
+          })
           // Also send toast for in-app feedback if app is focused
           void notifications.success(title, body, false)
         }

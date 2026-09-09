@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { Activity, Minus, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import {
   completionRate,
@@ -464,48 +465,49 @@ function TaskActivityStack({
   )
 }
 
-export default function AnalyticsPage() {
-  const { t, i18n } = useTranslation()
-  const period = useAnalyticsStore(state => state.period)
-  const loadData = useAnalyticsStore(state => state.loadData)
-  const summary = useAnalyticsStore(state => state.summary)
-  const previousSummary = useAnalyticsStore(state => state.previousSummary)
-  const focusTimeData = useAnalyticsStore(state => state.focusTimeData)
-  const taskCountData = useAnalyticsStore(state => state.taskCountData)
-  const pomodoroSummary = useAnalyticsStore(state => state.pomodoroSummary)
-  const habitLogs = useAnalyticsStore(state => state.habitLogs)
-  const isLoading = useAnalyticsStore(state => state.isLoading)
+type AnalyticsState = ReturnType<typeof useAnalyticsStore.getState>
 
-  useEffect(() => {
-    void loadData()
-  }, [loadData])
-
-  const periodRange = useMemo(() => getPeriodRange(period), [period])
-
-  const filledFocusData = useMemo(() => {
-    const rows = fillMissingDays(
-      focusTimeData,
-      periodRange.start,
-      periodRange.end
-    )
-    return rows.map(row => ({
-      day: row.day as string,
-      total_seconds: (row.total_seconds as number) ?? 0,
-    }))
-  }, [focusTimeData, periodRange.end, periodRange.start])
-
-  const filledTaskData = useMemo(() => {
-    const rows = fillMissingDays(
-      taskCountData,
-      periodRange.start,
-      periodRange.end
-    )
-    return rows.map(row => ({
-      day: row.day as string,
-      created: (row.created as number) ?? 0,
-      completed: (row.completed as number) ?? 0,
-    }))
-  }, [periodRange.end, periodRange.start, taskCountData])
+function buildAnalyticsViewModel({
+  period,
+  summary,
+  previousSummary,
+  focusTimeData,
+  taskCountData,
+  pomodoroSummary,
+  habitLogs,
+  locale,
+  t,
+}: Pick<
+  AnalyticsState,
+  | 'period'
+  | 'summary'
+  | 'previousSummary'
+  | 'focusTimeData'
+  | 'taskCountData'
+  | 'pomodoroSummary'
+  | 'habitLogs'
+> & {
+  locale: string
+  t: TFunction
+}) {
+  const periodRange = getPeriodRange(period)
+  const filledFocusData = fillMissingDays(
+    focusTimeData,
+    periodRange.start,
+    periodRange.end
+  ).map(row => ({
+    day: row.day as string,
+    total_seconds: (row.total_seconds as number) ?? 0,
+  }))
+  const filledTaskData = fillMissingDays(
+    taskCountData,
+    periodRange.start,
+    periodRange.end
+  ).map(row => ({
+    day: row.day as string,
+    created: (row.created as number) ?? 0,
+    completed: (row.completed as number) ?? 0,
+  }))
 
   const focusComparison = compareAnalyticsPeriods(
     summary?.total_focus_seconds ?? 0,
@@ -523,13 +525,13 @@ export default function AnalyticsPage() {
     summary?.days_active ?? 0,
     previousSummary?.days_active ?? 0
   )
-
-  const focusSessions = pomodoroSummary.find(s => s.session_type === 'focus')
-  const avgSessionMinutes =
+  const focusSessions = pomodoroSummary.find(
+    session => session.session_type === 'focus'
+  )
+  const averageSessionMinutes =
     focusSessions && focusSessions.sessions > 0
       ? Math.round(focusSessions.total_seconds / focusSessions.sessions / 60)
       : 0
-
   const trackedDays = Math.max(filledFocusData.length, 1)
   const focusTargetRatio = Math.min(
     (summary?.total_focus_seconds ?? 0) / (trackedDays * 45 * 60),
@@ -548,44 +550,110 @@ export default function AnalyticsPage() {
       Math.max(Math.round(trackedDays * 0.35), 1),
     1
   )
-
   const focusScore = Math.round(
     focusTargetRatio * 35 +
       taskFlowRatio * 30 +
       activeCadenceRatio * 20 +
       habitStreakRatio * 15
   )
-  const hasRecordedActivity =
+  const hasRecordedActivity = Boolean(
     (summary?.total_focus_seconds ?? 0) > 0 ||
     (summary?.tasks_created ?? 0) > 0 ||
     (summary?.tasks_completed ?? 0) > 0 ||
     (summary?.pomodoros_completed ?? 0) > 0 ||
     (summary?.days_active ?? 0) > 0 ||
     habitLogs.length > 0
-
+  )
+  const focusGrade = hasRecordedActivity ? gradeFromScore(focusScore) : '—'
   const analyticsSignals = [
     { key: 'focusDepth', ratio: focusTargetRatio },
     { key: 'taskFlow', ratio: taskFlowRatio },
     { key: 'activeCadence', ratio: activeCadenceRatio },
     { key: 'habitMomentum', ratio: habitStreakRatio },
   ] satisfies AnalyticsSignal[]
-  const insight = buildAnalyticsInsight({
-    score: focusScore,
-    signals: analyticsSignals,
-    hasData: hasRecordedActivity,
-  })
-  const focusGrade = hasRecordedActivity ? gradeFromScore(focusScore) : '—'
 
-  const compLabel = comparisonLabel(period, t)
-  const taskActivityBuckets = buildTaskActivityBuckets({
-    data: filledTaskData,
+  return {
+    analyticsSignals,
+    focusScore,
+    focusGrade,
+    insight: buildAnalyticsInsight({
+      score: focusScore,
+      signals: analyticsSignals,
+      hasData: hasRecordedActivity,
+    }),
+    compLabel: comparisonLabel(period, t),
+    taskActivityBuckets: buildTaskActivityBuckets({
+      data: filledTaskData,
+      period,
+      locale,
+    }),
+    taskCompletionRate: Math.min(
+      100,
+      completionRate(summary?.tasks_created ?? 0, summary?.tasks_completed ?? 0)
+    ),
+    focusStat: {
+      value: formatDuration(summary?.total_focus_seconds ?? 0),
+      subtitle: summary?.top_productivity_day
+        ? t('analytics.stat.peak', {
+            day: new Date(summary.top_productivity_day).toLocaleDateString(
+              locale,
+              { weekday: 'long' }
+            ),
+          })
+        : undefined,
+      comparison: focusComparison,
+    },
+    taskStat: {
+      value: summary?.tasks_completed ?? 0,
+      subtitle: t('analytics.stat.itemsCreated', {
+        count: summary?.tasks_created ?? 0,
+      }),
+      comparison: taskComparison,
+    },
+    pomodoroStat: {
+      value: summary?.pomodoros_completed ?? 0,
+      subtitle:
+        averageSessionMinutes > 0
+          ? t('analytics.stat.avgSession', {
+              minutes: averageSessionMinutes,
+            })
+          : undefined,
+      comparison: pomodoroComparison,
+    },
+    activeDaysStat: {
+      value: summary?.days_active ?? 0,
+      comparison: activeDaysComparison,
+    },
+  }
+}
+
+export default function AnalyticsPage() {
+  const { t, i18n } = useTranslation()
+  const period = useAnalyticsStore(state => state.period)
+  const loadData = useAnalyticsStore(state => state.loadData)
+  const summary = useAnalyticsStore(state => state.summary)
+  const previousSummary = useAnalyticsStore(state => state.previousSummary)
+  const focusTimeData = useAnalyticsStore(state => state.focusTimeData)
+  const taskCountData = useAnalyticsStore(state => state.taskCountData)
+  const pomodoroSummary = useAnalyticsStore(state => state.pomodoroSummary)
+  const habitLogs = useAnalyticsStore(state => state.habitLogs)
+  const isLoading = useAnalyticsStore(state => state.isLoading)
+
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
+
+  const viewModel = buildAnalyticsViewModel({
     period,
+    summary,
+    previousSummary,
+    focusTimeData,
+    taskCountData,
+    pomodoroSummary,
+    habitLogs,
     locale: i18n.language,
+    t,
   })
-  const taskCompletionRate = Math.min(
-    100,
-    completionRate(summary?.tasks_created ?? 0, summary?.tasks_completed ?? 0)
-  )
 
   return (
     <div className="h-full overflow-y-auto bg-background">
@@ -609,10 +677,10 @@ export default function AnalyticsPage() {
           )}
         >
           <AnalysisSummary
-            insight={insight}
-            score={focusScore}
-            grade={focusGrade}
-            signals={analyticsSignals}
+            insight={viewModel.insight}
+            score={viewModel.focusScore}
+            grade={viewModel.focusGrade}
+            signals={viewModel.analyticsSignals}
           />
 
           <section className="py-2">
@@ -627,59 +695,41 @@ export default function AnalyticsPage() {
             <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <StatBox
                 title={t('analytics.stat.focusTime')}
-                value={formatDuration(summary?.total_focus_seconds ?? 0)}
-                subtitle={
-                  summary?.top_productivity_day
-                    ? t('analytics.stat.peak', {
-                        day: new Date(
-                          summary.top_productivity_day
-                        ).toLocaleDateString(i18n.language, {
-                          weekday: 'long',
-                        }),
-                      })
-                    : undefined
-                }
-                comparison={focusComparison}
-                deltaLabel={compLabel}
+                value={viewModel.focusStat.value}
+                subtitle={viewModel.focusStat.subtitle}
+                comparison={viewModel.focusStat.comparison}
+                deltaLabel={viewModel.compLabel}
               />
 
               <StatBox
                 title={t('analytics.stat.tasksCompleted')}
-                value={summary?.tasks_completed ?? 0}
-                subtitle={t('analytics.stat.itemsCreated', {
-                  count: summary?.tasks_created ?? 0,
-                })}
-                comparison={taskComparison}
-                deltaLabel={compLabel}
+                value={viewModel.taskStat.value}
+                subtitle={viewModel.taskStat.subtitle}
+                comparison={viewModel.taskStat.comparison}
+                deltaLabel={viewModel.compLabel}
               />
 
               <StatBox
                 title={t('analytics.stat.pomodoros')}
-                value={summary?.pomodoros_completed ?? 0}
-                subtitle={
-                  avgSessionMinutes > 0
-                    ? t('analytics.stat.avgSession', {
-                        minutes: avgSessionMinutes,
-                      })
-                    : undefined
-                }
-                comparison={pomodoroComparison}
-                deltaLabel={compLabel}
+                value={viewModel.pomodoroStat.value}
+                subtitle={viewModel.pomodoroStat.subtitle}
+                comparison={viewModel.pomodoroStat.comparison}
+                deltaLabel={viewModel.compLabel}
               />
 
               <StatBox
                 title={t('analytics.stat.daysActive')}
-                value={summary?.days_active ?? 0}
+                value={viewModel.activeDaysStat.value}
                 subtitle={t('analytics.stat.daysActiveSubtitle')}
-                comparison={activeDaysComparison}
-                deltaLabel={compLabel}
+                comparison={viewModel.activeDaysStat.comparison}
+                deltaLabel={viewModel.compLabel}
               />
             </div>
           </section>
 
           <TaskActivityStack
-            buckets={taskActivityBuckets}
-            rate={taskCompletionRate}
+            buckets={viewModel.taskActivityBuckets}
+            rate={viewModel.taskCompletionRate}
           />
         </div>
       </div>

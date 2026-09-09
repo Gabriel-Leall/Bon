@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { listen } from '@tauri-apps/api/event'
+import { onAction } from '@tauri-apps/plugin-notification'
 import { useCommandContext } from './use-command-context'
 import { useKeyboardShortcuts } from './use-keyboard-shortcuts'
 import { useUIStore } from '@/store/ui-store'
@@ -9,6 +10,29 @@ import { useNotesStore } from '@/store/notes-store'
 import { useHabitsStore } from '@/store/habits-store'
 import { useCalendarStore } from '@/store/calendar-store'
 import type { CapturePaneCreatedPayload } from '@/lib/capture-pane-domain'
+import {
+  decodeAxisNotificationTarget,
+  revealMainWindow,
+  routeAxisNotificationTarget,
+} from '@/lib/notification-target'
+
+async function handleNativeNotificationAction(
+  extra: Record<string, unknown> | undefined
+) {
+  const target = decodeAxisNotificationTarget(extra)
+  if (!target) return
+
+  try {
+    await revealMainWindow()
+  } catch (error) {
+    logger.warn('Failed to reveal main window from notification', {
+      error,
+      target,
+    })
+  }
+
+  routeAxisNotificationTarget(target)
+}
 
 /**
  * Main window event listeners - handles global keyboard shortcuts and cross-window events.
@@ -112,6 +136,32 @@ export function useMainWindowEventListeners() {
       if (unlisten) {
         unlisten()
       }
+    }
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+    let actionListener: { unregister: () => void } | null = null
+
+    onAction(notification => {
+      void handleNativeNotificationAction(notification.extra)
+    })
+      .then(listener => {
+        if (!isMounted) {
+          listener.unregister()
+        } else {
+          actionListener = listener
+        }
+      })
+      .catch(error => {
+        logger.error('Failed to setup native notification action listener', {
+          error,
+        })
+      })
+
+    return () => {
+      isMounted = false
+      actionListener?.unregister()
     }
   }, [])
 }

@@ -8,7 +8,6 @@ pub mod calendar;
 pub mod credentials;
 pub mod daily_plan;
 pub mod habits;
-pub mod kanban;
 pub mod notes;
 pub mod notifications;
 pub mod oauth;

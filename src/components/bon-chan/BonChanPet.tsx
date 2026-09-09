@@ -93,35 +93,17 @@ function BonChanPetSprite({ bonChanMood }: BonChanPetSpriteProps) {
     if (animation.frames.length <= 1 || animation.fps <= 0) return
 
     const frameDurationMs = 1000 / animation.fps
-    let animationFrameId = 0
-    let elapsedMs = 0
-    let lastTimestamp = performance.now()
     let currentCursor = 0
+    const intervalId = window.setInterval(() => {
+      currentCursor = getNextAnimationCursor(
+        currentCursor,
+        animation.frames.length,
+        animation.loop
+      )
+      setFrameCursor(currentCursor)
+    }, frameDurationMs)
 
-    const tick = (timestamp: number) => {
-      elapsedMs += timestamp - lastTimestamp
-      lastTimestamp = timestamp
-
-      let hasNewFrame = false
-      while (elapsedMs >= frameDurationMs) {
-        elapsedMs -= frameDurationMs
-        currentCursor = getNextAnimationCursor(
-          currentCursor,
-          animation.frames.length,
-          animation.loop
-        )
-        hasNewFrame = true
-      }
-
-      if (hasNewFrame) {
-        setFrameCursor(currentCursor)
-      }
-
-      animationFrameId = requestAnimationFrame(tick)
-    }
-
-    animationFrameId = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(animationFrameId)
+    return () => window.clearInterval(intervalId)
   }, [animation.fps, animation.frames.length, animation.loop])
 
   const frameIndex = animation.frames[frameCursor] ?? animation.frames[0] ?? 0

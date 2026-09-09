@@ -21,9 +21,6 @@ import type { GoogleUser } from '@/types/google'
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as
   | string
   | undefined
-const GOOGLE_CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET as
-  | string
-  | undefined
 
 interface GoogleStoreState {
   isAuthenticated: boolean
@@ -70,7 +67,7 @@ export const useGoogleStore = create<GoogleStoreState>()(
           logger.warn('Google access token is no longer valid', { error })
 
           const refreshToken = await loadToken(TOKEN_KEYS.GOOGLE_REFRESH)
-          if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !refreshToken) {
+          if (!GOOGLE_CLIENT_ID || !refreshToken) {
             await get().logout()
             return
           }
@@ -78,7 +75,6 @@ export const useGoogleStore = create<GoogleStoreState>()(
           try {
             const refreshed = await refreshGoogleAccessToken(
               GOOGLE_CLIENT_ID,
-              GOOGLE_CLIENT_SECRET,
               refreshToken
             )
             await saveToken(TOKEN_KEYS.GOOGLE, refreshed.access_token ?? '')
@@ -109,15 +105,6 @@ export const useGoogleStore = create<GoogleStoreState>()(
             { error: 'VITE_GOOGLE_CLIENT_ID not configured' },
             undefined,
             'google/oauth/no-client-id'
-          )
-          return
-        }
-
-        if (!GOOGLE_CLIENT_SECRET) {
-          set(
-            { error: 'VITE_GOOGLE_CLIENT_SECRET not configured' },
-            undefined,
-            'google/oauth/no-client-secret'
           )
           return
         }
@@ -170,7 +157,6 @@ export const useGoogleStore = create<GoogleStoreState>()(
 
           const tokenResponse = await exchangeGoogleCodeForToken(
             GOOGLE_CLIENT_ID,
-            GOOGLE_CLIENT_SECRET,
             result.data.code,
             savedVerifier,
             result.data.redirect_uri

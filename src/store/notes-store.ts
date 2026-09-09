@@ -1058,32 +1058,37 @@ export const useNotesStore = create<NotesState>()(
                   })
                 )
               )
-              const syncedAnnotations: NoteAnnotation[] = []
-              for (const annotation of annotationsSnapshot) {
-                if (
-                  annotation.anchor_status !== 'anchored' ||
-                  annotation.from >= annotation.to
-                ) {
-                  continue
-                }
+              const syncedAnnotations = (
+                await Promise.all(
+                  annotationsSnapshot.map(async annotation => {
+                    if (
+                      annotation.anchor_status !== 'anchored' ||
+                      annotation.from >= annotation.to
+                    ) {
+                      return null
+                    }
 
-                try {
-                  syncedAnnotations.push(
-                    unwrapResult(
-                      await commands.repositionNoteAnnotation({
-                        note_id: id,
-                        annotation_id: annotation.id,
-                        from: annotation.from,
-                        to: annotation.to,
-                      })
-                    )
-                  )
-                } catch (error) {
-                  logger.error(
-                    `Failed to sync note annotation anchor: ${String(error)}`
-                  )
-                }
-              }
+                    try {
+                      return unwrapResult(
+                        await commands.repositionNoteAnnotation({
+                          note_id: id,
+                          annotation_id: annotation.id,
+                          from: annotation.from,
+                          to: annotation.to,
+                        })
+                      )
+                    } catch (error) {
+                      logger.error(
+                        `Failed to sync note annotation anchor: ${String(error)}`
+                      )
+                      return null
+                    }
+                  })
+                )
+              ).filter(
+                (annotation): annotation is NoteAnnotation =>
+                  annotation !== null
+              )
 
               set(
                 state => ({

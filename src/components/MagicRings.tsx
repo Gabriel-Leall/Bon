@@ -33,7 +33,8 @@ float ring(vec2 p, float ri, float cut, float t0, float px) {
   float a = atan(abs(p.y), abs(p.x)) / HP;
   float th = max(1.0 - a, 0.5) * px * uLineThickness;
   float h = (1.0 - smoothstep(th, th * 1.5, d)) + 1.0;
-  d += pow(cut * a, 3.0) * r;
+  float shapedCut = cut * a;
+  d += shapedCut * shapedCut * shapedCut * r;
   return h * exp(-uAttenuation * d) * fade(t);
 }
 
@@ -258,9 +259,7 @@ export default function MagicRings({
     mount.addEventListener('mouseleave', onMouseLeave)
     mount.addEventListener('click', onClick)
 
-    let frameId: number
     const animate = (t: number) => {
-      frameId = requestAnimationFrame(animate)
       const p = propsRef.current
       if (!p) return
 
@@ -298,10 +297,10 @@ export default function MagicRings({
 
       renderer.render(scene, camera)
     }
-    frameId = requestAnimationFrame(animate)
+    renderer.setAnimationLoop(animate)
 
     return () => {
-      cancelAnimationFrame(frameId)
+      renderer.setAnimationLoop(null)
       window.removeEventListener('resize', resize)
       ro.disconnect()
       mount.removeEventListener('mousemove', onMouseMove)

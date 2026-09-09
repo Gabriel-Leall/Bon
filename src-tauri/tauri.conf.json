@@ -77,12 +77,6 @@
       ],
       "dialog": true,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZCRDc2RkFDODExMDYwNApSV1FFQmhISStuYTlEN0pERFVIYUpVRDhBNEE4bFpPemJhZGZhdVJMNWkzSlBEL0VneGY1N0ZRVwo="
-    },
-    "deep-link": {
-      "mobile": [],
-      "desktop": {
-        "schemes": ["axis"]
-      }
     }
   }
 }

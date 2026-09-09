@@ -29,6 +29,85 @@ interface InputProps {
   wrapperClassName?: string
 }
 
+function getInputWrapperClass({
+  error,
+  size,
+  disabled,
+  className,
+}: {
+  error: InputProps['error']
+  size: NonNullable<InputProps['size']>
+  disabled: boolean
+  className?: string
+}) {
+  return clsx(
+    'flex items-center duration-150 font-sans',
+    error
+      ? 'shadow-error-input hover:shadow-error-input-hover'
+      : 'border border-gray-alpha-400 hover:border-gray-alpha-500 focus-within:border-transparent focus-within:shadow-focus-input',
+    sizes[size],
+    disabled ? 'cursor-not-allowed bg-gray-100' : 'bg-background-100',
+    className
+  )
+}
+
+function getInputClass({
+  size,
+  disabled,
+  className,
+}: {
+  size: NonNullable<InputProps['size']>
+  disabled: boolean
+  className?: string
+}) {
+  return clsx(
+    'w-full inline-flex appearance-none placeholder:text-zinc-900 placeholder:opacity-70 outline-none',
+    size === 'xSmall' || size === 'mediumSmall' ? 'px-2' : 'px-3',
+    disabled
+      ? 'cursor-not-allowed bg-gray-100 text-gray-700'
+      : 'bg-background-100 text-geist-foreground',
+    className
+  )
+}
+
+function InputAffix({
+  children,
+  styling,
+  side,
+  size,
+}: {
+  children: React.ReactNode
+  styling: boolean | string
+  side: 'prefix' | 'suffix'
+  size: NonNullable<InputProps['size']>
+}) {
+  const isPrefix = side === 'prefix'
+  const styledClass = isPrefix
+    ? 'bg-background-200 border-r border-gray-alpha-400 px-3'
+    : 'bg-background-200 border-l border-gray-alpha-400 px-3'
+  const plainClass = isPrefix ? 'pl-3' : 'pr-3'
+  const roundedClass = isPrefix
+    ? size === 'large'
+      ? 'rounded-l-lg'
+      : 'rounded-l-md'
+    : size === 'large'
+      ? 'rounded-r-lg'
+      : 'rounded-r-md'
+
+  return (
+    <div
+      className={clsx(
+        'text-gray-700 fill-gray-700 h-full flex items-center justify-center',
+        styling === true ? styledClass : plainClass,
+        typeof styling === 'string' && styling,
+        roundedClass
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+
 export const Input = ({
   placeholder,
   size = 'medium',
@@ -56,9 +135,7 @@ export const Input = ({
 
   const _onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     set_value(e.target.value)
-    if (onChange) {
-      onChange(e.target.value)
-    }
+    onChange?.(e.target.value)
   }
 
   const focusInput = () => {
@@ -81,38 +158,20 @@ export const Input = ({
         <div className="capitalize text-[13px] text-zinc-900">{label}</div>
       )}
       <div
-        className={clsx(
-          'flex items-center duration-150 font-sans',
-          error
-            ? 'shadow-error-input hover:shadow-error-input-hover'
-            : 'border border-gray-alpha-400 hover:border-gray-alpha-500 focus-within:border-transparent focus-within:shadow-focus-input',
-          sizes[size],
-          disabled ? 'cursor-not-allowed bg-gray-100' : 'bg-background-100',
-          wrapperClassName
-        )}
+        className={getInputWrapperClass({
+          error,
+          size,
+          disabled,
+          className: wrapperClassName,
+        })}
       >
         {prefix && (
-          <div
-            className={clsx(
-              'text-gray-700 fill-gray-700 h-full flex items-center justify-center',
-              prefixStyling === true
-                ? 'bg-background-200 border-r border-gray-alpha-400 px-3'
-                : `pl-3${!prefixStyling ? '' : ` ${prefixStyling}`}`,
-              size === 'large' ? 'rounded-l-lg' : 'rounded-l-md'
-            )}
-          >
+          <InputAffix styling={prefixStyling} side="prefix" size={size}>
             {prefix}
-          </div>
+          </InputAffix>
         )}
         <input
-          className={clsx(
-            'w-full inline-flex appearance-none placeholder:text-zinc-900 placeholder:opacity-70 outline-none',
-            size === 'xSmall' || size === 'mediumSmall' ? 'px-2' : 'px-3',
-            disabled
-              ? 'cursor-not-allowed bg-gray-100 text-gray-700'
-              : 'bg-background-100 text-geist-foreground',
-            className
-          )}
+          className={getInputClass({ size, disabled, className })}
           placeholder={placeholder}
           disabled={disabled}
           value={displayValue}
@@ -123,17 +182,9 @@ export const Input = ({
           {...rest}
         />
         {suffix && (
-          <div
-            className={clsx(
-              'text-gray-700 fill-gray-700 h-full flex items-center justify-center',
-              suffixStyling === true
-                ? 'bg-background-200 border-l border-gray-alpha-400 px-3'
-                : `pr-3 ${!suffixStyling ? '' : ` ${suffixStyling}`}`,
-              size === 'large' ? 'rounded-r-lg' : 'rounded-r-md'
-            )}
-          >
+          <InputAffix styling={suffixStyling} side="suffix" size={size}>
             {suffix}
-          </div>
+          </InputAffix>
         )}
       </div>
       {typeof error === 'string' && (

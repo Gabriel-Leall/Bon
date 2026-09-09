@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import { AnimatePresence } from 'motion/react'
 import { PageWrapper } from '@/components/layout/PageWrapper'
-import { useUIStore } from '@/store/ui-store'
+import { useUIStore, type AppPage } from '@/store/ui-store'
 import { lazy, Suspense } from 'react'
 
 const TasksPage = lazy(() =>
@@ -33,6 +33,33 @@ interface MainWindowContentProps {
   className?: string
 }
 
+function ActivePageContent({
+  activePage,
+  activePageData,
+}: {
+  activePage: AppPage
+  activePageData: Record<string, string>
+}) {
+  switch (activePage) {
+    case 'tasks':
+      return <TasksPage initialSelectedTaskId={activePageData.selectedTaskId} />
+    case 'habits':
+      return (
+        <HabitPage initialSelectedHabitId={activePageData.selectedHabitId} />
+      )
+    case 'focus':
+      return <FocusPage />
+    case 'notes':
+      return <NotesPage initialSelectedNoteId={activePageData.selectedNoteId} />
+    case 'calendar':
+      return <CalendarPage />
+    case 'analysis':
+      return <AnalysisPage />
+    case 'today':
+      return <TodayPage />
+  }
+}
+
 export function MainWindowContent({
   children,
   className,
@@ -47,41 +74,12 @@ export function MainWindowContent({
           fallback={<div className="flex h-full items-center justify-center" />}
         >
           <AnimatePresence mode="wait">
-            {activePage === 'tasks' ? (
-              <PageWrapper key="tasks">
-                <TasksPage
-                  initialSelectedTaskId={activePageData['selectedTaskId']}
-                />
-              </PageWrapper>
-            ) : activePage === 'habits' ? (
-              <PageWrapper key="habits">
-                <HabitPage
-                  initialSelectedHabitId={activePageData['selectedHabitId']}
-                />
-              </PageWrapper>
-            ) : activePage === 'focus' ? (
-              <PageWrapper key="focus">
-                <FocusPage />
-              </PageWrapper>
-            ) : activePage === 'notes' ? (
-              <PageWrapper key="notes">
-                <NotesPage
-                  initialSelectedNoteId={activePageData['selectedNoteId']}
-                />
-              </PageWrapper>
-            ) : activePage === 'calendar' ? (
-              <PageWrapper key="calendar">
-                <CalendarPage />
-              </PageWrapper>
-            ) : activePage === 'analysis' ? (
-              <PageWrapper key="analysis">
-                <AnalysisPage />
-              </PageWrapper>
-            ) : (
-              <PageWrapper key="today">
-                <TodayPage />
-              </PageWrapper>
-            )}
+            <PageWrapper key={activePage}>
+              <ActivePageContent
+                activePage={activePage}
+                activePageData={activePageData}
+              />
+            </PageWrapper>
           </AnimatePresence>
         </Suspense>
       )}

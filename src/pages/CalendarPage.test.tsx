@@ -153,4 +153,35 @@ describe('CalendarPage', () => {
       )
     })
   })
+
+  it('opens the requested event context after a native notification route', async () => {
+    vi.mocked(commands.getEventsRange).mockResolvedValue({
+      status: 'ok',
+      data: [
+        {
+          id: 'event-42',
+          title: 'Project review',
+          description: 'Review the launch checklist',
+          start_date: '2026-09-09T14:00:00.000Z',
+          end_date: '2026-09-09T15:00:00.000Z',
+          all_day: false,
+          color: null,
+          created_at: '2026-09-08T10:00:00.000Z',
+          updated_at: '2026-09-08T10:00:00.000Z',
+        },
+      ],
+    })
+    useCalendarStore.setState({
+      selectedDate: '2026-09-09',
+      selectedEventId: 'event-42',
+    })
+
+    render(<CalendarPage />)
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Edit Event' })
+    ).toBeVisible()
+    expect(screen.getByLabelText('Title')).toHaveValue('Project review')
+    expect(useCalendarStore.getState().selectedEventId).toBeNull()
+  })
 })

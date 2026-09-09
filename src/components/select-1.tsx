@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useId } from 'react'
 import { Error } from '@/components/error'
 import clsx from 'clsx'
 
@@ -43,10 +43,64 @@ const ArrowBottom = () => (
     <path
       fillRule="evenodd"
       clipRule="evenodd"
-      d="M14.0607 5.49999L13.5303 6.03032L8.7071 10.8535C8.31658 11.2441 7.68341 11.2441 7.29289 10.8535L2.46966 6.03032L1.93933 5.49999L2.99999 4.43933L3.53032 4.96966L7.99999 9.43933L12.4697 4.96966L13 4.43933L14.0607 5.49999Z"
+      d="m2 5 6 6 6-6-1-1-5 5-5-5-1 1Z"
     />
   </svg>
 )
+
+function getSelectClass({
+  prefix,
+  size,
+  disabled,
+  variant,
+  error,
+}: {
+  prefix: boolean
+  size: NonNullable<SelectProps['size']>
+  disabled: boolean
+  variant: Variant
+  error?: string
+}) {
+  return clsx(
+    'font-sans appearance-none w-full border rounded-[5px] duration-200 outline-none',
+    (prefix ? selectSizes.withPrefix : selectSizes.withoutPrefix)[size],
+    disabled
+      ? 'cursor-not-allowed bg-gray-100 text-gray-700'
+      : variant === 'default'
+        ? 'text-gray-1000 bg-background-100 cursor-pointer'
+        : 'bg-transparent text-accents-5',
+    error
+      ? 'border-error ring-red-900-alpha-160 ring-opacity-100 ring-[3px]'
+      : `ring-gray-alpha-500 ring-opacity-100 focus:ring-[3px] ${variant === 'default' ? 'border-gray-alpha-400' : 'border-transparent ring-none'}`
+  )
+}
+
+function SelectAffix({
+  children,
+  side,
+  size,
+}: {
+  children: React.ReactNode
+  side: 'prefix' | 'suffix'
+  size: NonNullable<SelectProps['size']>
+}) {
+  return (
+    <span
+      className={clsx(
+        `inline-flex absolute pointer-events-none duration-150 ${size}IconContainer`,
+        size === 'xsmall'
+          ? side === 'prefix'
+            ? 'left-1.25'
+            : 'right-1.25'
+          : side === 'prefix'
+            ? 'left-3'
+            : 'right-3'
+      )}
+    >
+      {children}
+    </span>
+  )
+}
 
 export const Select = ({
   variant = 'default',
@@ -61,11 +115,13 @@ export const Select = ({
   error,
   onChange,
 }: SelectProps) => {
+  const selectId = useId()
+
   return (
     <div>
       {label && (
         <label
-          htmlFor="select"
+          htmlFor={selectId}
           className="cursor-text block font-sans text-[13px] text-gray-900 capitalize mb-2"
         >
           {label}
@@ -92,25 +148,20 @@ export const Select = ({
         `}
         </style>
         <select
-          id="select"
+          id={selectId}
           disabled={disabled}
           value={value}
           onChange={onChange}
-          className={clsx(
-            'font-sans appearance-none w-full border rounded-[5px] duration-200 outline-none',
-            (prefix ? selectSizes.withPrefix : selectSizes.withoutPrefix)[size],
-            disabled
-              ? 'cursor-not-allowed bg-gray-100 text-gray-700'
-              : variant === 'default'
-                ? 'text-gray-1000 bg-background-100 cursor-pointer'
-                : 'bg-transparent text-accents-5',
-            error
-              ? 'border-error ring-red-900-alpha-160 ring-opacity-100 ring-[3px]'
-              : `ring-gray-alpha-500 ring-opacity-100 focus:ring-[3px] ${variant === 'default' ? 'border-gray-alpha-400' : 'border-transparent ring-none'}`
-          )}
+          className={getSelectClass({
+            prefix: Boolean(prefix),
+            size,
+            disabled,
+            variant,
+            error,
+          })}
         >
           {placeholder && (
-            <option value="" disabled selected>
+            <option value="" disabled>
               {placeholder}
             </option>
           )}
@@ -122,23 +173,13 @@ export const Select = ({
             ))}
         </select>
         {prefix && (
-          <span
-            className={clsx(
-              `inline-flex absolute pointer-events-none duration-150 ${size}IconContainer`,
-              size === 'xsmall' ? 'left-1.25' : 'left-3'
-            )}
-          >
+          <SelectAffix side="prefix" size={size}>
             {prefix}
-          </span>
+          </SelectAffix>
         )}
-        <span
-          className={clsx(
-            `inline-flex absolute pointer-events-none duration-150 ${size}IconContainer`,
-            size === 'xsmall' ? 'right-1.25' : 'right-3'
-          )}
-        >
-          {suffix ? suffix : <ArrowBottom />}
-        </span>
+        <SelectAffix side="suffix" size={size}>
+          {suffix ?? <ArrowBottom />}
+        </SelectAffix>
       </div>
       {error && (
         <div className="mt-2">

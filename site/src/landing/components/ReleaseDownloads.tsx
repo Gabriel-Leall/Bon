@@ -1,5 +1,5 @@
 import { ExternalLink, Loader2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { releasesApiUrl, releasesUrl } from '../data'
 
@@ -37,15 +37,20 @@ const assetMatchers: Record<Platform, RegExp[]> = {
 
 let releaseCache: GitHubRelease | null = null
 let releaseRequest: Promise<GitHubRelease> | null = null
+type ReleaseSnapshot = {
+  release: GitHubRelease | null
+  status: 'loading' | 'ready' | 'error'
+}
+let releaseSnapshot: ReleaseSnapshot = { release: null, status: 'loading' }
+const releaseListeners = new Set<() => void>()
 
-async function fetchLatestRelease(signal: AbortSignal) {
+async function fetchLatestRelease() {
   if (releaseCache) {
     return releaseCache
   }
 
   releaseRequest ??= fetch(releasesApiUrl, {
     headers: { Accept: 'application/vnd.github+json' },
-    signal,
   }).then(async response => {
     if (!response.ok) {
       throw new Error(`GitHub releases request failed: ${response.status}`)
@@ -56,6 +61,33 @@ async function fetchLatestRelease(signal: AbortSignal) {
   })
 
   return releaseRequest
+}
+
+function publishReleaseSnapshot(snapshot: ReleaseSnapshot) {
+  releaseSnapshot = snapshot
+  releaseListeners.forEach(listener => listener())
+}
+
+function loadLatestRelease() {
+  void fetchLatestRelease()
+    .then(release => publishReleaseSnapshot({ release, status: 'ready' }))
+    .catch(error => {
+      releaseRequest = null
+      console.error(error)
+      publishReleaseSnapshot({ release: null, status: 'error' })
+    })
+}
+
+function subscribeToRelease(listener: () => void) {
+  releaseListeners.add(listener)
+  if (releaseSnapshot.status === 'loading' && releaseRequest === null) {
+    loadLatestRelease()
+  }
+  return () => releaseListeners.delete(listener)
+}
+
+function getReleaseSnapshot() {
+  return releaseSnapshot
 }
 
 function WindowsIcon() {
@@ -95,32 +127,11 @@ function getDownloadOptions(release: GitHubRelease): DownloadOption[] {
 
 export function ReleaseDownloads({ id }: { id?: string }) {
   const { t } = useTranslation()
-  const [release, setRelease] = useState<GitHubRelease | null>(null)
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(
-    'loading'
+  const { release, status } = useSyncExternalStore(
+    subscribeToRelease,
+    getReleaseSnapshot,
+    getReleaseSnapshot
   )
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    async function loadReleases() {
-      try {
-        const data = await fetchLatestRelease(controller.signal)
-        setRelease(data)
-        setStatus('ready')
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          releaseRequest = null
-          console.error(error)
-          setStatus('error')
-        }
-      }
-    }
-
-    void loadReleases()
-
-    return () => controller.abort()
-  }, [])
 
   return (
     <div className="release-downloads" id={id}>

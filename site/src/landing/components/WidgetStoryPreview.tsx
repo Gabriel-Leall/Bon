@@ -10,225 +10,236 @@ import {
 } from '../data'
 import type { WidgetSlug } from '../types'
 
-export function WidgetStoryPreview({
-  slug,
-  active,
-}: {
-  slug: WidgetSlug
+interface PreviewProps {
   active: boolean
-}) {
-  const { t, i18n } = useTranslation()
-  const taskShowcaseRows = getTaskShowcaseRows(t)
-  const habitShowcaseRows = getHabitShowcaseRows(t)
-  const kanbanColumns = getKanbanColumns(t)
-  const pomodoroMetricCountdown = getPomodoroMetricCountdown(t)
+}
 
-  if (slug === 'tasks') {
-    return (
-      <div
-        className="widget-story-demo widget-story-demo--tasks"
-        data-preview-active={active ? 'true' : 'false'}
-      >
-        <div className="widget-story-metric">
-          <span>{t('landing.preview.tasks.metricLabel')}</span>
-          <strong>{t('landing.preview.tasks.metricValue')}</strong>
-        </div>
-        <div className="widget-story-task-list">
-          <span className="widget-story-fake-cursor" aria-hidden="true" />
-          {taskShowcaseRows.map((task, index) => (
-            <div
-              key={task.title}
-              className={`widget-story-task-row${
-                task.completed ? ' is-complete' : ''
-              }${index === 0 ? ' is-simulated' : ''}`}
-            >
-              <span className="widget-story-task-check" aria-hidden="true" />
-              <span className="widget-story-task-copy">{task.title}</span>
-              {index === 0 ? (
-                <span className="widget-story-task-status">
-                  <span className="widget-story-task-tag widget-story-task-tag--high">
-                    {task.level}
-                  </span>
-                  <span className="widget-story-task-done">
-                    {t('landing.preview.tasks.done')}
-                  </span>
-                </span>
-              ) : (
-                <span
-                  className={`widget-story-task-tag${
-                    task.level === t('landing.preview.levels.high')
-                      ? ' widget-story-task-tag--high'
-                      : ' widget-story-task-tag--medium'
-                  }`}
-                >
+function TasksPreview({ active }: PreviewProps) {
+  const { t } = useTranslation()
+  const rows = getTaskShowcaseRows(t)
+
+  return (
+    <div
+      className="widget-story-demo widget-story-demo--tasks"
+      data-preview-active={active ? 'true' : 'false'}
+    >
+      <div className="widget-story-metric">
+        <span>{t('landing.preview.tasks.metricLabel')}</span>
+        <strong>{t('landing.preview.tasks.metricValue')}</strong>
+      </div>
+      <div className="widget-story-task-list">
+        <span className="widget-story-fake-cursor" aria-hidden="true" />
+        {rows.map((task, index) => (
+          <div
+            key={task.title}
+            className={`widget-story-task-row${
+              task.completed ? ' is-complete' : ''
+            }${index === 0 ? ' is-simulated' : ''}`}
+          >
+            <span className="widget-story-task-check" aria-hidden="true" />
+            <span className="widget-story-task-copy">{task.title}</span>
+            {index === 0 ? (
+              <span className="widget-story-task-status">
+                <span className="widget-story-task-tag widget-story-task-tag--high">
                   {task.level}
                 </span>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="widget-story-inline-note">
-          {active
-            ? t('landing.preview.tasks.activeNote')
-            : t('landing.preview.tasks.idleNote')}
-        </div>
+                <span className="widget-story-task-done">
+                  {t('landing.preview.tasks.done')}
+                </span>
+              </span>
+            ) : (
+              <span
+                className={`widget-story-task-tag${
+                  task.level === t('landing.preview.levels.high')
+                    ? ' widget-story-task-tag--high'
+                    : ' widget-story-task-tag--medium'
+                }`}
+              >
+                {task.level}
+              </span>
+            )}
+          </div>
+        ))}
       </div>
-    )
-  }
+      <div className="widget-story-inline-note">
+        {t(
+          active
+            ? 'landing.preview.tasks.activeNote'
+            : 'landing.preview.tasks.idleNote'
+        )}
+      </div>
+    </div>
+  )
+}
 
-  if (slug === 'habit-tracker') {
-    return (
-      <div
-        className="widget-story-demo widget-story-demo--habit"
-        data-preview-active={active ? 'true' : 'false'}
-      >
-        <div className="widget-story-metric">
-          <span>{t('landing.preview.habits.metricLabel')}</span>
-          <strong>{t('landing.preview.habits.metricValue')}</strong>
-        </div>
-        <div className="widget-story-habit-list">
-          {habitShowcaseRows.map((habit, index) => (
-            <div
-              key={habit.title}
-              className={`widget-story-habit-row${
-                habit.completed ? ' is-complete' : ''
-              }${index === 0 ? ' is-simulated' : ''}`}
-            >
-              <div>
-                <strong>{habit.title}</strong>
-                {index === 0 ? (
-                  <span className="widget-story-habit-streak">
-                    <span className="widget-story-habit-streak-old">
-                      {t('landing.preview.habits.streak', {
-                        count: habit.streak,
-                      })}
-                    </span>
-                    <span className="widget-story-habit-streak-new">
-                      {t('landing.preview.habits.streak', {
-                        count: habit.streak + 1,
-                      })}
-                    </span>
-                  </span>
-                ) : (
-                  <span>
+function HabitPreview({ active }: PreviewProps) {
+  const { t } = useTranslation()
+  const rows = getHabitShowcaseRows(t)
+
+  return (
+    <div
+      className="widget-story-demo widget-story-demo--habit"
+      data-preview-active={active ? 'true' : 'false'}
+    >
+      <div className="widget-story-metric">
+        <span>{t('landing.preview.habits.metricLabel')}</span>
+        <strong>{t('landing.preview.habits.metricValue')}</strong>
+      </div>
+      <div className="widget-story-habit-list">
+        {rows.map((habit, index) => (
+          <div
+            key={habit.title}
+            className={`widget-story-habit-row${
+              habit.completed ? ' is-complete' : ''
+            }${index === 0 ? ' is-simulated' : ''}`}
+          >
+            <div>
+              <strong>{habit.title}</strong>
+              {index === 0 ? (
+                <span className="widget-story-habit-streak">
+                  <span className="widget-story-habit-streak-old">
                     {t('landing.preview.habits.streak', {
                       count: habit.streak,
                     })}
                   </span>
-                )}
-              </div>
-              <span
-                className={`widget-story-habit-fire${
-                  index === 0 ? ' is-simulated' : ''
-                }`}
-                aria-hidden="true"
-              >
-                <Flame />
-              </span>
+                  <span className="widget-story-habit-streak-new">
+                    {t('landing.preview.habits.streak', {
+                      count: habit.streak + 1,
+                    })}
+                  </span>
+                </span>
+              ) : (
+                <span>
+                  {t('landing.preview.habits.streak', {
+                    count: habit.streak,
+                  })}
+                </span>
+              )}
             </div>
-          ))}
-        </div>
+            <span
+              className={`widget-story-habit-fire${
+                index === 0 ? ' is-simulated' : ''
+              }`}
+              aria-hidden="true"
+            >
+              <Flame />
+            </span>
+          </div>
+        ))}
       </div>
-    )
-  }
+    </div>
+  )
+}
 
-  if (slug === 'pomodoro') {
-    return (
-      <div
-        className="widget-story-demo widget-story-demo--pomodoro"
-        data-preview-active={active ? 'true' : 'false'}
-      >
-        <div className="widget-story-metric">
-          <span>{t('landing.preview.pomodoro.metricLabel')}</span>
-          <strong className="widget-story-focus-metric">
+function PomodoroPreview({ active }: PreviewProps) {
+  const { t } = useTranslation()
+  const metricCountdown = getPomodoroMetricCountdown(t)
+
+  return (
+    <div
+      className="widget-story-demo widget-story-demo--pomodoro"
+      data-preview-active={active ? 'true' : 'false'}
+    >
+      <div className="widget-story-metric">
+        <span>{t('landing.preview.pomodoro.metricLabel')}</span>
+        <strong className="widget-story-focus-metric">
+          <span className="widget-story-focus-time-stage">
+            <span className="widget-story-focus-time-track">
+              {metricCountdown.map(time => (
+                <span key={time} className="widget-story-focus-time-item">
+                  {time}
+                </span>
+              ))}
+            </span>
+          </span>
+        </strong>
+      </div>
+      <div className="widget-story-focus-shell">
+        <div className="widget-story-focus-ring">
+          <div className="widget-story-focus-core">
             <span className="widget-story-focus-time-stage">
               <span className="widget-story-focus-time-track">
-                {pomodoroMetricCountdown.map(time => (
+                {pomodoroCoreCountdown.map(time => (
                   <span key={time} className="widget-story-focus-time-item">
                     {time}
                   </span>
                 ))}
               </span>
             </span>
-          </strong>
+          </div>
         </div>
-        <div className="widget-story-focus-shell">
-          <div className="widget-story-focus-ring">
-            <div className="widget-story-focus-core">
-              <span className="widget-story-focus-time-stage">
-                <span className="widget-story-focus-time-track">
-                  {pomodoroCoreCountdown.map(time => (
-                    <span key={time} className="widget-story-focus-time-item">
-                      {time}
-                    </span>
-                  ))}
-                </span>
-              </span>
-            </div>
-          </div>
-          <div className="widget-story-focus-task">
-            {t('landing.preview.pomodoro.task')}
-          </div>
-          <div className="widget-story-focus-progress" aria-hidden="true">
-            <span />
-          </div>
-          <div className="widget-story-focus-controls" aria-hidden="true">
-            <span>↺</span>
-            <span className="is-primary widget-story-focus-play-button">
-              <span className="widget-story-focus-play-icon">
-                <Play fill="currentColor" />
-              </span>
-              <span className="widget-story-focus-pause-icon">
-                <span />
-                <span />
-              </span>
+        <div className="widget-story-focus-task">
+          {t('landing.preview.pomodoro.task')}
+        </div>
+        <div className="widget-story-focus-progress" aria-hidden="true">
+          <span />
+        </div>
+        <div className="widget-story-focus-controls" aria-hidden="true">
+          <span>↺</span>
+          <span className="is-primary widget-story-focus-play-button">
+            <span className="widget-story-focus-play-icon">
+              <Play fill="currentColor" />
             </span>
-            <span>↷</span>
-          </div>
+            <span className="widget-story-focus-pause-icon">
+              <span />
+              <span />
+            </span>
+          </span>
+          <span>↷</span>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
+}
 
-  if (slug === 'kanban') {
-    return (
-      <div
-        className="widget-story-demo widget-story-demo--kanban"
-        data-preview-active={active ? 'true' : 'false'}
-      >
-        <div className="widget-story-metric">
-          <span>{t('landing.preview.kanban.metricLabel')}</span>
-          <strong>{t('landing.preview.kanban.metricValue')}</strong>
-        </div>
-        <div className="widget-story-kanban-board">
-          {kanbanColumns.map(column => (
-            <div
-              key={column.label}
-              className={`widget-story-kanban-column${
-                column.label === 'In Progress'
-                  ? ' widget-story-kanban-column--in-progress'
-                  : column.label === 'Done'
-                    ? ' widget-story-kanban-column--done'
-                    : ''
-              }`}
-            >
-              <span>{column.label}</span>
-              <div className="widget-story-kanban-cards">
-                {column.cards.map(card => (
-                  <div key={card} className="widget-story-kanban-card">
-                    {card}
-                  </div>
-                ))}
-              </div>
+function KanbanPreview({ active }: PreviewProps) {
+  const { t } = useTranslation()
+  const columns = getKanbanColumns(t)
+
+  return (
+    <div
+      className="widget-story-demo widget-story-demo--kanban"
+      data-preview-active={active ? 'true' : 'false'}
+    >
+      <div className="widget-story-metric">
+        <span>{t('landing.preview.kanban.metricLabel')}</span>
+        <strong>{t('landing.preview.kanban.metricValue')}</strong>
+      </div>
+      <div className="widget-story-kanban-board">
+        {columns.map(column => (
+          <div
+            key={column.label}
+            className={`widget-story-kanban-column${
+              column.label === 'In Progress'
+                ? ' widget-story-kanban-column--in-progress'
+                : column.label === 'Done'
+                  ? ' widget-story-kanban-column--done'
+                  : ''
+            }`}
+          >
+            <span>{column.label}</span>
+            <div className="widget-story-kanban-cards">
+              {column.cards.map(card => (
+                <div key={card} className="widget-story-kanban-card">
+                  {card}
+                </div>
+              ))}
             </div>
-          ))}
-          <div className="widget-story-kanban-floating-card" aria-hidden="true">
-            {t('landing.preview.kanban.cards.syncWidgetStory')}
           </div>
+        ))}
+        <div className="widget-story-kanban-floating-card" aria-hidden="true">
+          {t('landing.preview.kanban.cards.syncWidgetStory')}
         </div>
       </div>
-    )
-  }
+    </div>
+  )
+}
+
+function CalendarPreview({ active }: PreviewProps) {
+  const { t, i18n } = useTranslation()
+  const weekdays = i18n.resolvedLanguage?.startsWith('pt')
+    ? ['S', 'T', 'Q', 'Q', 'S', 'S', 'D']
+    : ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 
   return (
     <div
@@ -245,10 +256,7 @@ export function WidgetStoryPreview({
           <span>{t('landing.preview.calendar.review')}</span>
         </div>
         <div className="widget-story-calendar-weekdays">
-          {(i18n.resolvedLanguage?.startsWith('pt')
-            ? ['S', 'T', 'Q', 'Q', 'S', 'S', 'D']
-            : ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-          ).map((day, index) => (
+          {weekdays.map((day, index) => (
             <span key={`${day}-${index}`}>{day}</span>
           ))}
         </div>
@@ -269,4 +277,25 @@ export function WidgetStoryPreview({
       </div>
     </div>
   )
+}
+
+export function WidgetStoryPreview({
+  slug,
+  active,
+}: {
+  slug: WidgetSlug
+  active: boolean
+}) {
+  switch (slug) {
+    case 'tasks':
+      return <TasksPreview active={active} />
+    case 'habit-tracker':
+      return <HabitPreview active={active} />
+    case 'pomodoro':
+      return <PomodoroPreview active={active} />
+    case 'kanban':
+      return <KanbanPreview active={active} />
+    case 'calendar':
+      return <CalendarPreview active={active} />
+  }
 }

@@ -505,7 +505,7 @@ independentes. As pilhas usam blocos retangulares mais largos; as sparklines sem
 escala dos indicadores foram removidas. Comparações sem período anterior agora
 aparecem como “Novo neste período” ou “Sem atividade”, em vez de “Sem base”.
 
-### [ ] P8. Implementar encerramento diário e lembretes
+### [~] P8. Implementar encerramento diário e lembretes
 
 **Objetivo:** fechar o ciclo do dia e antecipar amanhã.
 
@@ -516,6 +516,21 @@ aparecem como “Novo neste período” ou “Sem atividade”, em vez de “Sem
 - Horário configurável envia lembrete de segurança quando Axis está ativo ou na bandeja.
 - Notificação abre o item correto no painel contextual.
 - Eventos Google não recebem notificação duplicada por padrão.
+
+**Rodada 1 iniciada em 2026-09-08:** o encerramento agora resume apenas o que
+pertence ao dia (essencial, tarefas concluídas e pendentes, compromissos, foco e
+hábitos), apresenta os compromissos de amanhã antes da confirmação e permite
+escolher explicitamente quais pendências avançam de data e qual será o primeiro
+foco.
+
+**Rodadas funcionais concluídas em 2026-09-08:** Configurações ganhou uma área de
+Notificações com opt-in e horário persistente para o encerramento. Enquanto a
+janela principal permanece ativa — visível ou recolhida na bandeja — o Axis envia
+no máximo um lembrete por dia e ignora planos já encerrados. A notificação restaura
+a janela e abre diretamente o encerramento; o mesmo contrato tipado atende foco,
+tarefas, notas, hábitos e eventos no contexto correto. Eventos pertencentes a um
+provedor externo ficam fora das notificações do Axis por padrão; a sincronização
+efetiva desses registros continua pertencendo à integração I1.
 
 ## Milestone I — Optional Integrations
 

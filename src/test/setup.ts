@@ -63,6 +63,9 @@ vi.mock('@tauri-apps/api/window', () => {
     maximize: vi.fn().mockResolvedValue(undefined),
     unmaximize: vi.fn().mockResolvedValue(undefined),
     minimize: vi.fn().mockResolvedValue(undefined),
+    show: vi.fn().mockResolvedValue(undefined),
+    isMinimized: vi.fn().mockResolvedValue(false),
+    unminimize: vi.fn().mockResolvedValue(undefined),
     close: vi.fn().mockResolvedValue(undefined),
     setFullscreen: vi.fn().mockResolvedValue(undefined),
     setFocus: vi.fn().mockResolvedValue(undefined),
@@ -76,16 +79,19 @@ vi.mock('@tauri-apps/plugin-os', () => ({
   platform: vi.fn().mockResolvedValue('macos'),
 }))
 
+vi.mock('@tauri-apps/plugin-notification', () => ({
+  isPermissionGranted: vi.fn().mockResolvedValue(true),
+  requestPermission: vi.fn().mockResolvedValue('granted'),
+  sendNotification: vi.fn(),
+  onAction: vi.fn().mockResolvedValue({ unregister: vi.fn() }),
+}))
+
 vi.mock('@tauri-apps/plugin-process', () => ({
   relaunch: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@tauri-apps/plugin-updater', () => ({
   check: vi.fn().mockResolvedValue(null),
-}))
-
-vi.mock('@tauri-apps/plugin-deep-link', () => ({
-  onOpenUrl: vi.fn().mockResolvedValue(vi.fn()),
 }))
 
 // Mock typed Tauri bindings (tauri-specta generated)

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useEffectEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { getPlatform } from '@/hooks/use-platform'
@@ -118,7 +118,10 @@ export function ShortcutPicker({
   const { t } = useTranslation()
   const [isCapturing, setIsCapturing] = useState(false)
   const [pendingShortcut, setPendingShortcut] = useState<string | null>(null)
-  const inputRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLButtonElement>(null)
+  const saveShortcut = useEffectEvent((shortcut: string | null) => {
+    onChange(shortcut)
+  })
 
   const displayValue = value ?? defaultValue
   const isDefault = value === null
@@ -155,7 +158,7 @@ export function ShortcutPicker({
         // Compare to default to determine if we should save null or the shortcut
         const valueToSave =
           pendingShortcut === defaultValue ? null : pendingShortcut
-        onChange(valueToSave)
+        saveShortcut(valueToSave)
         setPendingShortcut(null)
         setIsCapturing(false)
       }
@@ -175,7 +178,7 @@ export function ShortcutPicker({
       window.removeEventListener('keyup', handleKeyUp, true)
       inputElement?.removeEventListener('blur', handleBlur)
     }
-  }, [isCapturing, pendingShortcut, defaultValue, onChange])
+  }, [isCapturing, pendingShortcut, defaultValue])
 
   const handleClick = () => {
     if (disabled) return
@@ -191,17 +194,11 @@ export function ShortcutPicker({
 
   return (
     <div className="flex items-center gap-2">
-      <div
+      <button
+        type="button"
         ref={inputRef}
-        role="button"
-        tabIndex={disabled ? -1 : 0}
+        disabled={disabled}
         onClick={handleClick}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            handleClick()
-          }
-        }}
         className={cn(
           'h-9 min-w-[120px] rounded-md border border-neutral-300 bg-white px-3 py-1 text-sm shadow-sm transition-[color,box-shadow] outline-none select-none font-mono',
           'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
@@ -222,7 +219,7 @@ export function ShortcutPicker({
             {formatShortcutForDisplay(displayValue)}
           </span>
         )}
-      </div>
+      </button>
 
       {!isDefault && !disabled && (
         <button

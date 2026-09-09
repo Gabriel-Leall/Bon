@@ -12,6 +12,8 @@ const preferences = (overrides = {}): AppPreferences => ({
   daily_reset_time: '00:00',
   adaptive_dashboard_mode: 'full',
   notes_vault_path: null,
+  daily_wrap_up_reminder_enabled: false,
+  daily_wrap_up_reminder_time: '18:00',
   ...overrides,
 })
 
@@ -37,5 +39,17 @@ describe('normalizeAppPreferences', () => {
 
     expect(normalized.theme).toBe('system')
     expect(normalized.accent).toBe('blue')
+  })
+
+  it('fills reminder defaults when loading legacy preferences', () => {
+    const normalized = normalizeAppPreferences(
+      preferences({
+        daily_wrap_up_reminder_enabled: undefined,
+        daily_wrap_up_reminder_time: undefined,
+      })
+    )
+
+    expect(normalized.daily_wrap_up_reminder_enabled).toBe(false)
+    expect(normalized.daily_wrap_up_reminder_time).toBe('18:00')
   })
 })

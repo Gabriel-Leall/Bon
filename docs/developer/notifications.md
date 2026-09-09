@@ -20,6 +20,12 @@ notifications.info('Info', 'Here is some information')
 
 // Native system notification
 notify('Update Available', 'Click to install', { native: true })
+
+// Native notification that restores Axis and opens a specific context
+notify('Your day is still open', 'Review it before finishing.', {
+  native: true,
+  target: { kind: 'wrap-up' },
+})
 ```
 
 ### Available Functions
@@ -55,8 +61,35 @@ interface NotificationOptions {
   type?: 'success' | 'error' | 'info' | 'warning' // Notification type
   native?: boolean // Use native notification
   duration?: number // Toast duration (ms, 0 = no auto-dismiss)
+  target?: AxisNotificationTarget // Context opened when a native alert is activated
+  allowExternalCalendarNotification?: boolean // Explicit provider opt-in
 }
 ```
+
+## Actionable native notifications
+
+Targeted native alerts serialize a validated destination into the notification
+payload. `useMainWindowEventListeners` owns the single global action listener: it
+restores the main window from the tray, focuses it, and routes to the requested
+context. Supported destinations are wrap-up, focus, task, note, habit, and a
+calendar event with its local date.
+
+Use `notify(..., { native: true, target })` for any alert that expects the user
+to continue inside Axis. Do not register component-level notification listeners;
+duplicate listeners can open a destination more than once.
+
+## Daily wrap-up reminder
+
+`useDailyWrapUpReminder` evaluates the persisted reminder preference while the
+main webview is alive, including when the window is hidden in the system tray.
+It sends at most one alert per local date and skips plans already marked
+`wrapped_up`. Focus and visibility events trigger an immediate safety check in
+addition to the minute interval.
+
+The reminder is opt-in and defaults to 18:00. Keep providers such as Google as
+the default notification owner: targeted notifications marked as externally
+owned are suppressed unless the caller explicitly passes the opt-in flag. I1
+must only expose that opt-in after connected-event reminders are functional.
 
 ## Examples
 
@@ -117,6 +150,8 @@ try {
 ### Frontend (TypeScript)
 
 - **Location**: `src/lib/notifications.ts`
+- **Target routing**: `src/lib/notification-target.ts`
+- **Daily scheduler**: `src/hooks/useDailyWrapUpReminder.ts`
 - **Dependencies**: Sonner for toasts, Tauri API for native notifications
 - **Error handling**: Automatic fallback from native to toast
 - **Logging**: All notification actions are logged via logger utility

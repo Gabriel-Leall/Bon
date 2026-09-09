@@ -16,15 +16,29 @@ function toClassString(input: ClassValue): string {
   }
 
   if (Array.isArray(input)) {
-    return input.map(toClassString).filter(Boolean).join(' ')
+    return input
+      .reduce<string[]>((classes, value) => {
+        const className = toClassString(value)
+        if (className) classes.push(className)
+        return classes
+      }, [])
+      .join(' ')
   }
 
   return Object.entries(input)
-    .filter(([, isEnabled]) => Boolean(isEnabled))
-    .map(([key]) => key)
+    .reduce<string[]>((classes, [key, isEnabled]) => {
+      if (isEnabled) classes.push(key)
+      return classes
+    }, [])
     .join(' ')
 }
 
 export function cn(...inputs: ClassValue[]) {
-  return inputs.map(toClassString).filter(Boolean).join(' ')
+  return inputs
+    .reduce<string[]>((classes, input) => {
+      const className = toClassString(input)
+      if (className) classes.push(className)
+      return classes
+    }, [])
+    .join(' ')
 }

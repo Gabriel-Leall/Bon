@@ -18,6 +18,10 @@ export function normalizeAppPreferences(
   return {
     ...preferences,
     ...appearance,
+    daily_wrap_up_reminder_enabled:
+      preferences.daily_wrap_up_reminder_enabled ?? false,
+    daily_wrap_up_reminder_time:
+      preferences.daily_wrap_up_reminder_time ?? '18:00',
   }
 }
 
@@ -44,6 +48,8 @@ export function usePreferences() {
           daily_reset_time: '00:00',
           adaptive_dashboard_mode: 'full',
           notes_vault_path: null,
+          daily_wrap_up_reminder_enabled: false,
+          daily_wrap_up_reminder_time: '18:00',
         }
       }
 

@@ -13,6 +13,7 @@ import {
   SunMedium,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { Button } from '@/components/ui/button'
 import {
   Popover,
@@ -25,13 +26,294 @@ import { getDailyAxisPeriod } from '@/lib/daily-axis-banner-domain'
 import { cn } from '@/lib/utils'
 import { useDailyPlanStore } from '@/store/daily-plan-store'
 import { usePomodoroStore } from '@/store/pomodoro-store'
-import { useTasksStore } from '@/store/tasks-store'
+import { useTasksStore, type Task } from '@/store/tasks-store'
 import { useUIStore } from '@/store/ui-store'
 
 function greetingKey(period: ReturnType<typeof getDailyAxisPeriod>) {
   if (period === 'morning') return 'dailyAxis.goodMorning'
   if (period === 'afternoon') return 'dailyAxis.goodAfternoon'
   return 'dailyAxis.goodEvening'
+}
+
+function getPrimaryLabel(
+  t: TFunction,
+  period: ReturnType<typeof getDailyAxisPeriod>,
+  empty: boolean,
+  running: boolean
+) {
+  if (period === 'evening') return t('dailyAxis.prepareTomorrow')
+  if (empty) return t('dailyAxis.openTasks')
+  if (running) return t('dailyAxis.openFocus')
+  return t('dailyAxis.startFocus')
+}
+
+function createDailyAxisActions({
+  t,
+  period,
+  availableTasks,
+  focusedTask,
+  running,
+  timerState,
+  linkedTaskId,
+  updateFocus,
+  linkTask,
+  startContextualFocus,
+  navigateTo,
+  setWrapUpOpen,
+  closeSelector,
+}: {
+  t: TFunction
+  period: ReturnType<typeof getDailyAxisPeriod>
+  availableTasks: Task[]
+  focusedTask: Task | null
+  running: boolean
+  timerState: string
+  linkedTaskId: string | null
+  updateFocus: (taskId: string, source: 'manual') => Promise<unknown>
+  linkTask: (taskId: string) => void
+  startContextualFocus: (taskId: string) => Promise<boolean>
+  navigateTo: (page: 'tasks' | 'focus') => void
+  setWrapUpOpen: (open: boolean) => void
+  closeSelector: () => void
+}) {
+  const selectFocus = async (taskId: string) => {
+    if (!taskId || focusedTask?.id === taskId) {
+      closeSelector()
+      return
+    }
+
+    try {
+      const nextTask = availableTasks.find(task => task.id === taskId)
+      await updateFocus(taskId, 'manual')
+      closeSelector()
+      void notifications.success(
+        t('dailyAxis.success.focusUpdated'),
+        nextTask?.title
+      )
+    } catch {
+      void notifications.error(
+        t('dailyAxis.error.loadFailed'),
+        t('dailyAxis.error.focusUpdateFailed')
+      )
+    }
+  }
+
+  const startFocus = async () => {
+    if (!focusedTask) {
+      navigateTo('tasks')
+      return
+    }
+
+    linkTask(focusedTask.id)
+    navigateTo('focus')
+    if (timerState !== 'running' || linkedTaskId !== focusedTask.id) {
+      const started = await startContextualFocus(focusedTask.id)
+      if (!started) {
+        void notifications.error(
+          t('dailyAxis.error.startFailed'),
+          t('dailyAxis.error.startPreserved')
+        )
+        return
+      }
+    }
+    void notifications.success(
+      t('dailyAxis.success.focusStarted'),
+      focusedTask.title
+    )
+  }
+
+  const runPrimaryAction = () => {
+    if (period === 'evening') {
+      setWrapUpOpen(true)
+      return
+    }
+    if (running) {
+      navigateTo('focus')
+      return
+    }
+    void startFocus()
+  }
+
+  return { runPrimaryAction, selectFocus, startFocus }
+}
+
+function PeriodIcon({
+  period,
+}: {
+  period: ReturnType<typeof getDailyAxisPeriod>
+}) {
+  if (period === 'morning') return <Sunrise className="size-3.5" />
+  if (period === 'afternoon') return <SunMedium className="size-3.5" />
+  return <Sunset className="size-3.5" />
+}
+
+function DailyAxisSummary({
+  period,
+  isLoading,
+  hasError,
+  empty,
+  focusedTask,
+  running,
+}: {
+  period: ReturnType<typeof getDailyAxisPeriod>
+  isLoading: boolean
+  hasError: boolean
+  empty: boolean
+  focusedTask: Task | null
+  running: boolean
+}) {
+  const { t } = useTranslation()
+
+  let content = (
+    <div className="space-y-1.5">
+      <h2 className="text-base font-semibold tracking-tight">
+        {t('dailyAxis.title')}
+      </h2>
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1">
+          <CheckSquare2 className="size-3.5" />
+          <span className="truncate">{focusedTask?.title}</span>
+        </span>
+        {running ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+            <Sparkles className="size-3" />
+            {t('dailyAxis.inProgress')}
+          </span>
+        ) : null}
+        {focusedTask?.priority ? (
+          <span className="rounded-full bg-muted px-2.5 py-1 text-xs uppercase tracking-wide">
+            {t(`tasks.priority.${focusedTask.priority}`)}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  )
+
+  if (empty) {
+    content = (
+      <div className="space-y-2">
+        <h2 className="text-base font-semibold tracking-tight">
+          {t('dailyAxis.emptyTitle')}
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          {t('dailyAxis.emptyDescription')}
+        </p>
+      </div>
+    )
+  }
+  if (hasError) {
+    content = (
+      <div className="space-y-2">
+        <h2 className="text-base font-semibold tracking-tight">
+          {t('dailyAxis.errorTitle')}
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          {t('dailyAxis.error.loadFailed')}
+        </p>
+      </div>
+    )
+  }
+  if (isLoading) {
+    content = (
+      <div className="space-y-2">
+        <Skeleton className="h-6 w-44" />
+        <Skeleton className="h-5 w-80 max-w-full" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-w-0 space-y-1.5">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <PeriodIcon period={period} />
+        <span>{t(greetingKey(period))}</span>
+      </div>
+      {content}
+    </div>
+  )
+}
+
+function FocusSelector({
+  open,
+  onOpenChange,
+  tasks,
+  focusedTaskId,
+  disabled,
+  onSelect,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  tasks: Task[]
+  focusedTaskId?: string
+  disabled: boolean
+  onSelect: (taskId: string) => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="rounded-lg"
+          disabled={disabled}
+        >
+          <RefreshCcw className="size-4" />
+          <span>{t('dailyAxis.changeFocus')}</span>
+          <ChevronDown className="size-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-2">
+        <div className="mb-1 px-2 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t('dailyAxis.selectorTitle')}
+        </div>
+        <div className="space-y-1">
+          {tasks.map(task => {
+            const selected = task.id === focusedTaskId
+            return (
+              <button
+                key={task.id}
+                type="button"
+                onClick={() => onSelect(task.id)}
+                className={cn(
+                  'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent',
+                  selected && 'bg-accent'
+                )}
+              >
+                <span className="flex-1 truncate">{task.title}</span>
+                {selected ? <Check className="size-4 text-primary" /> : null}
+              </button>
+            )
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function MinimizedDailyAxis({ onRestore }: { onRestore: () => void }) {
+  const { t } = useTranslation()
+
+  return (
+    <section
+      aria-label="Daily Axis"
+      className="pointer-events-none fixed bottom-5 right-5 z-50"
+    >
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="pointer-events-auto rounded-xl bg-surface-elevated shadow-modal"
+        onClick={onRestore}
+        title={t('dailyAxis.restore')}
+      >
+        <Maximize2 className="size-3.5" />
+        <span>{t('dailyAxis.title')}</span>
+      </Button>
+    </section>
+  )
 }
 
 export function DailyAxisBanner() {
@@ -80,102 +362,34 @@ export function DailyAxisBanner() {
   const isLoading = planLoading || tasksLoading
   const emptyState = !isLoading && !focusedTask
 
-  const primaryLabel =
-    period === 'evening'
-      ? t('dailyAxis.prepareTomorrow')
-      : emptyState
-        ? t('dailyAxis.openTasks')
-        : isRunningFocusedTask
-          ? t('dailyAxis.openFocus')
-          : t('dailyAxis.startFocus')
-
-  const handleSelectFocus = async (taskId: string) => {
-    if (!taskId || focusedTask?.id === taskId) {
-      setSelectorOpen(false)
-      return
-    }
-
-    try {
-      const nextTask = availableFocusTasks.find(task => task.id === taskId)
-      await updateFocus(taskId, 'manual')
-      setSelectorOpen(false)
-      void notifications.success(
-        t('dailyAxis.success.focusUpdated'),
-        nextTask?.title
-      )
-    } catch {
-      void notifications.error(
-        t('dailyAxis.error.loadFailed'),
-        t('dailyAxis.error.focusUpdateFailed')
-      )
-    }
-  }
-
-  const handleStartFocus = async () => {
-    if (!focusedTask) {
-      navigateTo('tasks')
-      return
-    }
-
-    linkTask(focusedTask.id)
-    navigateTo('focus')
-
-    if (timerState !== 'running' || linkedTaskId !== focusedTask.id) {
-      const ok = await startContextualFocus(focusedTask.id)
-      if (!ok) {
-        void notifications.error(
-          t('dailyAxis.error.startFailed'),
-          t('dailyAxis.error.startPreserved')
-        )
-        return
-      }
-    }
-
-    void notifications.success(
-      t('dailyAxis.success.focusStarted'),
-      focusedTask.title
-    )
-  }
-
-  const handlePrimaryAction = () => {
-    if (period === 'evening') {
-      setWrapUpOpen(true)
-      return
-    }
-
-    if (isRunningFocusedTask) {
-      navigateTo('focus')
-      return
-    }
-
-    void handleStartFocus()
-  }
+  const primaryLabel = getPrimaryLabel(
+    t,
+    period,
+    emptyState,
+    isRunningFocusedTask
+  )
+  const actions = createDailyAxisActions({
+    t,
+    period,
+    availableTasks: availableFocusTasks,
+    focusedTask,
+    running: isRunningFocusedTask,
+    timerState,
+    linkedTaskId,
+    updateFocus,
+    linkTask,
+    startContextualFocus,
+    navigateTo,
+    setWrapUpOpen,
+    closeSelector: () => setSelectorOpen(false),
+  })
 
   if (minimized) {
-    return (
-      <section
-        role="region"
-        aria-label="Daily Axis"
-        className="pointer-events-none fixed bottom-5 right-5 z-50"
-      >
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="pointer-events-auto rounded-xl bg-surface-elevated shadow-modal"
-          onClick={() => setMinimized(false)}
-          title={t('dailyAxis.restore')}
-        >
-          <Maximize2 className="size-3.5" />
-          <span>{t('dailyAxis.title')}</span>
-        </Button>
-      </section>
-    )
+    return <MinimizedDailyAxis onRestore={() => setMinimized(false)} />
   }
 
   return (
     <section
-      role="region"
       aria-label="Daily Axis"
       className="pointer-events-none fixed bottom-5 right-5 z-50 w-[min(390px,calc(100vw-7rem))]"
     >
@@ -192,111 +406,24 @@ export function DailyAxisBanner() {
         </Button>
 
         <div className="flex flex-col gap-3 pr-8">
-          <div className="min-w-0 space-y-1.5">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {period === 'morning' ? (
-                <Sunrise className="size-3.5" />
-              ) : period === 'afternoon' ? (
-                <SunMedium className="size-3.5" />
-              ) : (
-                <Sunset className="size-3.5" />
-              )}
-              <span>{t(greetingKey(period))}</span>
-            </div>
-
-            {isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-6 w-44" />
-                <Skeleton className="h-5 w-80 max-w-full" />
-              </div>
-            ) : planError ? (
-              <div className="space-y-2">
-                <h2 className="text-base font-semibold tracking-tight">
-                  {t('dailyAxis.errorTitle')}
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  {t('dailyAxis.error.loadFailed')}
-                </p>
-              </div>
-            ) : emptyState ? (
-              <div className="space-y-2">
-                <h2 className="text-base font-semibold tracking-tight">
-                  {t('dailyAxis.emptyTitle')}
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  {t('dailyAxis.emptyDescription')}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                <h2 className="text-base font-semibold tracking-tight">
-                  {t('dailyAxis.title')}
-                </h2>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1">
-                    <CheckSquare2 className="size-3.5" />
-                    <span className="truncate">{focusedTask?.title}</span>
-                  </span>
-                  {isRunningFocusedTask && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                      <Sparkles className="size-3" />
-                      {t('dailyAxis.inProgress')}
-                    </span>
-                  )}
-                  {focusedTask?.priority && (
-                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs uppercase tracking-wide">
-                      {t(`tasks.priority.${focusedTask.priority}`)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          <DailyAxisSummary
+            period={period}
+            isLoading={isLoading}
+            hasError={Boolean(planError)}
+            empty={emptyState}
+            focusedTask={focusedTask}
+            running={isRunningFocusedTask}
+          />
 
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <Popover open={selectorOpen} onOpenChange={setSelectorOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="rounded-lg"
-                  disabled={
-                    isLoading || planSaving || selectableTasks.length <= 1
-                  }
-                >
-                  <RefreshCcw className="size-4" />
-                  <span>{t('dailyAxis.changeFocus')}</span>
-                  <ChevronDown className="size-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-80 p-2">
-                <div className="mb-1 px-2 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t('dailyAxis.selectorTitle')}
-                </div>
-                <div className="space-y-1">
-                  {selectableTasks.map(task => {
-                    const selected = task.id === focusedTask?.id
-                    return (
-                      <button
-                        key={task.id}
-                        type="button"
-                        onClick={() => void handleSelectFocus(task.id)}
-                        className={cn(
-                          'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent',
-                          selected && 'bg-accent'
-                        )}
-                      >
-                        <span className="flex-1 truncate">{task.title}</span>
-                        {selected ? (
-                          <Check className="size-4 text-primary" />
-                        ) : null}
-                      </button>
-                    )
-                  })}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <FocusSelector
+              open={selectorOpen}
+              onOpenChange={setSelectorOpen}
+              tasks={selectableTasks}
+              focusedTaskId={focusedTask?.id}
+              disabled={isLoading || planSaving || selectableTasks.length <= 1}
+              onSelect={taskId => void actions.selectFocus(taskId)}
+            />
 
             {period === 'evening' && !emptyState ? (
               <Button
@@ -305,7 +432,7 @@ export function DailyAxisBanner() {
                 size="sm"
                 className="rounded-lg"
                 disabled={isLoading || planSaving}
-                onClick={handleStartFocus}
+                onClick={() => void actions.startFocus()}
               >
                 <Play className="size-4" />
                 <span>{t('dailyAxis.startFocus')}</span>
@@ -317,7 +444,7 @@ export function DailyAxisBanner() {
               size="sm"
               className="rounded-lg"
               disabled={isLoading || planSaving}
-              onClick={handlePrimaryAction}
+              onClick={actions.runPrimaryAction}
             >
               <Play className="size-4" />
               <span>{primaryLabel}</span>

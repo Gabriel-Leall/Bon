@@ -16,6 +16,18 @@ import type { NoteVaultMigrationMode } from '@/lib/tauri-bindings'
 import { useNotesStore } from '@/store/notes-store'
 import { SettingsField, SettingsSection } from '../shared/SettingsComponents'
 
+async function runWhileBusy(
+  setBusy: (busy: boolean) => void,
+  action: () => Promise<void>
+) {
+  setBusy(true)
+  try {
+    await action()
+  } finally {
+    setBusy(false)
+  }
+}
+
 function getVaultErrorMessage(
   message: string,
   t: (key: string) => string
@@ -92,71 +104,52 @@ export function NotesPane() {
   }
 
   async function handleChooseFolder() {
-    setIsBusy(true)
+    await runWhileBusy(setIsBusy, async () => {
+      try {
+        const selected = await open({
+          directory: true,
+          multiple: false,
+        })
+        if (!selected || Array.isArray(selected)) return
 
-    const selected = await open({
-      directory: true,
-      multiple: false,
-    }).catch(chooseError => {
-      showVaultError(String(chooseError))
-      return null
+        await setVaultPath(selected)
+        toast.success(t('preferences.notes.vault.changed'))
+      } catch (commandError) {
+        showVaultError(String(commandError))
+      }
     })
-
-    if (!selected || Array.isArray(selected)) {
-      setIsBusy(false)
-      return
-    }
-
-    try {
-      await setVaultPath(selected)
-      toast.success(t('preferences.notes.vault.changed'))
-    } catch (commandError) {
-      showVaultError(String(commandError))
-      setIsBusy(false)
-      return
-    }
-
-    setIsBusy(false)
   }
 
   async function handleUseDefault() {
-    setIsBusy(true)
-
-    try {
-      await resetVaultPath()
-      toast.success(t('preferences.notes.vault.defaultRestored'))
-    } catch (commandError) {
-      showVaultError(String(commandError))
-      setIsBusy(false)
-      return
-    }
-
-    setIsBusy(false)
+    await runWhileBusy(setIsBusy, async () => {
+      try {
+        await resetVaultPath()
+        toast.success(t('preferences.notes.vault.defaultRestored'))
+      } catch (commandError) {
+        showVaultError(String(commandError))
+      }
+    })
   }
 
   async function handleMigrateVault(mode: NoteVaultMigrationMode) {
-    setIsBusy(true)
-
-    try {
-      const result = await migratePendingVault(mode)
-      toast.success(
-        mode === 'copy'
-          ? t('preferences.notes.vault.migration.copied')
-          : t('preferences.notes.vault.migration.moved'),
-        {
-          description: t('preferences.notes.vault.migration.summary', {
-            notes: result.notes_migrated,
-            metadata: result.metadata_files_migrated,
-          }),
-        }
-      )
-    } catch (commandError) {
-      showVaultError(String(commandError))
-      setIsBusy(false)
-      return
-    }
-
-    setIsBusy(false)
+    await runWhileBusy(setIsBusy, async () => {
+      try {
+        const result = await migratePendingVault(mode)
+        toast.success(
+          mode === 'copy'
+            ? t('preferences.notes.vault.migration.copied')
+            : t('preferences.notes.vault.migration.moved'),
+          {
+            description: t('preferences.notes.vault.migration.summary', {
+              notes: result.notes_migrated,
+              metadata: result.metadata_files_migrated,
+            }),
+          }
+        )
+      } catch (commandError) {
+        showVaultError(String(commandError))
+      }
+    })
   }
 
   async function handleOpenFolder() {

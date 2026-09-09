@@ -230,6 +230,100 @@ function NotesSection({
   )
 }
 
+function NotesWorkspaceContent({
+  editable,
+  emptyTitle,
+  isLoading,
+  notesCount,
+  pinned,
+  pinnedNoteIds,
+  recent,
+  search,
+  selectedNoteId,
+  visibleNotes,
+  workspaceView,
+  onSelect,
+  onTogglePinned,
+}: {
+  editable: boolean
+  emptyTitle: string
+  isLoading: boolean
+  notesCount: number
+  pinned: Note[]
+  pinnedNoteIds: string[]
+  recent: Note[]
+  search: string
+  selectedNoteId: string | null
+  visibleNotes: Note[]
+  workspaceView: NotesWorkspaceView
+  onSelect: (id: string) => void
+  onTogglePinned: (id: string) => void
+}) {
+  const { t } = useTranslation()
+
+  if (isLoading && notesCount === 0) {
+    return (
+      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-44 animate-pulse rounded-2xl border border-border bg-surface shadow-neu-raised"
+          />
+        ))}
+      </div>
+    )
+  }
+
+  if (visibleNotes.length === 0) {
+    return (
+      <section className="mt-8 flex items-center gap-4 rounded-2xl border border-border bg-surface px-5 py-6 shadow-neu-raised">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-border-strong bg-surface-elevated text-muted-foreground shadow-neu-raised-sm">
+          <FileText className="size-5" />
+        </span>
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">
+            {emptyTitle}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t(
+              search.trim()
+                ? 'notes.empty.clearSearchHint'
+                : `notes.empty.${workspaceView}Hint`
+            )}
+          </p>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <>
+      {editable ? (
+        <NotesSection
+          title={t('notes.sections.pinned')}
+          notes={pinned}
+          pinnedNoteIds={pinnedNoteIds}
+          selectedNoteId={selectedNoteId}
+          editable
+          onSelect={onSelect}
+          onTogglePinned={onTogglePinned}
+        />
+      ) : null}
+      <NotesSection
+        title={t(
+          editable ? 'notes.sections.recent' : `notes.sections.${workspaceView}`
+        )}
+        notes={editable ? recent : visibleNotes}
+        pinnedNoteIds={pinnedNoteIds}
+        selectedNoteId={selectedNoteId}
+        editable={editable}
+        onSelect={onSelect}
+        onTogglePinned={onTogglePinned}
+      />
+    </>
+  )
+}
+
 export function NotesPage({ initialSelectedNoteId }: NotesPageProps) {
   const { t } = useTranslation()
   const notes = useNotesStore(state => state.notes)
@@ -402,61 +496,21 @@ export function NotesPage({ initialSelectedNoteId }: NotesPageProps) {
           ) : null}
         </div>
 
-        {isLoading && notes.length === 0 ? (
-          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={index}
-                className="h-44 animate-pulse rounded-2xl border border-border bg-surface shadow-neu-raised"
-              />
-            ))}
-          </div>
-        ) : visibleNotes.length > 0 ? (
-          <>
-            {editable ? (
-              <NotesSection
-                title={t('notes.sections.pinned')}
-                notes={pinned}
-                pinnedNoteIds={pinnedNoteIds}
-                selectedNoteId={selectedNoteId}
-                editable
-                onSelect={selectNote}
-                onTogglePinned={togglePinnedNote}
-              />
-            ) : null}
-            <NotesSection
-              title={t(
-                editable
-                  ? 'notes.sections.recent'
-                  : `notes.sections.${workspaceView}`
-              )}
-              notes={editable ? recent : visibleNotes}
-              pinnedNoteIds={pinnedNoteIds}
-              selectedNoteId={selectedNoteId}
-              editable={editable}
-              onSelect={selectNote}
-              onTogglePinned={togglePinnedNote}
-            />
-          </>
-        ) : (
-          <section className="mt-8 flex items-center gap-4 rounded-2xl border border-border bg-surface px-5 py-6 shadow-neu-raised">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-border-strong bg-surface-elevated text-muted-foreground shadow-neu-raised-sm">
-              <FileText className="size-5" />
-            </span>
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">
-                {emptyTitle}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t(
-                  search.trim()
-                    ? 'notes.empty.clearSearchHint'
-                    : `notes.empty.${workspaceView}Hint`
-                )}
-              </p>
-            </div>
-          </section>
-        )}
+        <NotesWorkspaceContent
+          editable={editable}
+          emptyTitle={emptyTitle}
+          isLoading={isLoading}
+          notesCount={notes.length}
+          pinned={pinned}
+          pinnedNoteIds={pinnedNoteIds}
+          recent={recent}
+          search={search}
+          selectedNoteId={selectedNoteId}
+          visibleNotes={visibleNotes}
+          workspaceView={workspaceView}
+          onSelect={selectNote}
+          onTogglePinned={togglePinnedNote}
+        />
 
         {selectedNote ? (
           <NoteDetailsSheet

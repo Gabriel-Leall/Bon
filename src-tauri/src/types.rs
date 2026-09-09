@@ -11,6 +11,7 @@ pub const DEFAULT_QUICK_PANE_SHORTCUT: &str = "CommandOrControl+Shift+.";
 /// Default visual preferences.
 pub const DEFAULT_THEME: &str = "system";
 pub const DEFAULT_ACCENT: &str = "blue";
+pub const DEFAULT_DAILY_WRAP_UP_REMINDER_TIME: &str = "18:00";
 
 /// Maximum size for recovery data files (10MB)
 pub const MAX_RECOVERY_DATA_BYTES: u32 = 10_485_760;
@@ -50,6 +51,12 @@ pub struct AppPreferences {
     pub adaptive_dashboard_mode: Option<String>,
     /// Absolute path to the active local notes vault. If None, uses Documents/Axis Notes.
     pub notes_vault_path: Option<String>,
+    /// Whether Axis should send a safety reminder to wrap up the current day.
+    #[serde(default)]
+    pub daily_wrap_up_reminder_enabled: bool,
+    /// Local time for the daily wrap-up reminder (HH:MM).
+    #[serde(default = "default_daily_wrap_up_reminder_time")]
+    pub daily_wrap_up_reminder_time: String,
 }
 
 impl Default for AppPreferences {
@@ -64,6 +71,8 @@ impl Default for AppPreferences {
             daily_reset_time: Some("00:00".to_string()),
             adaptive_dashboard_mode: Some("full".to_string()),
             notes_vault_path: None,
+            daily_wrap_up_reminder_enabled: false,
+            daily_wrap_up_reminder_time: default_daily_wrap_up_reminder_time(),
         }
     }
 }
@@ -74,6 +83,10 @@ fn default_theme() -> String {
 
 fn default_accent() -> String {
     DEFAULT_ACCENT.to_string()
+}
+
+fn default_daily_wrap_up_reminder_time() -> String {
+    DEFAULT_DAILY_WRAP_UP_REMINDER_TIME.to_string()
 }
 
 impl AppPreferences {
@@ -88,6 +101,17 @@ impl AppPreferences {
         self.accent = normalized_accent;
 
         changed
+    }
+
+    /// Normalizes malformed reminder preferences without preventing startup.
+    /// Returns true when the persisted reminder time was replaced.
+    pub fn normalize_reminders(&mut self) -> bool {
+        if validate_time_of_day(&self.daily_wrap_up_reminder_time).is_ok() {
+            return false;
+        }
+
+        self.daily_wrap_up_reminder_time = default_daily_wrap_up_reminder_time();
+        true
     }
 }
 
@@ -192,6 +216,30 @@ pub fn validate_accent(accent: &str) -> Result<(), String> {
     }
 }
 
+/// Validates a local wall-clock time in 24-hour HH:MM format.
+pub fn validate_time_of_day(value: &str) -> Result<(), String> {
+    let Some((hour, minute)) = value.split_once(':') else {
+        return Err("Invalid time: must use HH:MM".to_string());
+    };
+
+    if hour.len() != 2 || minute.len() != 2 {
+        return Err("Invalid time: must use HH:MM".to_string());
+    }
+
+    let hour = hour
+        .parse::<u8>()
+        .map_err(|_| "Invalid hour in time".to_string())?;
+    let minute = minute
+        .parse::<u8>()
+        .map_err(|_| "Invalid minute in time".to_string())?;
+
+    if hour > 23 || minute > 59 {
+        return Err("Invalid time: hour or minute is out of range".to_string());
+    }
+
+    Ok(())
+}
+
 /// Validates dashboard adaptation mode.
 pub fn validate_dashboard_adaptation_mode(mode: &str) -> Result<(), String> {
     match mode {
@@ -221,6 +269,11 @@ mod appearance_tests {
 
         assert_eq!(preferences.theme, "cream");
         assert_eq!(preferences.accent, DEFAULT_ACCENT);
+        assert!(!preferences.daily_wrap_up_reminder_enabled);
+        assert_eq!(
+            preferences.daily_wrap_up_reminder_time,
+            DEFAULT_DAILY_WRAP_UP_REMINDER_TIME
+        );
     }
 
     #[test]
@@ -257,5 +310,27 @@ mod appearance_tests {
             assert!(validate_accent(accent).is_ok());
         }
         assert!(validate_accent("green").is_err());
+    }
+
+    #[test]
+    fn validates_and_normalizes_daily_wrap_up_times() {
+        for value in ["00:00", "18:00", "23:59"] {
+            assert!(validate_time_of_day(value).is_ok());
+        }
+        for value in ["8:00", "24:00", "18:60", "tomorrow"] {
+            assert!(validate_time_of_day(value).is_err());
+        }
+
+        let mut preferences = AppPreferences {
+            daily_wrap_up_reminder_time: "25:90".to_string(),
+            ..AppPreferences::default()
+        };
+
+        assert!(preferences.normalize_reminders());
+        assert_eq!(
+            preferences.daily_wrap_up_reminder_time,
+            DEFAULT_DAILY_WRAP_UP_REMINDER_TIME
+        );
+        assert!(!preferences.normalize_reminders());
     }
 }

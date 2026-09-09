@@ -2,19 +2,7 @@ import type {
   NameType,
   ValueType,
 } from 'recharts/types/component/DefaultTooltipContent'
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const CHART_COLORS = {
-  accent: 'var(--color-accent)',
-  accentMuted: 'var(--color-accent-muted)',
-  success: 'var(--color-success)',
-  warning: 'var(--color-warning)',
-  danger: 'var(--color-danger)',
-  muted: 'var(--color-muted)',
-  border: 'var(--color-border)',
-  text: 'var(--color-text)',
-  textMuted: 'var(--color-text-muted)',
-}
+import { CHART_COLORS } from '@/lib/chart-colors'
 
 export function ChartTooltip({
   active,

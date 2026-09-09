@@ -373,13 +373,11 @@ function TaskLinkSection() {
           variant="outline"
           size="xs"
           onClick={() => {
-            setShowPicker(prev => {
-              const next = !prev
-              if (!prev) {
-                requestAnimationFrame(() => searchInputRef.current?.focus())
-              }
-              return next
-            })
+            const next = !showPicker
+            setShowPicker(next)
+            if (next) {
+              requestAnimationFrame(() => searchInputRef.current?.focus())
+            }
           }}
         >
           <Plus className="size-3.5" />
@@ -541,8 +539,16 @@ function NumberInput({
       max={max}
       aria-label={label}
       onChange={e => {
-        const v = parseInt(e.target.value, 10)
-        if (!isNaN(v) && v >= min && v <= max) onChange(v)
+        const rawValue = e.target.value
+        if (!rawValue) return
+        const nextValue = Number(rawValue)
+        if (
+          Number.isFinite(nextValue) &&
+          nextValue >= min &&
+          nextValue <= max
+        ) {
+          onChange(nextValue)
+        }
       }}
       className="w-16 rounded-lg border border-border-strong bg-surface px-2.5 py-1.5 text-center text-sm font-medium tabular-nums shadow-neu-raised-sm outline-none transition-[border-color,box-shadow] focus:border-primary focus:shadow-focus-input"
     />
@@ -674,9 +680,9 @@ function SettingsSection({
               key={row.key}
               className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 last:border-b-0"
             >
-              <label className="text-sm font-medium text-foreground">
+              <span className="text-sm font-medium text-foreground">
                 {row.label}
-              </label>
+              </span>
               <div className="flex items-center gap-2">
                 {row.type === 'number' ? (
                   <>
