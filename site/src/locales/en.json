@@ -1,227 +1,461 @@
 {
   "landing": {
+    "brand": "Axis",
+    "brandAria": "Axis Desktop, home",
     "nav": {
-      "ariaLabel": "Landing navigation",
-      "widgets": "Widgets",
-      "clarity": "Clarity",
-      "analysis": "Analysis",
+      "ariaLabel": "Main navigation",
+      "product": "Product",
+      "resources": "Resources",
+      "privacy": "Privacy",
+      "github": "GitHub",
+      "free": "Free"
+    },
+    "megaMenu": {
+      "product": {
+        "day": {
+          "title": "Day view",
+          "copy": "Commitments and your next action",
+          "focus": "Main focus",
+          "meeting": "Project meeting",
+          "review": "Daily review"
+        },
+        "focus": {
+          "title": "Focus session",
+          "copy": "Protected time without losing context"
+        },
+        "analytics": {
+          "title": "Routine analysis",
+          "copy": "Local signals for better decisions"
+        }
+      },
+      "resources": {
+        "source": {
+          "title": "Open source",
+          "copy": "Explore the architecture and follow the project."
+        },
+        "releases": {
+          "title": "Axis releases",
+          "copy": "Download the latest desktop version.",
+          "badge": "Releases"
+        },
+        "explore": "EXPLORE",
+        "privacy": {
+          "title": "Privacy",
+          "copy": "Local data with control in your hands"
+        },
+        "features": {
+          "title": "Features",
+          "copy": "Planning, focus, habits, and analysis"
+        }
+      }
+    },
+    "actions": {
+      "github": "GitHub",
       "download": "Download"
     },
-    "languageSwitcher": {
-      "ariaLabel": "Select site language",
-      "toggleLabel": "Current language: {{language}}. Click to switch language.",
-      "english": "EN",
-      "portuguese": "PT-BR"
-    },
     "hero": {
-      "kicker": "AXIS",
-      "title": "Turn your daily chaos into ruthless focus.",
-      "subtitle": "No more scattered tools. Tasks, habits, and calendar flow perfectly in one local-first command center.",
-      "primaryCta": "Download Axis Desktop",
-      "preview": {
-        "ariaLabel": "Axis Desktop board preview",
-        "clock": "Wed, May 06 01:44 AM",
-        "sidebar": {
-          "board": "Board",
-          "tasks": "Tasks",
-          "notes": "Notes",
-          "calendar": "Calendar",
-          "focus": "Focus"
-        },
-        "notes": {
-          "title": "Brain Dump",
-          "placeholder": "Dump it here...",
-          "count": "2 notes"
-        },
-        "focus": {
-          "title": "Focus",
-          "emptyTask": "No task selected",
-          "reset": "Reset focus timer",
-          "start": "Start focus timer",
-          "skip": "Skip focus timer"
-        },
-        "calendar": {
-          "title": "Calendar",
-          "month": "May 2026"
-        },
-        "tasks": {
-          "title": "Today",
-          "planTheDay": "Plan the day",
-          "reviewWeeklyGoals": "Review weekly goals",
-          "deepWorkBlock": "Deep work block (90m)",
-          "triageGithubAndSlack": "Triage GitHub and Slack"
-        },
-        "habits": {
-          "noPhone": "No phone for 1 hour",
-          "dailyReview": "Daily review",
-          "drinkWater": "Drink water",
-          "readTenPages": "Read 10 pages"
-        },
-        "protocol": {
-          "title": "Protocol",
-          "meta": "2/13 ACTIVE",
-          "streak": "STREAK: 0"
-        }
-      }
-    },
-    "clarity": {
-      "chaos": {
-        "label": "Chaos scan",
-        "titleLineOne": "Work feels",
-        "titleLineTwo": "chaotic without Axis",
-        "ariaLabel": "Chaos impact",
+      "titleLineOne": "Stop rebuilding your day.",
+      "titleLineTwo": "See the next step.",
+      "subtitle": "For people who work or study on a computer, Axis brings tasks, commitments, and focus together so what deserves attention now stays clear.",
+      "secondaryCta": "See how it works",
+      "proofAria": "Demonstration of the Axis daily flow",
+      "timeline": {
+        "title": "Day timeline",
+        "date": "Today · May 14",
+        "now": "Now",
         "items": {
-          "tabs": "Too many tabs and no single command center.",
-          "disconnectedPlanning": "Daily planning breaks when meetings and tasks are disconnected.",
-          "busyWork": "Hard to know if progress is real or just busy work."
-        },
-        "stat": {
-          "label": "Context switching cost",
-          "value": "2h/day",
-          "description": "The average professional loses around 2 hours a day just switching context between tabs, chats, and scattered tools."
+          "planning": {
+            "time": "08:30",
+            "label": "Organize the day"
+          },
+          "focus": {
+            "time": "09:00",
+            "label": "Review proposal"
+          },
+          "pause": {
+            "time": "10:00",
+            "label": "Short break"
+          },
+          "meeting": {
+            "time": "14:00",
+            "label": "Project meeting"
+          },
+          "review": {
+            "time": "17:30",
+            "label": "Close the day"
+          }
         }
       },
-      "axis": {
-        "label": "Axis signal",
-        "titleLineOne": "Axis turns chaos",
-        "titleLineTwoPrefix": "into",
-        "titleEmphasis": "clarity",
-        "items": {
-          "widgets": "Widgets keep all critical signals on one board.",
-          "sharedView": "Time, tasks, habits, and focus cycles live in the same view.",
-          "analysis": "The analysis panel compares last month vs this month automatically."
+      "sessions": {
+        "active": {
+          "title": "Review proposal",
+          "meta": "Focus session · in progress",
+          "duration": "48 min",
+          "status": "Live"
         },
-        "testimonialAriaLabel": "Axis testimonial",
-        "testimonial": "I use Axis every day to track priorities and finish the day with less friction.",
-        "author": "Gabriel Leal"
-      }
-    },
-    "widgets": {
-      "progressAriaLabel": "Widget progress",
-      "cards": {
-        "tasks": {
-          "kicker": "Tasks",
-          "title": "Close tasks before they become noise",
-          "description": "Capture, prioritize, and finish daily tasks in one place with clear status and fast completion flow.",
-          "badge": "3 completed"
+        "next": {
+          "title": "Prepare meeting",
+          "meta": "Next action",
+          "duration": "35 min",
+          "status": "14:00"
         },
-        "habitTracker": {
-          "kicker": "Habit Tracker",
-          "title": "Build consistency with visible streaks",
-          "description": "Track routines with streak history and quick daily check-ins so habits stay active instead of forgotten.",
-          "badge": "+1 streak"
-        },
-        "pomodoro": {
-          "kicker": "Pomodoro",
-          "title": "Protect deep work with focused cycles",
-          "description": "Start focus sessions, pause when needed, and reset instantly to keep momentum through real work blocks.",
-          "badge": "Focus live"
-        },
-        "kanban": {
-          "kicker": "Kanban",
-          "title": "See execution flow at a glance",
-          "description": "Move cards across stages and spot blockers quickly with a board designed for continuous delivery.",
-          "badge": "Flow update"
-        },
-        "calendar": {
-          "kicker": "Calendar",
-          "title": "Plan your week with real context",
-          "description": "Keep deadlines, meetings, and planned work aligned so the week stays realistic and under control.",
-          "badge": "Week synced"
+        "completed": {
+          "title": "Plan the day",
+          "meta": "Completed today",
+          "duration": "12 min",
+          "status": "Done"
         }
+      },
+      "code": {
+        "ariaLabel": "Local focus session details",
+        "file": "session.local",
+        "sessionLabel": "session",
+        "intentKey": "intent",
+        "intentValue": "\"Review proposal\"",
+        "modeKey": "mode",
+        "modeValue": "\"focus\"",
+        "durationKey": "duration",
+        "storageKey": "storage",
+        "storageValue": "\"local\"",
+        "note": "Saved only on this device"
+      },
+      "trust": {
+        "local": "Works without internet",
+        "private": "Your data stays with you",
+        "desktop": "Windows and Linux"
       }
     },
-    "preview": {
-      "levels": {
-        "high": "High",
-        "medium": "Medium"
+    "proof": {
+      "title": "One flow to capture, decide, and execute",
+      "items": {
+        "today": "Today",
+        "tasks": "Tasks",
+        "calendar": "Calendar",
+        "focus": "Focus",
+        "habits": "Habits",
+        "analysis": "Analysis",
+        "notes": "Notes",
+        "closure": "Daily close"
+      }
+    },
+    "analytics": {
+      "title": "See what made your day work",
+      "subtitle": "Understand where your focus moved forward, when overload appeared, and which small adjustment to make tomorrow.",
+      "cta": "See analysis in action",
+      "dashboardAria": "Example of Axis rhythm and execution analysis",
+      "demoNote": "Illustrative example with local data",
+      "period": "Last 7 days",
+      "rhythm": {
+        "title": "Consistency",
+        "value": "6 of 7 days",
+        "caption": "at a sustainable pace"
       },
-      "tasks": {
-        "metricLabel": "Today",
-        "metricValue": "3/4 cleared",
-        "done": "Done",
-        "activeNote": "Task completed and cleared from the queue.",
-        "idleNote": "Ready to close.",
+      "signals": {
+        "title": "Period summary",
         "rows": {
-          "shipLandingUpdate": "Ship landing update",
-          "polishPricingCopy": "Polish pricing copy",
-          "reviewOnboardingFlow": "Review onboarding flow"
+          "focusTime": {
+            "label": "Focus time",
+            "value": "4h 12min"
+          },
+          "tasksCompleted": {
+            "label": "Tasks completed",
+            "value": "18"
+          },
+          "focusSessions": {
+            "label": "Focus sessions",
+            "value": "7"
+          },
+          "activeDays": {
+            "label": "Active days",
+            "value": "6"
+          }
         }
+      },
+      "insight": {
+        "title": "Period reading",
+        "status": "Sustainable rhythm",
+        "headline": "Your focus became more consistent without increasing overload.",
+        "body": "Protected blocks grew while planned breaks remained present.",
+        "supportedBy": "Supported by",
+        "focusDepth": "Focus depth",
+        "supportValue": "82%",
+        "needsAttention": "Needs attention",
+        "recovery": "Recovery",
+        "attentionValue": "64%",
+        "scoreTitle": "Focus index",
+        "scoreGrade": "A",
+        "scoreValue": "78%",
+        "scoreCaption": "Composed from focus, execution, cadence, and habits.",
+        "scoreAria": "Focus index 78 percent, grade A"
+      },
+      "activity": {
+        "title": "Task activity",
+        "completed": "Completed",
+        "created": "Created",
+        "rate": "76%",
+        "rateLabel": "completion rate",
+        "pileAria": "{{day}}: {{completed}} tasks completed and {{created}} created",
+        "days": {
+          "mon": "M",
+          "tue": "T",
+          "wed": "W",
+          "thu": "T",
+          "fri": "F",
+          "sat": "S",
+          "sun": "S"
+        }
+      },
+      "adjustment": {
+        "title": "Next adjustment",
+        "body": "Protect a real break after the second focus block.",
+        "basis": "Based on recovery · 64%"
+      },
+      "week": {
+        "title": "Current week",
+        "value": "78%",
+        "delta": "+9 points vs. previous week",
+        "days": {
+          "mon": "M",
+          "tue": "T",
+          "wed": "W",
+          "thu": "T",
+          "fri": "F",
+          "sat": "S",
+          "sun": "S"
+        },
+        "note": "Focus grew without sacrificing planned breaks."
+      }
+    },
+    "capabilities": {
+      "ariaLabel": "Core Axis features",
+      "planning": {
+        "title": "Organize your day in minutes",
+        "today": "Today",
+        "date": "Tuesday, May 14",
+        "load": "4 protected blocks",
+        "rows": {
+          "focus": {
+            "time": "09:00",
+            "label": "Main focus",
+            "meta": "Review proposal · 50 min"
+          },
+          "meeting": {
+            "time": "11:30",
+            "label": "Project meeting",
+            "meta": "Calendar · 30 min"
+          },
+          "break": {
+            "time": "12:15",
+            "label": "Break and hydrate",
+            "meta": "Minimum habit · 10 min"
+          },
+          "review": {
+            "time": "17:30",
+            "label": "Daily review",
+            "meta": "Daily close · 15 min"
+          }
+        },
+        "add": "Add next action",
+        "captureAria": "Example of Axis Quick Capture",
+        "captureTitle": "Quick Capture",
+        "captureShortcut": "Ctrl Shift .",
+        "captureText": "task: Send revised proposal",
+        "captureType": "Task detected",
+        "captureAction": "Save"
+      },
+      "focus": {
+        "title": "Focus without losing context",
+        "session": "Current session",
+        "live": "Active",
+        "intent": "Review proposal",
+        "time": "42:18",
+        "cycle": "Cycle 1 of 2",
+        "context": "Context saved automatically"
       },
       "habits": {
-        "metricLabel": "Daily check-ins",
-        "metricValue": "4/5 done",
-        "streak": "Streak {{count}}",
-        "rows": {
-          "morningReview": "Morning review",
-          "hydrationReset": "Hydration reset",
-          "readTenPages": "Read 10 pages"
-        }
-      },
-      "pomodoro": {
-        "metricLabel": "Focus session",
-        "task": "Landing page polish",
-        "timeLeft": "{{time}} left"
-      },
-      "kanban": {
-        "metricLabel": "Delivery board",
-        "metricValue": "1 card moving",
-        "columns": {
-          "backlog": "Backlog",
-          "inProgress": "In Progress",
-          "done": "Done"
+        "title": "Keep your rhythm on difficult days",
+        "week": "This week",
+        "progress": "15/21 check-ins",
+        "days": {
+          "mon": "M",
+          "tue": "T",
+          "wed": "W",
+          "thu": "T",
+          "fri": "F",
+          "sat": "S",
+          "sun": "S"
         },
-        "cards": {
-          "rewriteCta": "Rewrite CTA",
-          "syncWidgetStory": "Sync widget story",
-          "updateHeroPreview": "Update hero preview"
-        }
+        "rows": {
+          "planning": {
+            "label": "Morning planning"
+          },
+          "water": {
+            "label": "Drink water"
+          },
+          "reading": {
+            "label": "Read 10 pages"
+          }
+        },
+        "note": "Minimum days also count toward keeping your rhythm."
       },
-      "calendar": {
-        "metricLabel": "Week overview",
-        "metricValue": "4 blocks protected",
-        "month": "May 2026",
-        "review": "Daily review",
-        "note": "+1 check-in logged"
+      "events": {
+        "title": "Watch your day update as you move",
+        "event": "Event",
+        "source": "Source",
+        "time": "Time",
+        "live": "Updating",
+        "rows": {
+          "focus": {
+            "label": "Focus started",
+            "source": "Task · Review proposal",
+            "time": "Now",
+            "state": "Local"
+          },
+          "reminder": {
+            "label": "Reminder scheduled",
+            "source": "Calendar · Meeting",
+            "time": "13:50",
+            "state": "Pending"
+          },
+          "habit": {
+            "label": "Habit completed",
+            "source": "Today · Drink water",
+            "time": "12:18",
+            "state": "Logged"
+          },
+          "closure": {
+            "label": "Daily close prepared",
+            "source": "Daily summary",
+            "time": "17:30",
+            "state": "Planned"
+          }
+        }
       }
     },
-    "analysis": {
-      "chartAriaLabel": "Momentum comparison chart",
-      "headline": "Track. Compare. Compound.",
-      "subtitle": "See exactly how much your focus and habits are growing week over week. Your baseline is constantly evolving.",
-      "pastMonth": "Last Month",
-      "thisMonth": "This Month",
-      "pastPin": "Past"
+    "ownership": {
+      "title": "Your day remains yours",
+      "copy": "Use Axis without a mandatory account, keep your data on your device, and connect only the services that make sense.",
+      "cta": "Learn about privacy"
     },
-    "bridge": {
-      "pillars": {
-        "zeroLag": {
-          "title": "Zero-Lag Speed",
-          "description": "No cloud, no slowdown. Your tasks, timers, and habits respond instantly on your machine."
-        },
-        "focus": {
-          "title": "Unbreakable Focus",
-          "description": "No browser tabs pulling you away. A closed environment designed exclusively for execution and deep work."
-        },
-        "openSource": {
-          "title": "Open Source and Transparent",
-          "description": "Your control panel, your rules. Fully open source and built to respect your privacy from day one."
+    "config": {
+      "title": "Create next action",
+      "subtitle": "Turn an interruption into a next action without leaving your current work.",
+      "local": "Saved locally",
+      "fields": {
+        "action": "What needs to happen?",
+        "type": "Type",
+        "when": "When",
+        "duration": "Duration"
+      },
+      "values": {
+        "action": "Review this week's proposal",
+        "type": "Task",
+        "when": "Today, 16:30",
+        "duration": "45 min"
+      },
+      "cancel": "Cancel",
+      "create": "Create action",
+      "reminder": {
+        "trigger": "Add reminder",
+        "ariaLabel": "Action reminder options",
+        "title": "Reminder",
+        "subtitle": "Choose when Axis should notify you.",
+        "options": {
+          "atTime": "At the scheduled time",
+          "tenMinutes": "10 minutes before",
+          "oneHour": "1 hour before"
         }
+      },
+      "scenes": {
+        "integrations": {
+          "title": "Integration flow",
+          "status": "Synced",
+          "columns": {
+            "event": "Next action",
+            "source": "Source",
+            "time": "Time",
+            "state": "Status"
+          },
+          "rows": {
+            "calendar": {
+              "event": "Project meeting",
+              "source": "Google Calendar",
+              "time": "11:30",
+              "state": "Scheduled"
+            },
+            "github": {
+              "event": "Review pull request",
+              "source": "GitHub",
+              "time": "14:00",
+              "state": "Imported"
+            },
+            "axis": {
+              "event": "Daily review",
+              "source": "Axis",
+              "time": "17:30",
+              "state": "Local"
+            }
+          }
+        },
+        "local": {
+          "title": "Records on your device",
+          "status": "No mandatory cloud",
+          "saved": "Local",
+          "rows": {
+            "task": {
+              "title": "Review this week's proposal",
+              "meta": "Task · Reminder enabled",
+              "time": "Today, 16:30"
+            },
+            "focus": {
+              "title": "Prepare presentation",
+              "meta": "Focus session · 45 min",
+              "time": "Tomorrow, 09:00"
+            },
+            "note": {
+              "title": "Meeting decisions",
+              "meta": "Note · Context preserved",
+              "time": "Now"
+            }
+          }
+        }
+      }
+    },
+    "benefits": {
+      "device": {
+        "title": "Privacy without setup",
+        "description": "Tasks, notes, habits, and analysis stay on your device. Export or delete everything whenever you want."
+      },
+      "shortcuts": {
+        "title": "Capture without breaking focus",
+        "description": "Save an idea, create a task, or start a session without leaving the work already on your screen."
+      },
+      "integrations": {
+        "title": "Optional integrations",
+        "description": "Google Calendar and GitHub add context when you want it. The essentials work without an account or depending on them."
       }
     },
     "downloads": {
-      "eyebrow": "Latest release",
-      "description": "Download AXIS and turn focus into execution.",
-      "loading": "Fetching releases from GitHub...",
-      "fallback": "Open GitHub releases",
-      "releaseLabel": "Release",
-      "downloadAria": "Download {{release}} for {{platform}}"
+      "trigger": "Download Axis",
+      "loading": "Finding releases…",
+      "fallback": "View available releases",
+      "downloadAria": "Download Axis {{release}} for {{platform}}",
+      "platforms": {
+        "windows": "Installer for Windows",
+        "linux": "AppImage or Linux package"
+      }
     },
     "footer": {
-      "cta": "Execute with ruthless focus. Zero friction.",
-      "download": "Download for desktop",
-      "metaLineOne": "Built for focused work.",
-      "metaLineTwo": "Local-first. Free. Open source."
+      "title": "Your next step can be clearer today.",
+      "copy": "Download Axis, gather what competes for your attention, and get back to execution without rebuilding context after every interruption.",
+      "navAria": "Footer links",
+      "links": {
+        "product": "Product",
+        "features": "Features",
+        "analysis": "Analysis",
+        "privacy": "Privacy"
+      },
+      "meta": "Open source · Windows and Linux"
     }
   }
 }

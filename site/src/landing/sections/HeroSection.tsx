@@ -1,229 +1,176 @@
 import {
+  ArrowDownRight,
   CalendarDays,
-  CheckSquare,
-  Flame,
-  FolderOpen,
+  Check,
+  CirclePause,
+  Clock3,
+  Coffee,
+  HardDrive,
+  Laptop2,
   Play,
-  Timer,
+  ShieldCheck,
+  TimerReset,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ReleaseDownloads } from '../components/ReleaseDownloads'
-import {
-  getHeroPreviewHabits,
-  getHeroPreviewTasks,
-  heroCalendarDays,
-  heroSidebarItems,
-} from '../data'
+import { useMotionPresence } from '../useMotionPresence'
+
+const timelineItems = [
+  { timeKey: 'planning.time', labelKey: 'planning.label', icon: CalendarDays },
+  { timeKey: 'focus.time', labelKey: 'focus.label', icon: Play },
+  { timeKey: 'pause.time', labelKey: 'pause.label', icon: Coffee },
+  { timeKey: 'meeting.time', labelKey: 'meeting.label', icon: Clock3 },
+  { timeKey: 'review.time', labelKey: 'review.label', icon: Check },
+] as const
+
+const sessionRows = [
+  { key: 'active', icon: CirclePause, active: true },
+  { key: 'next', icon: TimerReset, active: false },
+  { key: 'completed', icon: Check, active: false },
+] as const
+
+const trustItems = [
+  { key: 'local', icon: HardDrive },
+  { key: 'private', icon: ShieldCheck },
+  { key: 'desktop', icon: Laptop2 },
+] as const
 
 export function HeroSection() {
-  const { t, i18n } = useTranslation()
-  const heroPreviewTasks = getHeroPreviewTasks(t)
-  const heroPreviewHabits = getHeroPreviewHabits(t)
-  const calendarWeekdays = i18n.resolvedLanguage?.startsWith('pt')
-    ? ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
-    : ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+  const { t } = useTranslation()
+  const { ref: productRef, isMotionActive } =
+    useMotionPresence<HTMLDivElement>()
 
   return (
-    <section className="hero-section" data-reveal={true} data-delay="1">
-      <div className="hero-shell">
-        <div className="hero-copy">
-          <p className="hero-kicker">{t('landing.hero.kicker')}</p>
-          <h1>{t('landing.hero.title')}</h1>
-          <p>{t('landing.hero.subtitle')}</p>
-          <div className="hero-actions">
-            <ReleaseDownloads id="downloads" />
-          </div>
-          <div
-            className="hero-preview"
-            aria-label={t('landing.hero.preview.ariaLabel')}
-          >
-            <div className="hero-preview-window">
-              <div className="hero-preview-toolbar">
-                <div className="hero-preview-toolbar-brand">
-                  <img src="/Axis-Logo.png" alt="" />
-                  <span>Axis Desktop</span>
-                </div>
-                <span className="hero-preview-toolbar-clock">
-                  {t('landing.hero.preview.clock')}
-                </span>
-                <div
-                  className="hero-preview-toolbar-controls"
-                  aria-hidden="true"
-                >
-                  <span />
-                  <span />
-                  <span />
-                </div>
-              </div>
-
-              <div className="hero-preview-body">
-                <aside className="hero-preview-sidebar" aria-hidden="true">
-                  {heroSidebarItems.map(item => {
-                    const Icon = item.icon
-                    return (
-                      <span
-                        key={item.labelKey}
-                        className={item.active ? 'is-active' : undefined}
-                        title={t(item.labelKey)}
-                      >
-                        <Icon />
-                      </span>
-                    )
-                  })}
-                </aside>
-
-                <div className="hero-preview-canvas">
-                  <div className="hero-preview-grid">
-                    <article className="hero-widget hero-widget--notes">
-                      <div className="hero-widget-head">
-                        <FolderOpen />
-                        <span>{t('landing.hero.preview.notes.title')}</span>
-                      </div>
-                      <div className="hero-widget-body hero-widget-body--empty">
-                        {t('landing.hero.preview.notes.placeholder')}
-                      </div>
-                      <div className="hero-widget-foot">
-                        <span>{t('landing.hero.preview.notes.count')}</span>
-                        <span>1/2</span>
-                      </div>
-                    </article>
-
-                    <article className="hero-widget hero-widget--focus">
-                      <div className="hero-widget-head">
-                        <Timer />
-                        <span>{t('landing.hero.preview.focus.title')}</span>
-                      </div>
-                      <div className="hero-focus-dots" aria-hidden="true">
-                        <span />
-                        <span />
-                        <span />
-                        <span />
-                        <span />
-                      </div>
-                      <div className="hero-focus-pill">
-                        {t('landing.hero.preview.focus.emptyTask')}
-                      </div>
-                      <div className="hero-focus-time">01:00</div>
-                      <div className="hero-focus-controls">
-                        <button
-                          type="button"
-                          aria-label={t('landing.hero.preview.focus.reset')}
-                        >
-                          ↺
-                        </button>
-                        <button
-                          type="button"
-                          className="hero-focus-play"
-                          aria-label={t('landing.hero.preview.focus.start')}
-                        >
-                          <Play fill="currentColor" />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={t('landing.hero.preview.focus.skip')}
-                        >
-                          ↷
-                        </button>
-                      </div>
-                    </article>
-
-                    <article className="hero-widget hero-widget--calendar">
-                      <div className="hero-widget-head">
-                        <CalendarDays />
-                        <span>{t('landing.hero.preview.calendar.title')}</span>
-                      </div>
-                      <div className="hero-calendar">
-                        <div className="hero-calendar-head">
-                          <span>
-                            {t('landing.hero.preview.calendar.month')}
-                          </span>
-                        </div>
-                        <div className="hero-calendar-weekdays">
-                          {calendarWeekdays.map(day => (
-                            <span key={day}>{day}</span>
-                          ))}
-                        </div>
-                        <div className="hero-calendar-grid">
-                          {heroCalendarDays.map((day, index) => (
-                            <span
-                              key={`${day}-${index}`}
-                              className={
-                                day === '6' && index === 7
-                                  ? 'is-selected'
-                                  : index < 2 || index > 32
-                                    ? 'is-muted'
-                                    : undefined
-                              }
-                            >
-                              {day}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </article>
-
-                    <article className="hero-widget hero-widget--tasks">
-                      <div className="hero-widget-head">
-                        <CheckSquare />
-                        <span>{t('landing.hero.preview.tasks.title')}</span>
-                      </div>
-                      <div className="hero-task-list">
-                        {heroPreviewTasks.map(task => (
-                          <div key={task.title} className="hero-task-row">
-                            <span
-                              className="hero-task-check"
-                              aria-hidden="true"
-                            />
-                            <span className="hero-task-title">
-                              {task.title}
-                            </span>
-                            <span
-                              className={`hero-task-badge ${
-                                task.level === t('landing.preview.levels.high')
-                                  ? 'hero-task-badge--high'
-                                  : 'hero-task-badge--medium'
-                              }`}
-                            >
-                              {task.level}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </article>
-
-                    <article className="hero-widget hero-widget--protocol">
-                      <div className="hero-widget-head">
-                        <Flame />
-                        <span>{t('landing.hero.preview.protocol.title')}</span>
-                      </div>
-                      <div className="hero-protocol-meta">
-                        {t('landing.hero.preview.protocol.meta')}
-                      </div>
-                      <div className="hero-habit-list">
-                        {heroPreviewHabits.map(habit => (
-                          <div key={habit} className="hero-habit-row">
-                            <div>
-                              <strong>{habit}</strong>
-                              <span>
-                                {t('landing.hero.preview.protocol.streak')}
-                              </span>
-                            </div>
-                            <span
-                              className="hero-habit-mark"
-                              aria-hidden="true"
-                            >
-                              <Flame />
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </article>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+    <section id="produto" className="hero-section">
+      <div className="hero-copy">
+        <h1 className="hero-title">
+          <span>{t('landing.hero.titleLineOne')}</span>
+          <span>{t('landing.hero.titleLineTwo')}</span>
+        </h1>
+        <p className="hero-subtitle">{t('landing.hero.subtitle')}</p>
+        <div className="hero-actions">
+          <ReleaseDownloads />
+          <a className="site-button site-button--quiet" href="#analise">
+            <span>{t('landing.hero.secondaryCta')}</span>
+            <ArrowDownRight aria-hidden="true" />
+          </a>
         </div>
+      </div>
+
+      <div
+        ref={productRef}
+        className={`hero-product${isMotionActive ? ' is-motion-active' : ''}`}
+        aria-label={t('landing.hero.proofAria')}
+      >
+        <aside className="hero-timeline">
+          <div className="hero-timeline-header">
+            <span className="hero-timeline-mark" aria-hidden="true">
+              <CalendarDays />
+            </span>
+            <div>
+              <strong>{t('landing.hero.timeline.title')}</strong>
+              <span>{t('landing.hero.timeline.date')}</span>
+            </div>
+            <span className="hero-timeline-now">
+              {t('landing.hero.timeline.now')}
+            </span>
+          </div>
+          <ol className="hero-timeline-list">
+            {timelineItems.map(item => {
+              const Icon = item.icon
+              return (
+                <li key={item.timeKey} className="hero-timeline-item">
+                  <time>
+                    {t(`landing.hero.timeline.items.${item.timeKey}`)}
+                  </time>
+                  <span className="hero-timeline-node" aria-hidden="true">
+                    <Icon />
+                  </span>
+                  <span>
+                    {t(`landing.hero.timeline.items.${item.labelKey}`)}
+                  </span>
+                </li>
+              )
+            })}
+          </ol>
+        </aside>
+
+        <div className="hero-session-stack">
+          {sessionRows.map(row => {
+            const Icon = row.icon
+            return (
+              <article
+                key={row.key}
+                className={`hero-session-card hero-session-card--${row.key}${row.active ? ' is-active' : ''}`}
+              >
+                <span className="hero-session-icon" aria-hidden="true">
+                  <Icon />
+                </span>
+                <div className="hero-session-copy">
+                  <strong>{t(`landing.hero.sessions.${row.key}.title`)}</strong>
+                  <span>{t(`landing.hero.sessions.${row.key}.meta`)}</span>
+                </div>
+                <span className="hero-session-duration">
+                  {t(`landing.hero.sessions.${row.key}.duration`)}
+                </span>
+                <span className="hero-session-status">
+                  {t(`landing.hero.sessions.${row.key}.status`)}
+                </span>
+              </article>
+            )
+          })}
+        </div>
+
+        <aside
+          className="hero-code"
+          aria-label={t('landing.hero.code.ariaLabel')}
+        >
+          <div className="hero-code-header">
+            <span className="hero-code-dots" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+            <span>{t('landing.hero.code.file')}</span>
+          </div>
+          <code className="hero-code-body">
+            <span className="hero-code-line">
+              <b>{t('landing.hero.code.sessionLabel')}</b> {'{'}
+            </span>
+            <span className="hero-code-line hero-code-line--indent">
+              {t('landing.hero.code.intentKey')}:{' '}
+              <em>{t('landing.hero.code.intentValue')}</em>,
+            </span>
+            <span className="hero-code-line hero-code-line--indent">
+              {t('landing.hero.code.modeKey')}:{' '}
+              <em>{t('landing.hero.code.modeValue')}</em>,
+            </span>
+            <span className="hero-code-line hero-code-line--indent">
+              {t('landing.hero.code.durationKey')}: <strong>50</strong>,
+            </span>
+            <span className="hero-code-line hero-code-line--indent">
+              {t('landing.hero.code.storageKey')}:{' '}
+              <em>{t('landing.hero.code.storageValue')}</em>
+            </span>
+            <span className="hero-code-line">{'}'}</span>
+          </code>
+          <p className="hero-code-note">
+            <ShieldCheck aria-hidden="true" />
+            <span>{t('landing.hero.code.note')}</span>
+          </p>
+        </aside>
+      </div>
+
+      <div className="hero-trust-list">
+        {trustItems.map(item => {
+          const Icon = item.icon
+          return (
+            <span key={item.key} className="hero-trust-item">
+              <Icon aria-hidden="true" />
+              {t(`landing.hero.trust.${item.key}`)}
+            </span>
+          )
+        })}
       </div>
     </section>
   )

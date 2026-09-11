@@ -1,4 +1,4 @@
-import { ExternalLink, Loader2 } from 'lucide-react'
+import { ChevronDown, Download, ExternalLink, Loader2 } from 'lucide-react'
 import { useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { releasesApiUrl, releasesUrl } from '../data'
@@ -125,7 +125,13 @@ function getDownloadOptions(release: GitHubRelease): DownloadOption[] {
   })
 }
 
-export function ReleaseDownloads({ id }: { id?: string }) {
+export function ReleaseDownloads({
+  id,
+  placement = 'hero',
+}: {
+  id?: string
+  placement?: 'hero' | 'footer'
+}) {
   const { t } = useTranslation()
   const { release, status } = useSyncExternalStore(
     subscribeToRelease,
@@ -134,43 +140,63 @@ export function ReleaseDownloads({ id }: { id?: string }) {
   )
 
   return (
-    <div className="release-downloads" id={id}>
+    <div
+      className={`release-downloads release-downloads--${placement}`}
+      id={id}
+    >
       {status === 'loading' ? (
-        <div className="release-downloads-status">
-          <Loader2 />
+        <div
+          className="release-downloads-trigger is-loading"
+          aria-live="polite"
+        >
+          <Loader2 className="release-downloads-spinner" aria-hidden="true" />
           {t('landing.downloads.loading')}
         </div>
       ) : status === 'error' || !release ? (
-        <a className="release-downloads-fallback" href={releasesUrl}>
-          <ExternalLink />
+        <a className="release-downloads-trigger" href={releasesUrl}>
+          <ExternalLink aria-hidden="true" />
           {t('landing.downloads.fallback')}
         </a>
       ) : (
-        <div className="release-downloads-list">
-          <article className="release-card">
-            <div className="release-platforms">
-              {getDownloadOptions(release).map(option => (
-                <a
-                  key={option.platform}
-                  className="release-platform"
-                  href={option.href}
-                  title={option.assetName ?? release.html_url}
-                  aria-label={t('landing.downloads.downloadAria', {
-                    platform: option.label,
-                    release: release.name ?? release.tag_name,
-                  })}
-                >
+        <details className="release-downloads-menu">
+          <summary className="release-downloads-trigger">
+            <Download aria-hidden="true" />
+            <span>{t('landing.downloads.trigger')}</span>
+            <ChevronDown
+              className="release-downloads-chevron"
+              aria-hidden="true"
+            />
+          </summary>
+          <div className="release-downloads-options">
+            {getDownloadOptions(release).map(option => (
+              <a
+                key={option.platform}
+                className="release-platform"
+                href={option.href}
+                title={option.assetName ?? release.html_url}
+                aria-label={t('landing.downloads.downloadAria', {
+                  platform: option.label,
+                  release: release.name ?? release.tag_name,
+                })}
+              >
+                <span className="release-platform-icon">
                   {option.platform === 'windows' ? (
                     <WindowsIcon />
                   ) : (
                     <LinuxIcon />
                   )}
-                  <span>{option.label}</span>
-                </a>
-              ))}
-            </div>
-          </article>
-        </div>
+                </span>
+                <span>
+                  <strong>{option.label}</strong>
+                  <small>
+                    {t(`landing.downloads.platforms.${option.platform}`)}
+                  </small>
+                </span>
+                <Download aria-hidden="true" />
+              </a>
+            ))}
+          </div>
+        </details>
       )}
     </div>
   )
