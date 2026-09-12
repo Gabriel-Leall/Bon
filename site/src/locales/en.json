@@ -1,7 +1,7 @@
 {
   "landing": {
-    "brand": "Axis",
-    "brandAria": "Axis Desktop, home",
+    "brand": "Bon",
+    "brandAria": "Bon Desktop, home",
     "nav": {
       "ariaLabel": "Main navigation",
       "product": "Product",
@@ -34,7 +34,7 @@
           "copy": "Explore the architecture and follow the project."
         },
         "releases": {
-          "title": "Axis releases",
+          "title": "Bon releases",
           "copy": "Download the latest desktop version.",
           "badge": "Releases"
         },
@@ -56,9 +56,9 @@
     "hero": {
       "titleLineOne": "Stop rebuilding your day.",
       "titleLineTwo": "See the next step.",
-      "subtitle": "For people who work or study on a computer, Axis brings tasks, commitments, and focus together so what deserves attention now stays clear.",
+      "subtitle": "For people who work or study on a computer, Bon brings tasks, commitments, and focus together so what deserves attention now stays clear.",
       "secondaryCta": "See how it works",
-      "proofAria": "Demonstration of the Axis daily flow",
+      "proofAria": "Demonstration of the Bon daily flow",
       "timeline": {
         "title": "Day timeline",
         "date": "Today · May 14",
@@ -142,7 +142,7 @@
       "title": "See what made your day work",
       "subtitle": "Understand where your focus moved forward, when overload appeared, and which small adjustment to make tomorrow.",
       "cta": "See analysis in action",
-      "dashboardAria": "Example of Axis rhythm and execution analysis",
+      "dashboardAria": "Example of Bon rhythm and execution analysis",
       "demoNote": "Illustrative example with local data",
       "period": "Last 7 days",
       "rhythm": {
@@ -227,7 +227,7 @@
       }
     },
     "capabilities": {
-      "ariaLabel": "Core Axis features",
+      "ariaLabel": "Core Bon features",
       "planning": {
         "title": "Organize your day in minutes",
         "today": "Today",
@@ -256,7 +256,7 @@
           }
         },
         "add": "Add next action",
-        "captureAria": "Example of Axis Quick Capture",
+        "captureAria": "Example of Bon Quick Capture",
         "captureTitle": "Quick Capture",
         "captureShortcut": "Ctrl Shift .",
         "captureText": "task: Send revised proposal",
@@ -334,7 +334,7 @@
     },
     "ownership": {
       "title": "Your day remains yours",
-      "copy": "Use Axis without a mandatory account, keep your data on your device, and connect only the services that make sense.",
+      "copy": "Use Bon without a mandatory account, keep your data on your device, and connect only the services that make sense.",
       "cta": "Learn about privacy"
     },
     "config": {
@@ -359,7 +359,7 @@
         "trigger": "Add reminder",
         "ariaLabel": "Action reminder options",
         "title": "Reminder",
-        "subtitle": "Choose when Axis should notify you.",
+        "subtitle": "Choose when Bon should notify you.",
         "options": {
           "atTime": "At the scheduled time",
           "tenMinutes": "10 minutes before",
@@ -391,7 +391,7 @@
             },
             "axis": {
               "event": "Daily review",
-              "source": "Axis",
+              "source": "Bon",
               "time": "17:30",
               "state": "Local"
             }
@@ -436,10 +436,10 @@
       }
     },
     "downloads": {
-      "trigger": "Download Axis",
+      "trigger": "Download Bon",
       "loading": "Finding releases…",
       "fallback": "View available releases",
-      "downloadAria": "Download Axis {{release}} for {{platform}}",
+      "downloadAria": "Download Bon {{release}} for {{platform}}",
       "platforms": {
         "windows": "Installer for Windows",
         "linux": "AppImage or Linux package"
@@ -447,7 +447,7 @@
     },
     "footer": {
       "title": "Your next step can be clearer today.",
-      "copy": "Download Axis, gather what competes for your attention, and get back to execution without rebuilding context after every interruption.",
+      "copy": "Download Bon, gather what competes for your attention, and get back to execution without rebuilding context after every interruption.",
       "navAria": "Footer links",
       "links": {
         "product": "Product",

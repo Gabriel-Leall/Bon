@@ -116,13 +116,13 @@ export function LeftSideBar({ children, className }: LeftSideBarProps) {
           )}
         >
           <img
-            src="/Axis-Logo.png"
+            src="/bon/bon-approved.png"
             alt=""
             aria-hidden="true"
             className="size-7 shrink-0 object-contain"
           />
           <span className="truncate text-base font-semibold tracking-tight max-[1099px]:sr-only">
-            Axis
+            Bon
           </span>
         </div>
 

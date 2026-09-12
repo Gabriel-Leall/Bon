@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { useTheme } from '@/hooks/use-theme'
 import { availableLanguages } from '@/i18n'
-import { commands } from '@/lib/tauri-bindings'
+import { commands, type AppPreferences } from '@/lib/tauri-bindings'
 import { logger } from '@/lib/logger'
 import type { Accent, Theme } from '@/lib/theme-context'
 import { usePreferences, useSavePreferences } from '@/services/preferences'
@@ -127,6 +127,20 @@ export function GeneralPane() {
     }
   }
 
+  const persistBuddyPreference = (
+    updates: Partial<
+      Pick<
+        AppPreferences,
+        | 'buddy_enabled'
+        | 'buddy_proactive_messages_enabled'
+        | 'buddy_reduced_motion'
+        | 'buddy_sound_enabled'
+      >
+    >
+  ) => {
+    if (preferences) savePreferences.mutate({ ...preferences, ...updates })
+  }
+
   return (
     <div className="space-y-6">
       <GeneralAppearanceSettings
@@ -148,6 +162,106 @@ export function GeneralPane() {
           }
         }}
       />
+
+      <SettingsSection title={t('preferences.bon.title')}>
+        <SettingsField
+          label={t('preferences.bon.visible')}
+          description={t('preferences.bon.visibleDescription')}
+        >
+          <div className="flex items-center gap-2">
+            <Switch
+              id="bon-visible"
+              aria-label={t('preferences.bon.visible')}
+              checked={preferences?.buddy_enabled ?? true}
+              onCheckedChange={buddyEnabled =>
+                persistBuddyPreference({ buddy_enabled: buddyEnabled })
+              }
+              disabled={!preferences || savePreferences.isPending}
+            />
+            <Label htmlFor="bon-visible" className="text-sm">
+              {t(
+                preferences?.buddy_enabled === false
+                  ? 'common.disabled'
+                  : 'common.enabled'
+              )}
+            </Label>
+          </div>
+        </SettingsField>
+
+        <SettingsField
+          label={t('preferences.bon.proactive')}
+          description={t('preferences.bon.proactiveDescription')}
+        >
+          <div className="flex items-center gap-2">
+            <Switch
+              id="bon-proactive"
+              aria-label={t('preferences.bon.proactive')}
+              checked={preferences?.buddy_proactive_messages_enabled ?? true}
+              onCheckedChange={enabled =>
+                persistBuddyPreference({
+                  buddy_proactive_messages_enabled: enabled,
+                })
+              }
+              disabled={!preferences || savePreferences.isPending}
+            />
+            <Label htmlFor="bon-proactive" className="text-sm">
+              {t(
+                preferences?.buddy_proactive_messages_enabled === false
+                  ? 'common.disabled'
+                  : 'common.enabled'
+              )}
+            </Label>
+          </div>
+        </SettingsField>
+
+        <SettingsField
+          label={t('preferences.bon.reducedMotion')}
+          description={t('preferences.bon.reducedMotionDescription')}
+        >
+          <div className="flex items-center gap-2">
+            <Switch
+              id="bon-reduced-motion"
+              aria-label={t('preferences.bon.reducedMotion')}
+              checked={preferences?.buddy_reduced_motion ?? false}
+              onCheckedChange={enabled =>
+                persistBuddyPreference({ buddy_reduced_motion: enabled })
+              }
+              disabled={!preferences || savePreferences.isPending}
+            />
+            <Label htmlFor="bon-reduced-motion" className="text-sm">
+              {t(
+                preferences?.buddy_reduced_motion
+                  ? 'common.enabled'
+                  : 'common.disabled'
+              )}
+            </Label>
+          </div>
+        </SettingsField>
+
+        <SettingsField
+          label={t('preferences.bon.sound')}
+          description={t('preferences.bon.soundDescription')}
+        >
+          <div className="flex items-center gap-2">
+            <Switch
+              id="bon-sound"
+              aria-label={t('preferences.bon.sound')}
+              checked={preferences?.buddy_sound_enabled ?? false}
+              onCheckedChange={enabled =>
+                persistBuddyPreference({ buddy_sound_enabled: enabled })
+              }
+              disabled={!preferences || savePreferences.isPending}
+            />
+            <Label htmlFor="bon-sound" className="text-sm">
+              {t(
+                preferences?.buddy_sound_enabled
+                  ? 'common.enabled'
+                  : 'common.disabled'
+              )}
+            </Label>
+          </div>
+        </SettingsField>
+      </SettingsSection>
 
       <SettingsSection title={t('preferences.advanced.startup')}>
         <SettingsField

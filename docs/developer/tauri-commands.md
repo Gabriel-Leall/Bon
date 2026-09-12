@@ -140,7 +140,7 @@ pub fn generate_bindings() -> Builder<tauri::Wry> {
 bun run rust:bindings
 ```
 
-This runs `cargo run --features export-bindings --bin Axis`, which generates `src/lib/bindings.ts` without relying on the Rust test harness.
+This runs `cargo run --features export-bindings --bin Bon`, which generates `src/lib/bindings.ts` without relying on the Rust test harness.
 
 ### 5. Use in frontend
 

@@ -807,40 +807,64 @@ export type AppPreferences = { theme?: string; accent?: string;
  * Global shortcut for quick pane (e.g., "CommandOrControl+Shift+.")
  * If None, uses the default shortcut
  */
-quick_pane_shortcut: string | null; 
+quick_pane_shortcut: string | null;
 /**
  * User's preferred language (e.g., "en", "es", "de")
  * If None, uses system locale detection
  */
-language: string | null; 
+language: string | null;
 /**
  * Whether to minimize the application to the system tray instead of exiting
  */
-minimize_to_tray: boolean | null; 
+minimize_to_tray: boolean | null;
 /**
  * The start day of the week (e.g., "monday", "sunday")
  */
-start_of_week: string | null; 
+start_of_week: string | null;
 /**
  * The time when daily habits and stats reset (e.g., "00:00", "03:00")
  */
-daily_reset_time: string | null; 
+daily_reset_time: string | null;
 /**
  * How strongly the dashboard should adapt to the current context
  */
-adaptive_dashboard_mode: string | null; 
+adaptive_dashboard_mode: string | null;
 /**
- * Absolute path to the active local notes vault. If None, uses Documents/Axis Notes.
+ * Absolute path to the active local notes vault. If None, uses Documents/Bon_Notes.
  */
 notes_vault_path: string | null;
 /**
- * Whether Axis should send a safety reminder to wrap up the current day.
+ * Whether Bon should send a safety reminder to wrap up the current day.
  */
 daily_wrap_up_reminder_enabled?: boolean;
 /**
  * Local time for the daily wrap-up reminder (HH:MM).
  */
-daily_wrap_up_reminder_time?: string }
+daily_wrap_up_reminder_time?: string;
+/**
+ * Whether Bon is visible on its contextual surfaces.
+ */
+buddy_enabled?: boolean;
+/**
+ * Whether Bon may show contextual, proactive speech bubbles.
+ */
+buddy_proactive_messages_enabled?: boolean;
+/**
+ * Whether Bon should use its static, reduced-motion presentation.
+ */
+buddy_reduced_motion?: boolean;
+/**
+ * Whether Bon may play subtle milestone and urgent sounds.
+ */
+buddy_sound_enabled?: boolean;
+/**
+ * Whether the one-time introduction has already been shown.
+ */
+buddy_intro_seen?: boolean;
+/**
+ * Last local date on which Bon was shown, used for the next-day wake-up.
+ */
+buddy_last_seen_date?: string | null }
 export type CalendarEvent = { id: string; title: string; description: string | null; start_date: string; end_date: string; all_day: boolean; color: string | null; created_at: string; updated_at: string }
 export type CreateDailyPlanInput = { id: string; plan_date: string; focus_task_id: string | null; status: string; focus_source: string; created_at: string; updated_at: string }
 export type CreateEventInput = { id: string; title: string; description: string | null; start_date: string; end_date: string; all_day: boolean; color: string | null; created_at: string; updated_at: string }

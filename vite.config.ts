@@ -2,8 +2,8 @@ import { defineConfig } from 'vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
-import path, { resolve } from 'path'
-import packageJson from './package.json'
+import { resolve } from 'node:path'
+import packageJson from './package.json' with { type: 'json' }
 
 const host = process.env.TAURI_DEV_HOST
 
@@ -21,7 +21,7 @@ export default defineConfig(async () => ({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': resolve(import.meta.dirname, './src'),
     },
   },
   build: {
@@ -29,8 +29,8 @@ export default defineConfig(async () => ({
     chunkSizeWarningLimit: 1000,
     rolldownOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        'quick-pane': resolve(__dirname, 'quick-pane.html'),
+        main: resolve(import.meta.dirname, 'index.html'),
+        'quick-pane': resolve(import.meta.dirname, 'quick-pane.html'),
       },
       output: {
         manualChunks(id: string) {

@@ -15,7 +15,7 @@ use uuid::Uuid;
 use crate::commands::preferences;
 use crate::types::AppPreferences;
 
-const DEFAULT_VAULT_DIR_NAME: &str = "Axis_Notes";
+const DEFAULT_VAULT_DIR_NAME: &str = "Bon_Notes";
 const INBOX_DIR: &str = "inbox";
 const ARCHIVE_DIR: &str = "archive";
 const TRASH_DIR: &str = "trash";
@@ -26,8 +26,8 @@ const VAULT_CACHE_DIR: &str = "cache";
 const VAULT_CONFIG_DIR: &str = "config";
 const VAULT_METADATA_SCHEMA_VERSION: u32 = 2;
 const SEARCH_MAX_RESULTS: usize = 80;
-const WELCOME_NOTE_RELATIVE_PATH: &str = "inbox/Comece aqui/Bem-vindo ao Axis.md";
-const WELCOME_NOTE_CONTENT: &str = "# Bem-vindo ao Axis\n\nSuas notas locais ficam no seu vault do Axis. Esta pasta e sua: voce pode criar notas soltas em Entrada, organizar projetos em pastas e abrir o vault no Explorer ou Finder quando quiser.\n\n## Como usar Notes\n\n- Escreva em Markdown e mantenha seus arquivos no seu computador.\n- Entrada e sua area ativa; Arquivo e Lixeira sao estados para organizar o que ja nao esta em uso.\n- Use a barra lateral para navegar pelas pastas e encontrar suas notas.\n\n## Anotacoes\n\nEm breve, voce podera selecionar um trecho para deixar uma anotacao privada nele. Ela tambem ficara salva apenas no seu vault.\n";
+const WELCOME_NOTE_RELATIVE_PATH: &str = "inbox/Comece aqui/Bem-vindo ao Bon.md";
+const WELCOME_NOTE_CONTENT: &str = "# Bem-vindo ao Bon\n\nSuas notas locais ficam no seu vault do Bon. Esta pasta e sua: voce pode criar notas soltas em Entrada, organizar projetos em pastas e abrir o vault no Explorer ou Finder quando quiser.\n\n## Como usar Notes\n\n- Escreva em Markdown e mantenha seus arquivos no seu computador.\n- Entrada e sua area ativa; Arquivo e Lixeira sao estados para organizar o que ja nao esta em uso.\n- Use a barra lateral para navegar pelas pastas e encontrar suas notas.\n\n## Anotacoes\n\nEm breve, voce podera selecionar um trecho para deixar uma anotacao privada nele. Ela tambem ficara salva apenas no seu vault.\n";
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct VaultLayout {
@@ -323,6 +323,16 @@ fn notes_root(app: &AppHandle) -> Result<PathBuf, String> {
         .document_dir()
         .map_err(|e| format!("Failed to get documents directory: {e}"))?;
     let preferences = preferences::load_preferences_from_disk(app)?;
+    if preferences
+        .notes_vault_path
+        .as_deref()
+        .map(str::trim)
+        .filter(|path| !path.is_empty())
+        .is_none()
+    {
+        crate::brand_migration::migrate_default_notes_vault(&documents_dir)
+            .map_err(|error| format!("Failed to copy previous default notes vault: {error}"))?;
+    }
     let notes_dir = resolve_vault_root_from_preferences(&documents_dir, &preferences)?;
 
     ensure_vault_structure(&notes_dir)?;
@@ -410,7 +420,7 @@ fn ensure_vault_metadata_area(root: &Path) -> Result<(), String> {
     let now = now_iso_string();
     let manifest = VaultManifest {
         schema_version: VAULT_METADATA_SCHEMA_VERSION,
-        application: "axis-desktop".to_string(),
+        application: "bon".to_string(),
         created_at: now.clone(),
         updated_at: now,
         note_ids_by_path: BTreeMap::new(),
@@ -440,10 +450,7 @@ fn load_vault_metadata(root: &Path) -> Result<VaultMetadata, String> {
 }
 
 fn seed_welcome_note(root: &Path) -> Result<(), String> {
-    let welcome_path = root
-        .join(INBOX_DIR)
-        .join("Comece aqui")
-        .join("Bem-vindo ao Axis.md");
+    let welcome_path = root.join(WELCOME_NOTE_RELATIVE_PATH);
 
     if !welcome_path.exists() {
         let parent = welcome_path

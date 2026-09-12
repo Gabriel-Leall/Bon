@@ -130,7 +130,7 @@ export function TitleBarTitle({ showClock = true }: TitleBarTitleProps) {
  *
  * For more control, use TitleBarLeftActions, TitleBarRightActions, and TitleBarTitle separately.
  */
-export function TitleBarContent({ title = 'Axis' }: TitleBarTitleProps) {
+export function TitleBarContent({ title = 'Bon' }: TitleBarTitleProps) {
   return (
     <>
       <TitleBarLeftActions />

@@ -115,9 +115,9 @@ fn wait_for_oauth_callback(
     }
 
     let response_body = if error.is_some() {
-        "Google sign-in was cancelled. You can close this tab and return to Axis."
+        "Google sign-in was cancelled. You can close this tab and return to Bon."
     } else {
-        "Google sign-in complete. You can close this tab and return to Axis."
+        "Google sign-in complete. You can close this tab and return to Bon."
     };
     let response = format!(
         "HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",

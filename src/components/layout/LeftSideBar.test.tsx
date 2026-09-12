@@ -79,7 +79,7 @@ describe('LeftSideBar', () => {
       'w-(--axis-sidebar-width)',
       'max-[1099px]:w-(--axis-sidebar-width-compact)'
     )
-    expect(screen.getByText('Axis')).toHaveClass('max-[1099px]:sr-only')
+    expect(screen.getByText('Bon')).toHaveClass('max-[1099px]:sr-only')
     expect(screen.getByText('Hoje')).toHaveClass('max-[1099px]:sr-only')
   })
 

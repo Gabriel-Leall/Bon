@@ -298,7 +298,7 @@ function MinimizedDailyAxis({ onRestore }: { onRestore: () => void }) {
 
   return (
     <section
-      aria-label="Daily Axis"
+      aria-label="Foco do dia"
       className="pointer-events-none fixed bottom-5 right-5 z-50"
     >
       <Button
@@ -390,7 +390,7 @@ export function DailyAxisBanner() {
 
   return (
     <section
-      aria-label="Daily Axis"
+      aria-label="Foco do dia"
       className="pointer-events-none fixed bottom-5 right-5 z-50 w-[min(390px,calc(100vw-7rem))]"
     >
       <div className="pointer-events-auto relative overflow-hidden rounded-xl border border-border-strong bg-surface-elevated px-4 py-3 shadow-modal">

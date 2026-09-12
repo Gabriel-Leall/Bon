@@ -528,11 +528,13 @@ export function OnboardingPage() {
         <aside className="hidden w-64 shrink-0 flex-col justify-between border-r border-border bg-card px-7 py-8 lg:flex">
           <div className="flex flex-col gap-12">
             <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <Target className="size-5" />
-              </div>
+              <img
+                src="/bon/bon-approved.png"
+                alt=""
+                className="size-10 shrink-0 object-contain"
+              />
               <div>
-                <p className="font-semibold text-foreground">axis</p>
+                <p className="font-semibold text-foreground">Bon</p>
                 <p className="text-xs text-muted-foreground">
                   {t('onboarding.brandTagline')}
                 </p>

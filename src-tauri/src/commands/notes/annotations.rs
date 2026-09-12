@@ -3,7 +3,7 @@ use super::*;
 pub(super) const NOTE_ANNOTATION_SIDECAR_SCHEMA_VERSION: u32 = 1;
 pub(super) const WELCOME_ANNOTATION_QUOTE: &str = "Markdown";
 pub(super) const WELCOME_ANNOTATION_TEXT: &str =
-    "Markdown e o formato local das suas notas no Axis.";
+    "Markdown e o formato local das suas notas no Bon.";
 const ANNOTATION_CONTEXT_CHARS: usize = 32;
 
 #[derive(Debug, Serialize, Deserialize, Type, Clone, Copy, PartialEq, Eq)]

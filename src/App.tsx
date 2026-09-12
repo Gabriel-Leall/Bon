@@ -53,9 +53,11 @@ function AppLoadingFallback() {
   return (
     <div className="flex h-screen w-full items-center justify-center bg-[oklch(0.985_0.006_230)]">
       <div className="flex flex-col items-center gap-4">
-        <div className="flex size-16 items-center justify-center rounded-lg border border-[oklch(0.88_0.025_230)] bg-[oklch(0.995_0.004_230)]">
-          <img src="/Axis-Mark.png" alt="Axis" className="size-10" />
-        </div>
+        <img
+          src="/bon/bon-approved.png"
+          alt="Bon"
+          className="size-[4.5rem] object-contain"
+        />
         <div className="h-1 w-40 overflow-hidden rounded-full bg-[oklch(0.93_0.014_230)]">
           <div className="h-full w-1/2 animate-pulse rounded-full bg-[oklch(0.46_0.035_230)]" />
         </div>

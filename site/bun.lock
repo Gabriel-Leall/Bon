@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "axis-desktop-site",
+      "name": "bon-site",
       "dependencies": {
         "motion": "^12.38.0",
         "recharts": "^3.8.1",

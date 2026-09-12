@@ -14,6 +14,12 @@ const preferences = (overrides = {}): AppPreferences => ({
   notes_vault_path: null,
   daily_wrap_up_reminder_enabled: false,
   daily_wrap_up_reminder_time: '18:00',
+  buddy_enabled: true,
+  buddy_proactive_messages_enabled: true,
+  buddy_reduced_motion: false,
+  buddy_sound_enabled: false,
+  buddy_intro_seen: false,
+  buddy_last_seen_date: null,
   ...overrides,
 })
 
@@ -51,5 +57,25 @@ describe('normalizeAppPreferences', () => {
 
     expect(normalized.daily_wrap_up_reminder_enabled).toBe(false)
     expect(normalized.daily_wrap_up_reminder_time).toBe('18:00')
+  })
+
+  it('fills Bon defaults when loading legacy preferences', () => {
+    const normalized = normalizeAppPreferences(
+      preferences({
+        buddy_enabled: undefined,
+        buddy_proactive_messages_enabled: undefined,
+        buddy_reduced_motion: undefined,
+        buddy_sound_enabled: undefined,
+        buddy_intro_seen: undefined,
+        buddy_last_seen_date: undefined,
+      })
+    )
+
+    expect(normalized.buddy_enabled).toBe(true)
+    expect(normalized.buddy_proactive_messages_enabled).toBe(true)
+    expect(normalized.buddy_reduced_motion).toBe(false)
+    expect(normalized.buddy_sound_enabled).toBe(false)
+    expect(normalized.buddy_intro_seen).toBe(false)
+    expect(normalized.buddy_last_seen_date).toBeNull()
   })
 })

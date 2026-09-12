@@ -5,6 +5,7 @@
 //! and shared types are in the `types` module.
 
 mod bindings;
+mod brand_migration;
 mod commands;
 mod types;
 mod utils;
@@ -46,9 +47,9 @@ fn create_tray(app: &tauri::App) -> tauri::Result<()> {
     };
 
     let menu = MenuBuilder::new(app)
-        .text("show", "Show Axis")
+        .text("show", "Show Bon")
         .separator()
-        .text("quit", "Quit Axis")
+        .text("quit", "Quit Bon")
         .build()?;
 
     let icon = app
@@ -56,9 +57,9 @@ fn create_tray(app: &tauri::App) -> tauri::Result<()> {
         .cloned()
         .expect("default window icon is configured");
 
-    TrayIconBuilder::with_id("axis-tray")
+    TrayIconBuilder::with_id("bon-tray")
         .icon(icon)
-        .tooltip("Axis")
+        .tooltip("Bon")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_tray_icon_event(|tray, event| match event {
@@ -337,6 +338,7 @@ pub fn run() {
         })
         .setup(|app| {
             log::info!("Application starting up");
+            brand_migration::migrate_legacy_app_data(app)?;
             log::debug!(
                 "App handle initialized for package: {}",
                 app.package_info().name

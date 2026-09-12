@@ -22,6 +22,13 @@ export function normalizeAppPreferences(
       preferences.daily_wrap_up_reminder_enabled ?? false,
     daily_wrap_up_reminder_time:
       preferences.daily_wrap_up_reminder_time ?? '18:00',
+    buddy_enabled: preferences.buddy_enabled ?? true,
+    buddy_proactive_messages_enabled:
+      preferences.buddy_proactive_messages_enabled ?? true,
+    buddy_reduced_motion: preferences.buddy_reduced_motion ?? false,
+    buddy_sound_enabled: preferences.buddy_sound_enabled ?? false,
+    buddy_intro_seen: preferences.buddy_intro_seen ?? false,
+    buddy_last_seen_date: preferences.buddy_last_seen_date ?? null,
   }
 }
 
@@ -50,6 +57,12 @@ export function usePreferences() {
           notes_vault_path: null,
           daily_wrap_up_reminder_enabled: false,
           daily_wrap_up_reminder_time: '18:00',
+          buddy_enabled: true,
+          buddy_proactive_messages_enabled: true,
+          buddy_reduced_motion: false,
+          buddy_sound_enabled: false,
+          buddy_intro_seen: false,
+          buddy_last_seen_date: null,
         }
       }
 

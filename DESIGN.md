@@ -1,8 +1,8 @@
-# Axis Visual System
+# Bon Visual System
 
 ## North Star
 
-Axis deve parecer um instrumento desktop calmo e tátil: superfícies neutras se organizam por profundidade, enquanto cor aparece somente quando comunica ação, seleção ou estado. O resultado é mais próximo de uma ferramenta física precisa do que de um dashboard web decorativo.
+Bon deve parecer um instrumento desktop calmo e tátil: superfícies neutras se organizam por profundidade, enquanto cor aparece somente quando comunica ação, seleção ou estado. O resultado é mais próximo de uma ferramenta física precisa do que de um dashboard web decorativo.
 
 ## Appearance Model
 

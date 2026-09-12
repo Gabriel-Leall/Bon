@@ -38,6 +38,10 @@ import {
   requestPermission,
 } from '@tauri-apps/plugin-notification'
 import { notifications } from '@/lib/notifications'
+import { BonCompanion } from '@/components/bon/BonCompanion'
+import { findUrgentFocusEvent } from '@/lib/bon-domain'
+import { useCalendarStore } from '@/store/calendar-store'
+import { useUIStore } from '@/store/ui-store'
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -747,6 +751,10 @@ export function PomodoroPage() {
   const loadTasks = useTasksStore(state => state.loadTasks)
   const tasks = useTasksStore(state => state.tasks)
   const toggleComplete = useTasksStore(state => state.toggleComplete)
+  const events = useCalendarStore(state => state.events)
+  const loadEvents = useCalendarStore(state => state.loadEvents)
+  const navigateTo = useUIStore(state => state.navigateTo)
+  const [now, setNow] = useState(() => new Date())
 
   const { t } = useTranslation()
 
@@ -754,7 +762,13 @@ export function PomodoroPage() {
     loadSettings()
     loadTodaySessions()
     loadTasks()
-  }, [loadSettings, loadTodaySessions, loadTasks])
+    void loadEvents(new Date())
+  }, [loadEvents, loadSettings, loadTodaySessions, loadTasks])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   // Request notification permissions on mount
   useEffect(() => {
@@ -790,6 +804,15 @@ export function PomodoroPage() {
 
   const isRunning = timerState === 'running'
   const progress = totalDuration > 0 ? 1 - timeRemaining / totalDuration : 0
+  const urgentEvent = findUrgentFocusEvent(events, now)
+  const urgentMinutes = urgentEvent
+    ? Math.max(
+        1,
+        Math.ceil(
+          (new Date(urgentEvent.start_date).getTime() - now.getTime()) / 60_000
+        )
+      )
+    : null
 
   const handlePlayPause = () => {
     if (isRunning) pause()
@@ -949,6 +972,48 @@ export function PomodoroPage() {
             </section>
 
             <aside className="space-y-5">
+              <BonCompanion
+                variant="focus"
+                state={
+                  urgentEvent
+                    ? 'surprised'
+                    : currentType === 'focus'
+                      ? 'focus'
+                      : 'tired'
+                }
+                book={
+                  urgentEvent
+                    ? 'closed'
+                    : currentType === 'focus'
+                      ? 'open'
+                      : 'closed'
+                }
+                urgent={Boolean(urgentEvent)}
+                message={
+                  urgentEvent
+                    ? t('bon.focus.urgent', {
+                        title: urgentEvent.title,
+                        minutes: urgentMinutes,
+                      })
+                    : undefined
+                }
+                messageKey={
+                  urgentEvent ? `urgent-event-${urgentEvent.id}` : undefined
+                }
+                actionLabel={
+                  urgentEvent ? t('bon.action.viewCommitment') : undefined
+                }
+                onAction={
+                  urgentEvent
+                    ? () => {
+                        useCalendarStore
+                          .getState()
+                          .setSelectedEvent(urgentEvent.id)
+                        navigateTo('calendar')
+                      }
+                    : undefined
+                }
+              />
               <TaskLinkSection />
               <SettingsSection settings={settings} onUpdate={updateSettings} />
             </aside>

@@ -31,7 +31,7 @@ describe('WrapUpDialog', () => {
   const tomorrow = getTomorrowISO()
 
   beforeEach(async () => {
-    vi.resetAllMocks()
+    vi.clearAllMocks()
     await i18n.changeLanguage('en')
 
     useCalendarStore.setState({

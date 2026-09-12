@@ -49,14 +49,32 @@ pub struct AppPreferences {
     pub daily_reset_time: Option<String>,
     /// How strongly the dashboard should adapt to the current context
     pub adaptive_dashboard_mode: Option<String>,
-    /// Absolute path to the active local notes vault. If None, uses Documents/Axis Notes.
+    /// Absolute path to the active local notes vault. If None, uses Documents/Bon_Notes.
     pub notes_vault_path: Option<String>,
-    /// Whether Axis should send a safety reminder to wrap up the current day.
+    /// Whether Bon should send a safety reminder to wrap up the current day.
     #[serde(default)]
     pub daily_wrap_up_reminder_enabled: bool,
     /// Local time for the daily wrap-up reminder (HH:MM).
     #[serde(default = "default_daily_wrap_up_reminder_time")]
     pub daily_wrap_up_reminder_time: String,
+    /// Whether Bon is visible on its contextual surfaces.
+    #[serde(default = "default_true")]
+    pub buddy_enabled: bool,
+    /// Whether Bon may show contextual, proactive speech bubbles.
+    #[serde(default = "default_true")]
+    pub buddy_proactive_messages_enabled: bool,
+    /// Whether Bon should use its static, reduced-motion presentation.
+    #[serde(default)]
+    pub buddy_reduced_motion: bool,
+    /// Whether Bon may play subtle milestone and urgent sounds.
+    #[serde(default)]
+    pub buddy_sound_enabled: bool,
+    /// Whether the one-time introduction has already been shown.
+    #[serde(default)]
+    pub buddy_intro_seen: bool,
+    /// Last local date on which Bon was shown, used for the next-day wake-up.
+    #[serde(default)]
+    pub buddy_last_seen_date: Option<String>,
 }
 
 impl Default for AppPreferences {
@@ -73,6 +91,12 @@ impl Default for AppPreferences {
             notes_vault_path: None,
             daily_wrap_up_reminder_enabled: false,
             daily_wrap_up_reminder_time: default_daily_wrap_up_reminder_time(),
+            buddy_enabled: true,
+            buddy_proactive_messages_enabled: true,
+            buddy_reduced_motion: false,
+            buddy_sound_enabled: false,
+            buddy_intro_seen: false,
+            buddy_last_seen_date: None,
         }
     }
 }
@@ -87,6 +111,10 @@ fn default_accent() -> String {
 
 fn default_daily_wrap_up_reminder_time() -> String {
     DEFAULT_DAILY_WRAP_UP_REMINDER_TIME.to_string()
+}
+
+fn default_true() -> bool {
+    true
 }
 
 impl AppPreferences {
@@ -274,6 +302,12 @@ mod appearance_tests {
             preferences.daily_wrap_up_reminder_time,
             DEFAULT_DAILY_WRAP_UP_REMINDER_TIME
         );
+        assert!(preferences.buddy_enabled);
+        assert!(preferences.buddy_proactive_messages_enabled);
+        assert!(!preferences.buddy_reduced_motion);
+        assert!(!preferences.buddy_sound_enabled);
+        assert!(!preferences.buddy_intro_seen);
+        assert_eq!(preferences.buddy_last_seen_date, None);
     }
 
     #[test]

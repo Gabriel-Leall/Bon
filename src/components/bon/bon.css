@@ -1,0 +1,505 @@
+.bon-companion {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bon-companion-stage {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  width: 7rem;
+  place-items: center;
+}
+
+.bon-companion[data-variant='compact'] .bon-companion-stage {
+  width: 5.5rem;
+}
+
+.bon-companion[data-variant='focus'] {
+  min-height: 11rem;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-neu-raised-sm);
+  padding: 0.75rem;
+}
+
+.bon-companion[data-variant='focus'] .bon-companion-stage {
+  width: min(12rem, 62%);
+}
+
+.bon-companion[data-variant='habitat'] {
+  position: fixed;
+  z-index: 30;
+  inset-block-end: 1.5rem;
+  inset-inline-end: 1.5rem;
+  flex-direction: row-reverse;
+  align-items: flex-end;
+  gap: 0.9rem;
+  pointer-events: none;
+}
+
+.bon-companion[data-variant='habitat'] .bon-companion-stage {
+  width: 9.5rem;
+  pointer-events: auto;
+}
+
+.bon-companion[data-variant='wrap-up'] {
+  min-height: 8.5rem;
+  justify-content: flex-start;
+  border-block-end: 1px solid var(--border);
+  padding-block-end: 1rem;
+}
+
+.bon-companion[data-variant='wrap-up'] .bon-companion-stage {
+  width: 8.5rem;
+}
+
+.bon-avatar {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.bon-avatar:focus-visible {
+  border-radius: 1rem;
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.bon-avatar:disabled {
+  cursor: default;
+}
+
+.bon-avatar-interaction,
+.bon-avatar-visual {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+}
+
+.bon-avatar-renderer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mask-image: url('/bon/bon-approved.png');
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+}
+
+.bon-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.bon-eye {
+  fill: #161922;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bon-avatar:not([data-reduced-motion='true']):not([data-state='sleeping']):not(
+    [data-state='napping']
+  )
+  .bon-eyes {
+  animation: bon-blink 7.2s linear infinite;
+  transform-origin: 50% 48%;
+}
+
+.bon-avatar[data-state='sleeping'] .bon-eye,
+.bon-avatar[data-state='napping'] .bon-eye {
+  transform: scaleY(0.07);
+}
+
+.bon-avatar[data-state='drowsy'] .bon-eye,
+.bon-avatar[data-state='tired'] .bon-eye,
+.bon-avatar[data-state='focus'] .bon-eye {
+  transform: scaleY(0.58);
+}
+
+.bon-avatar[data-state='happy'] .bon-eye,
+.bon-avatar[data-state='proud'] .bon-eye,
+.bon-avatar[data-state='laughing'] .bon-eye,
+.bon-avatar[data-state='celebrate'] .bon-eye {
+  transform: scaleY(0.55) rotate(-5deg);
+}
+
+.bon-avatar[data-state='surprised'] .bon-eye {
+  transform: scale(1.12, 1.18);
+}
+
+.bon-avatar[data-state='concerned'] .bon-eye-left,
+.bon-avatar[data-state='confused'] .bon-eye-left {
+  transform: rotate(-12deg);
+}
+
+.bon-avatar[data-state='concerned'] .bon-eye-right,
+.bon-avatar[data-state='confused'] .bon-eye-right {
+  transform: rotate(12deg);
+}
+
+.bon-avatar[data-state='curious'] .bon-eye-right,
+.bon-avatar[data-state='thinking'] .bon-eye-right {
+  transform: translateY(-15px) rotate(5deg);
+}
+
+.bon-avatar:not([data-reduced-motion='true'])[data-state='idle']
+  .bon-avatar-visual,
+.bon-avatar:not([data-reduced-motion='true'])[data-state='listening']
+  .bon-avatar-visual {
+  animation: bon-breathe 5.5s ease-in-out infinite;
+}
+
+.bon-avatar:not([data-reduced-motion='true'])[data-state='focus']
+  .bon-avatar-visual {
+  animation: bon-reading 8s ease-in-out infinite;
+}
+
+.bon-avatar:not([data-reduced-motion='true'])[data-state='sleeping']
+  .bon-avatar-visual,
+.bon-avatar:not([data-reduced-motion='true'])[data-state='napping']
+  .bon-avatar-visual {
+  animation: bon-sleep 6s ease-in-out infinite;
+}
+
+.bon-avatar:not([data-reduced-motion='true'])[data-state='waking']
+  .bon-avatar-visual,
+.bon-avatar:not([data-reduced-motion='true'])[data-state='surprised']
+  .bon-avatar-visual,
+.bon-avatar:not([data-reduced-motion='true'])[data-state='celebrate']
+  .bon-avatar-visual {
+  animation: bon-pop 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.bon-avatar:not([data-reduced-motion='true'])[data-state='playful']
+  .bon-avatar-visual,
+.bon-avatar:not([data-reduced-motion='true'])[data-state='curious']
+  .bon-avatar-visual {
+  animation: bon-tilt 1.3s ease-in-out both;
+}
+
+.bon-mouth-opening {
+  fill: #161922;
+  opacity: 0;
+  transform: scaleY(0.2);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.bon-avatar[data-speaking='true'] .bon-mouth-opening,
+.bon-avatar[data-state='laughing'] .bon-mouth-opening {
+  opacity: 1;
+  animation: bon-mouth-open-close 0.48s ease-in-out infinite alternate;
+}
+
+.bon-book-cover {
+  fill: currentColor;
+  stroke: color-mix(in oklab, currentColor 72%, #171924);
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.bon-book-page {
+  fill: color-mix(in oklab, var(--background) 88%, white);
+  stroke: color-mix(in oklab, var(--border) 75%, #171924);
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.bon-book-spine,
+.bon-page-line {
+  fill: none;
+  stroke: color-mix(in oklab, var(--muted-foreground) 72%, transparent);
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.bon-book-mark {
+  fill: color-mix(in oklab, currentColor 75%, #171924);
+}
+
+.bon-turning-page {
+  fill: color-mix(in oklab, var(--background) 92%, white);
+  stroke: color-mix(in oklab, var(--border) 75%, #171924);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: left bottom;
+  animation: bon-page-turn 9s ease-in-out infinite;
+}
+
+.bon-speech {
+  position: relative;
+  z-index: 1;
+  max-width: 21rem;
+  min-width: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 1rem 1rem 1rem 0.25rem;
+  background: var(--popover);
+  box-shadow: var(--shadow-neu-raised-sm);
+  padding: 0.85rem 2.25rem 0.85rem 1rem;
+  color: var(--popover-foreground);
+  animation: bon-speech-in 0.24s ease-out both;
+}
+
+.bon-speech p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.bon-speech-dismiss {
+  position: absolute;
+  inset-block-start: 0.4rem;
+  inset-inline-end: 0.4rem;
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.bon-speech-dismiss:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.bon-speech-dismiss:focus-visible,
+.bon-speech-action:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.bon-speech-dismiss svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.bon-speech-action {
+  margin-block-start: 0.65rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.bon-companion[data-variant='focus'] .bon-speech {
+  position: absolute;
+  inset-inline: 1rem;
+  inset-block-start: 1rem;
+  max-width: none;
+}
+
+.bon-companion[data-variant='habitat'] .bon-speech {
+  max-width: min(21rem, calc(100vw - 13rem));
+  margin-block-end: 3.5rem;
+  border-radius: 1rem 1rem 0.25rem;
+  pointer-events: auto;
+}
+
+.bon-companion[data-variant='habitat'] .bon-speech::after {
+  position: absolute;
+  inset-inline-end: -0.38rem;
+  inset-block-end: 0.6rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-block-end: 1px solid var(--border-strong);
+  border-inline-end: 1px solid var(--border-strong);
+  background: var(--popover);
+  content: '';
+  transform: rotate(-45deg);
+}
+
+.bon-companion[data-urgent='true'] .bon-speech {
+  border-color: color-mix(in oklab, var(--primary) 55%, var(--border));
+}
+
+@keyframes bon-mouth-open-close {
+  from {
+    transform: scaleY(0.2);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes bon-blink {
+  0%,
+  47%,
+  51%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  49% {
+    transform: scaleY(0.08);
+  }
+}
+
+@keyframes bon-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-2px) scale(1.015);
+  }
+}
+
+@keyframes bon-reading {
+  0%,
+  100% {
+    transform: rotate(-1deg) translateY(0);
+  }
+
+  50% {
+    transform: rotate(1deg) translateY(1px);
+  }
+}
+
+@keyframes bon-sleep {
+  0%,
+  100% {
+    transform: translateY(1px) scale(0.98);
+  }
+
+  50% {
+    transform: translateY(3px) scale(1);
+  }
+}
+
+@keyframes bon-pop {
+  0% {
+    transform: translateY(5px) scale(0.9);
+  }
+
+  65% {
+    transform: translateY(-3px) scale(1.04);
+  }
+
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes bon-tilt {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes bon-page-turn {
+  0%,
+  72%,
+  100% {
+    opacity: 0;
+    transform: rotateY(0deg);
+  }
+
+  76% {
+    opacity: 1;
+  }
+
+  86% {
+    opacity: 1;
+    transform: rotateY(165deg);
+  }
+
+  90% {
+    opacity: 0;
+    transform: rotateY(180deg);
+  }
+}
+
+@keyframes bon-speech-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bon-avatar[data-reduced-motion='true'] *,
+.bon-avatar[data-reduced-motion='true']::before,
+.bon-avatar[data-reduced-motion='true']::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+.bon-avatar[data-reduced-motion='true'][data-speaking='true']
+  .bon-mouth-opening {
+  opacity: 1;
+  transform: scaleY(0.62);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bon-avatar *,
+  .bon-avatar::before,
+  .bon-avatar::after,
+  .bon-speech {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .bon-avatar[data-speaking='true'] .bon-mouth-opening {
+    opacity: 1;
+    transform: scaleY(0.62);
+  }
+}
+
+@media (max-width: 760px) {
+  .bon-companion[data-variant='habitat'] {
+    inset-block-end: 1rem;
+    inset-inline-end: 1rem;
+    gap: 0.5rem;
+  }
+
+  .bon-companion[data-variant='habitat'] .bon-companion-stage {
+    width: 7.5rem;
+  }
+
+  .bon-companion[data-variant='habitat'] .bon-speech {
+    max-width: calc(100vw - 10rem);
+    margin-block-end: 2.5rem;
+  }
+
+  .bon-companion[data-variant='wrap-up'] .bon-companion-stage {
+    width: 6.75rem;
+  }
+}

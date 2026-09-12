@@ -1,7 +1,7 @@
 {
   "landing": {
-    "brand": "Axis",
-    "brandAria": "Axis Desktop, início",
+    "brand": "Bon",
+    "brandAria": "Bon Desktop, início",
     "nav": {
       "ariaLabel": "Navegação principal",
       "product": "Produto",
@@ -34,7 +34,7 @@
           "copy": "Explore a arquitetura e acompanhe o projeto."
         },
         "releases": {
-          "title": "Versões do Axis",
+          "title": "Versões do Bon",
           "copy": "Baixe a versão mais recente para desktop.",
           "badge": "Releases"
         },
@@ -56,9 +56,9 @@
     "hero": {
       "titleLineOne": "Pare de reconstruir seu dia.",
       "titleLineTwo": "Veja o próximo passo.",
-      "subtitle": "Para quem trabalha ou estuda no computador, o Axis reúne tarefas, compromissos e foco para deixar claro o que merece atenção agora.",
+      "subtitle": "Para quem trabalha ou estuda no computador, o Bon reúne tarefas, compromissos e foco para deixar claro o que merece atenção agora.",
       "secondaryCta": "Ver como funciona",
-      "proofAria": "Demonstração do fluxo diário do Axis",
+      "proofAria": "Demonstração do fluxo diário do Bon",
       "timeline": {
         "title": "Linha do dia",
         "date": "Hoje · 14 de maio",
@@ -142,7 +142,7 @@
       "title": "Veja o que fez seu dia funcionar",
       "subtitle": "Entenda onde seu foco avançou, quando a sobrecarga apareceu e qual pequeno ajuste fazer amanhã.",
       "cta": "Ver a análise em ação",
-      "dashboardAria": "Exemplo da análise de ritmo e execução do Axis",
+      "dashboardAria": "Exemplo da análise de ritmo e execução do Bon",
       "demoNote": "Exemplo ilustrativo com dados locais",
       "period": "Últimos 7 dias",
       "rhythm": {
@@ -227,7 +227,7 @@
       }
     },
     "capabilities": {
-      "ariaLabel": "Recursos centrais do Axis",
+      "ariaLabel": "Recursos centrais do Bon",
       "planning": {
         "title": "Organize o dia em minutos",
         "today": "Hoje",
@@ -256,7 +256,7 @@
           }
         },
         "add": "Adicionar próxima ação",
-        "captureAria": "Exemplo da Captura Rápida do Axis",
+        "captureAria": "Exemplo da Captura Rápida do Bon",
         "captureTitle": "Captura Rápida",
         "captureShortcut": "Ctrl Shift .",
         "captureText": "tarefa: Enviar proposta revisada",
@@ -334,7 +334,7 @@
     },
     "ownership": {
       "title": "Seu dia continua sendo seu",
-      "copy": "Use o Axis sem conta obrigatória, mantenha seus dados no dispositivo e conecte apenas os serviços que fizerem sentido.",
+      "copy": "Use o Bon sem conta obrigatória, mantenha seus dados no dispositivo e conecte apenas os serviços que fizerem sentido.",
       "cta": "Conhecer a privacidade"
     },
     "config": {
@@ -359,7 +359,7 @@
         "trigger": "Adicionar lembrete",
         "ariaLabel": "Opções de lembrete da ação",
         "title": "Lembrete",
-        "subtitle": "Escolha quando o Axis deve avisar.",
+        "subtitle": "Escolha quando o Bon deve avisar.",
         "options": {
           "atTime": "No horário",
           "tenMinutes": "10 minutos antes",
@@ -391,7 +391,7 @@
             },
             "axis": {
               "event": "Revisão diária",
-              "source": "Axis",
+              "source": "Bon",
               "time": "17:30",
               "state": "Local"
             }
@@ -436,10 +436,10 @@
       }
     },
     "downloads": {
-      "trigger": "Baixar Axis",
+      "trigger": "Baixar Bon",
       "loading": "Buscando versões…",
       "fallback": "Ver versões disponíveis",
-      "downloadAria": "Baixar Axis {{release}} para {{platform}}",
+      "downloadAria": "Baixar Bon {{release}} para {{platform}}",
       "platforms": {
         "windows": "Instalador para Windows",
         "linux": "AppImage ou pacote Linux"
@@ -447,7 +447,7 @@
     },
     "footer": {
       "title": "Seu próximo passo pode estar mais claro hoje.",
-      "copy": "Baixe o Axis, reúna o que disputa sua atenção e volte a executar sem reconstruir o contexto a cada interrupção.",
+      "copy": "Baixe o Bon, reúna o que disputa sua atenção e volte a executar sem reconstruir o contexto a cada interrupção.",
       "navAria": "Links do rodapé",
       "links": {
         "product": "Produto",

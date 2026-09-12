@@ -43,6 +43,8 @@ import { useHabitsStore } from '@/store/habits-store'
 import { usePomodoroStore } from '@/store/pomodoro-store'
 import { type Task, useTasksStore } from '@/store/tasks-store'
 import { useUIStore } from '@/store/ui-store'
+import { BonCompanion } from '@/components/bon/BonCompanion'
+import { getWrapUpBonState } from '@/lib/bon-domain'
 
 const timeFormatters = new Map<string, Intl.DateTimeFormat>()
 const dateFormatters = new Map<string, Intl.DateTimeFormat>()
@@ -522,6 +524,16 @@ export function WrapUpDialog() {
   const essentialTask = tasks.find(
     task => task.id === activePlan?.focus_task_id
   )
+  const essentialDone = Boolean(
+    essentialTask?.completed_at || essentialTask?.status === 'done'
+  )
+  const bonState = getWrapUpBonState({
+    completedCount: snapshot.completedTasks.length,
+    essentialDone,
+    habitsDone: snapshot.habitsDone,
+    habitsExpected: snapshot.habitsExpected,
+    openCount: snapshot.openTasks.length,
+  })
 
   useEffect(() => {
     if (!wrapUpOpen) return
@@ -614,6 +626,13 @@ export function WrapUpDialog() {
         </DialogHeader>
 
         <div className="max-h-[calc(100vh-13rem)] overflow-y-auto px-6 py-5">
+          <BonCompanion
+            variant="wrap-up"
+            state={isSubmitting ? 'drowsy' : bonState}
+            message={t(`bon.wrapUp.${bonState}`)}
+            messageKey={`wrap-up-${bonState}`}
+          />
+
           <DaySummary snapshot={snapshot} />
 
           <div className="mt-6 grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(19rem,0.9fr)]">

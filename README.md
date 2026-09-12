@@ -1,6 +1,6 @@
-# Axis Desktop
+# Bon
 
-Axis Desktop is a cross-platform personal productivity desktop app built with **Tauri v2**, **React 19**, **TypeScript**, and **Rust**. The project combines tasks, habits, Pomodoro, notes, calendar, and analytics into a native-feeling workspace with a strong emphasis on architecture, performance, and type safety.
+Bon is a cross-platform personal productivity desktop app built with **Tauri v2**, **React 19**, **TypeScript**, and **Rust**. The project combines tasks, habits, Pomodoro, notes, calendar, and analytics into a native-feeling workspace with a strong emphasis on architecture, performance, and type safety.
 
 ## Overview
 
@@ -11,7 +11,7 @@ Axis Desktop is a cross-platform personal productivity desktop app built with **
 
 ## Dashboard Preview
 
-![Axis Desktop dashboard preview](./dashboard-ladingpage.png)
+![Bon dashboard preview](./dashboard-ladingpage.png)
 
 ## Product Areas
 

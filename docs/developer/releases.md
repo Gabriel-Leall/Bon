@@ -155,9 +155,16 @@ Users can manually check via:
 ## Development Data Isolation
 
 Local development uses `src-tauri/tauri.dev.conf.json` through `bun run tauri:dev`.
-That config changes the product name to `Axis Dev` and the app identifier to
-`com.gabrielleall.axis-desktop.dev`, so test data written by the dev build does
+That config changes the product name to `Bon Dev` and the app identifier to
+`com.gabrielleall.bon.dev`, so test data written by the dev build does
 not share the release app data directory.
+
+The former identifiers (`com.gabrielleall.axis-desktop` and its `.dev` variant)
+are migration sources. On first launch, Bon copies app data, a consistent SQLite
+snapshot, and Windows WebView local storage into its new directories; it does
+not delete the old installation or data. Credential reads also migrate the old
+keyring entry lazily. Because the bundle identifier changes, distribute Bon as
+a new installation and verify upgrade/migration on each supported platform.
 
 ## Release Artifacts
 

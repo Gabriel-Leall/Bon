@@ -1,4 +1,4 @@
-name: 'Release Axis'
+name: 'Release Bon'
 
 on:
   push:
@@ -82,16 +82,16 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
-          releaseName: "Axis ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}"
+          releaseName: "Bon ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}"
           releaseBody: |
-            ## Axis ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+            ## Bon ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
 
             ### Installation Instructions
-            - **Windows**: Use the signed NSIS setup package. After setup, open Axis from the Start Menu shortcut.
+            - **Windows**: Use the signed NSIS setup package. After setup, open Bon from the Start Menu shortcut.
             - **Linux**: Download the `.AppImage` file, make it executable (`chmod +x`), and run
 
             ### Auto-Updates
-            Existing users will receive automatic update notifications. Tauri verifies every update against the public signing key bundled with Axis before installation.
+            Tauri verifies updates against the public signing key bundled with Bon before installation. Users moving from the old application identifier should install Bon and close the previous app before first launch so its local data can be copied safely.
 
             **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
           releaseDraft: false

@@ -6,7 +6,7 @@ each responsibility.
 
 ## Scope
 
-Axis notes are local files owned by the user. The current architecture does not
+Bon notes are local files owned by the user. The current architecture does not
 include cloud sync, remote vaults, account-based notes, multi-device conflict
 resolution, or Obsidian/Notion import/export.
 
@@ -18,10 +18,10 @@ Preferences, and the Rust vault commands.
 The default vault is created automatically on first use at:
 
 ```text
-Documents/Axis_Notes/
+Documents/Bon_Notes/
 +-- inbox/
 +   +-- Comece aqui/
-+       +-- Bem-vindo ao Axis.md
++       +-- Bem-vindo ao Bon.md
 +-- archive/
 +-- trash/
 +-- .axis-notes/
@@ -31,7 +31,7 @@ Documents/Axis_Notes/
     +-- config/
 ```
 
-The user can choose another absolute vault path in Settings. Axis validates the
+The user can choose another absolute vault path in Settings. Bon validates the
 new path, creates any missing vault directories, persists the active path in
 `preferences.json` as `notes_vault_path`, and keeps existing notes in the old
 vault. Changing the vault path is a switch, not a migration.
@@ -41,8 +41,9 @@ prompt for the previous vault path. The default safe action is copy. Move is a
 separate user action and must never happen as part of changing the active vault
 path.
 
-If `notes_vault_path` is not set, Axis resolves the active vault to the default
-`Documents/Axis_Notes` path.
+If `notes_vault_path` is not set, Bon resolves the active vault to the default
+`Documents/Bon_Notes` path. On first use, an existing `Documents/Axis_Notes`
+vault is copied to the new location without removing the original.
 
 Only a newly created default vault receives the welcome note. An existing vault
 is never populated or modified merely by being opened.
@@ -60,7 +61,7 @@ Current top-level directories:
 - `archive/` stores notes removed from the active workspace but preserved for
   later restoration.
 - `trash/` stores deleted notes before any future permanent deletion feature.
-- `.axis-notes/` stores Axis-owned vault metadata and must not appear as user
+- `.axis-notes/` stores Bon-owned vault metadata and must not appear as user
   content.
 
 Current metadata directories:
@@ -68,7 +69,7 @@ Current metadata directories:
 - `.axis-notes/manifest.json` records internal vault metadata schema, the
   stable UUID for each Markdown path, and the welcome-note ID. It is preserved
   after creation and is the authority for note IDs when files move or rename.
-- `.axis-notes/sidecars/` stores per-note structured metadata owned by Axis.
+- `.axis-notes/sidecars/` stores per-note structured metadata owned by Bon.
   Note annotations use `.axis-notes/sidecars/<stable-note-id>.json`, so they
   survive note rename, note move, and folder lifecycle moves without coupling
   the comment metadata to the Markdown file path.

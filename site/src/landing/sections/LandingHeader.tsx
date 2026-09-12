@@ -26,7 +26,7 @@ export function LandingHeader() {
   return (
     <header className="site-header">
       <a className="site-brand" href="#produto" aria-label={t('landing.brandAria')}>
-        <img className="site-brand-icon" src="/Icon.svg" alt="" />
+        <img className="site-brand-icon" src="/BonIcon.png" alt="" />
         <span className="site-brand-name">{t('landing.brand')}</span>
       </a>
 

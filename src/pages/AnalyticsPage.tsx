@@ -24,6 +24,8 @@ import {
 } from '@/lib/analytics-task-activity'
 import { cn } from '@/lib/utils'
 import { useAnalyticsStore } from '@/store/analytics-store'
+import { BonCompanion } from '@/components/bon/BonCompanion'
+import { getAnalysisBonState } from '@/lib/bon-domain'
 
 function comparisonLabel(
   period: AnalyticsPeriod,
@@ -733,6 +735,13 @@ export default function AnalyticsPage() {
           />
         </div>
       </div>
+
+      <BonCompanion
+        variant="habitat"
+        state={getAnalysisBonState(viewModel.insight.level, isLoading)}
+        message={t(`bon.analysis.${viewModel.insight.level}`)}
+        messageKey={`analysis-${viewModel.insight.level}`}
+      />
     </div>
   )
 }

@@ -30,6 +30,7 @@ Technical documentation for building and extending this app. These docs describe
 | [Internationalization](./i18n-patterns.md) | Translation system, RTL support             |
 | [Notifications](./notifications.md)        | Toast and native notifications              |
 | [Cross-Platform](./cross-platform.md)      | Platform detection, OS-specific adaptations |
+| [Bon Companion](./bon-companion.md)        | Contextual states, motion, and preferences  |
 
 ## Data & Storage
 

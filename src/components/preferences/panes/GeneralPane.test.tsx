@@ -67,6 +67,12 @@ describe('GeneralPane theme selection', () => {
         notes_vault_path: null,
         daily_wrap_up_reminder_enabled: false,
         daily_wrap_up_reminder_time: '18:00',
+        buddy_enabled: true,
+        buddy_proactive_messages_enabled: true,
+        buddy_reduced_motion: false,
+        buddy_sound_enabled: false,
+        buddy_intro_seen: true,
+        buddy_last_seen_date: '2026-09-11',
       },
     } as never)
     vi.mocked(useSavePreferences).mockReturnValue({
@@ -104,6 +110,17 @@ describe('GeneralPane theme selection', () => {
     expect(setAccent).toHaveBeenCalledWith('purple')
     expect(savePreferences).toHaveBeenCalledWith(
       expect.objectContaining({ accent: 'purple' })
+    )
+  })
+
+  it('lets the user hide Bon without changing the brand', async () => {
+    const user = userEvent.setup()
+    render(<GeneralPane />)
+
+    await user.click(screen.getByRole('switch', { name: 'Mostrar o Bon' }))
+
+    expect(savePreferences).toHaveBeenCalledWith(
+      expect.objectContaining({ buddy_enabled: false })
     )
   })
 })

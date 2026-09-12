@@ -117,11 +117,11 @@ fn creates_a_note_in_an_existing_inbox_subfolder() {
 }
 
 #[test]
-fn default_vault_path_uses_visible_axis_notes_folder() {
+fn default_vault_path_uses_visible_bon_notes_folder() {
     let documents = Path::new("Documents");
     let path = default_vault_path_from_documents(documents);
 
-    assert_eq!(path, documents.join("Axis_Notes"));
+    assert_eq!(path, documents.join("Bon_Notes"));
 }
 
 #[test]
@@ -173,7 +173,7 @@ fn ensure_vault_structure_creates_metadata_manifest_and_reserved_subdirs() {
     assert!(metadata_root.join(VAULT_CACHE_DIR).is_dir());
     assert!(metadata_root.join(VAULT_CONFIG_DIR).is_dir());
     assert_eq!(manifest["schema_version"], VAULT_METADATA_SCHEMA_VERSION);
-    assert_eq!(manifest["application"], "axis-desktop");
+    assert_eq!(manifest["application"], "bon");
     assert!(manifest["created_at"]
         .as_str()
         .is_some_and(|v| !v.is_empty()));
@@ -193,7 +193,7 @@ fn ensure_empty_vault_seeds_welcome_note_with_stable_id() {
     let welcome_path = root
         .join(INBOX_DIR)
         .join("Comece aqui")
-        .join("Bem-vindo ao Axis.md");
+        .join("Bem-vindo ao Bon.md");
     assert!(welcome_path.is_file());
 
     let content = std::fs::read_to_string(&welcome_path).expect("welcome note should be readable");
@@ -208,7 +208,7 @@ fn ensure_empty_vault_seeds_welcome_note_with_stable_id() {
         .as_str()
         .expect("welcome note should have a stable ID");
     assert_eq!(
-        manifest["note_ids_by_path"]["inbox/Comece aqui/Bem-vindo ao Axis.md"].as_str(),
+        manifest["note_ids_by_path"]["inbox/Comece aqui/Bem-vindo ao Bon.md"].as_str(),
         Some(welcome_id)
     );
 

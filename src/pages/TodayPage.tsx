@@ -7,6 +7,7 @@ import { TodayHabits } from '@/components/today/TodayHabits'
 import { TodayNow } from '@/components/today/TodayNow'
 import { TodayTimeline } from '@/components/today/TodayTimeline'
 import { TodayWrapUp } from '@/components/today/TodayWrapUp'
+import { TodayBon } from '@/components/bon/TodayBon'
 import { selectNextCommitment } from '@/lib/today-domain'
 import { useCalendarStore } from '@/store/calendar-store'
 import { useHabitsStore } from '@/store/habits-store'
@@ -77,27 +78,30 @@ export function TodayPage() {
               {dateLabel}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => void toggleFullscreen()}
-            className="flex size-9 items-center justify-center rounded-xl border border-border-strong bg-surface text-muted-foreground shadow-neu-raised-sm transition-[background-color,color,box-shadow,transform] hover:bg-accent hover:text-accent-foreground active:translate-y-px active:shadow-neu-pressed focus-visible:shadow-focus-ring focus-visible:outline-none"
-            aria-label={t(
-              isFullscreen
-                ? 'navigation.exitFullscreen'
-                : 'navigation.enterFullscreen'
-            )}
-            title={t(
-              isFullscreen
-                ? 'navigation.exitFullscreen'
-                : 'navigation.enterFullscreen'
-            )}
-          >
-            {isFullscreen ? (
-              <Minimize2 className="size-4" />
-            ) : (
-              <Maximize2 className="size-4" />
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <TodayBon />
+            <button
+              type="button"
+              onClick={() => void toggleFullscreen()}
+              className="flex size-9 items-center justify-center rounded-xl border border-border-strong bg-surface text-muted-foreground shadow-neu-raised-sm transition-[background-color,color,box-shadow,transform] hover:bg-accent hover:text-accent-foreground active:translate-y-px active:shadow-neu-pressed focus-visible:shadow-focus-ring focus-visible:outline-none"
+              aria-label={t(
+                isFullscreen
+                  ? 'navigation.exitFullscreen'
+                  : 'navigation.enterFullscreen'
+              )}
+              title={t(
+                isFullscreen
+                  ? 'navigation.exitFullscreen'
+                  : 'navigation.enterFullscreen'
+              )}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="size-4" />
+              ) : (
+                <Maximize2 className="size-4" />
+              )}
+            </button>
+          </div>
         </header>
 
         <div className="space-y-10">

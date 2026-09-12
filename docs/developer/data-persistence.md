@@ -15,7 +15,7 @@ Patterns for saving and loading data to disk.
 ```
 Need to persist data?
 ├─ App settings? → Preferences (Rust struct + TanStack Query)
-├─ Local notes? → Notes Vault (Documents/Axis Notes by default)
+├─ Local notes? → Notes Vault (Documents/Bon_Notes by default)
 ├─ User data with queries/relationships? → SQLite (see below)
 ├─ Remote API data? → external-apis.md
 └─ Emergency/crash recovery? → Recovery System
@@ -108,7 +108,7 @@ contract across backend, store, Notes Page, widget, and Preferences.
 Default location:
 
 ```text
-Documents/Axis Notes/
+Documents/Bon_Notes/
 ├── inbox/
 ├── archive/
 ├── trash/
@@ -123,11 +123,11 @@ Rules:
 
 - The default vault is created automatically on first use.
 - The active vault path is persisted in `preferences.json` as `notes_vault_path`.
-- If `notes_vault_path` is not set, Axis uses `Documents/Axis Notes`.
+- If `notes_vault_path` is not set, Bon uses `Documents/Bon_Notes` and copies an existing `Documents/Axis_Notes` vault there once.
 - The physical vault contract is defined in `VaultLayout` in `src-tauri/src/commands/notes.rs`; backend code should use that contract instead of duplicating directory names.
 - Selecting a different vault path validates and completes the vault structure, but does not move notes from the previous vault.
-- `.axis-notes/` is reserved for Axis metadata and must not be indexed as user notes.
-- User-authored Markdown remains in note files; Axis-owned structured data belongs under `.axis-notes/`.
+- `.axis-notes/` is retained for compatibility with existing vault IDs and annotations; it is reserved for Bon metadata and must not be indexed as user notes.
+- User-authored Markdown remains in note files; Bon-owned structured data belongs under `.axis-notes/`.
 - `.axis-notes/manifest.json` records the internal vault metadata schema and is created once, then preserved across later structure checks.
 - `.axis-notes/sidecars/` is reserved for per-note structured metadata, `.axis-notes/cache/` for rebuildable derived data, and `.axis-notes/config/` for vault-scoped settings.
 - The active notes workspace excludes top-level `archive/` and `trash/` folders from normal list/search results.

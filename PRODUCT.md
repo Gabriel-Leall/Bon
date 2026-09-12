@@ -1,14 +1,14 @@
-# Axis Product Definition
+# Bon Product Definition
 
 ## Product in One Sentence
 
-Axis é um sistema pessoal de execução para desktop que transforma demandas dispersas e interrupções em uma próxima ação clara, protege o contexto de foco e ajuda o usuário a lembrar, executar e refletir sobre a própria rotina.
+Bon é um sistema pessoal de execução para desktop que transforma demandas dispersas e interrupções em uma próxima ação clara, protege o contexto de foco e ajuda o usuário a lembrar, executar e refletir sobre a própria rotina.
 
-## Why Axis Exists
+## Why Bon Exists
 
 Pessoas que trabalham ou estudam no computador distribuem compromissos, tarefas, lembretes e hábitos entre ferramentas que exigem manutenção constante. Quando o dia muda ou uma interrupção aparece, elas precisam reconstruir o contexto antes de decidir o que fazer. O resultado é esquecimento, planejamento irreal, troca excessiva de contexto e sensação de estar ocupado sem controle.
 
-Axis existe para reduzir essa distância entre intenção e execução. Ele não tenta administrar uma empresa, construir uma base de conhecimento ou maximizar o número de tarefas concluídas. Ele mantém o essencial visível, torna a próxima ação evidente e ajuda o usuário a retomar o ritmo depois de uma interrupção ou de um dia ruim.
+Bon existe para reduzir essa distância entre intenção e execução. Ele não tenta administrar uma empresa, construir uma base de conhecimento ou maximizar o número de tarefas concluídas. Ele mantém o essencial visível, torna a próxima ação evidente e ajuda o usuário a retomar o ritmo depois de uma interrupção ou de um dia ruim.
 
 ## Primary User
 
@@ -28,7 +28,7 @@ Quando minha atenção estiver dividida entre tarefas, compromissos e interrupç
 
 ## Product Promise
 
-Axis oferece uma estrutura local-first, rápida e coerente para capturar, organizar no tempo, executar e refletir. O produto deve diminuir a manutenção do próprio sistema de produtividade, não criar outra obrigação para o usuário administrar.
+Bon oferece uma estrutura local-first, rápida e coerente para capturar, organizar no tempo, executar e refletir. O produto deve diminuir a manutenção do próprio sistema de produtividade, não criar outra obrigação para o usuário administrar.
 
 ## Core Loop
 
@@ -45,7 +45,7 @@ capturar → organizar no tempo → escolher a próxima ação → focar → enc
 
 ## Definition of User Success
 
-Axis considera que o usuário teve sucesso quando ele:
+Bon considera que o usuário teve sucesso quando ele:
 
 - entende rapidamente o que precisa fazer;
 - protege ao menos um período relevante de foco;
@@ -60,7 +60,7 @@ Volume bruto não define sucesso. Uma tarefa essencial pode importar mais que vi
 
 ### Today
 
-`Hoje` é a superfície principal do Axis. Ela apresenta, em hierarquia controlada:
+`Hoje` é a superfície principal do Bon. Ela apresenta, em hierarquia controlada:
 
 1. próximo compromisso;
 2. próxima ação recomendada;
@@ -90,7 +90,7 @@ Uma tarefa é uma ação simples com:
 
 Tarefas datadas aparecem no Calendário; tarefas sem data permanecem na lista de execução. Projetos complexos, Kanban, dependências, estimativas, múltiplos níveis de subtarefas e fluxos extensos de status não fazem parte do núcleo.
 
-GitHub pode atuar como fonte opcional de tarefas. O usuário conecta a conta, escolhe uma issue atribuída a ele e cria uma tarefa vinculada que pode iniciar uma sessão de Foco. O Axis não importa todas as issues nem altera o estado delas automaticamente na primeira versão da integração.
+GitHub pode atuar como fonte opcional de tarefas. O usuário conecta a conta, escolhe uma issue atribuída a ele e cria uma tarefa vinculada que pode iniciar uma sessão de Foco. O Bon não importa todas as issues nem altera o estado delas automaticamente na primeira versão da integração.
 
 ### Calendar and Events
 
@@ -102,7 +102,7 @@ Um evento é um compromisso com data, horário e duração. O Calendário é uma
 - Notas e tarefas sem data não aparecem no Calendário.
 - Hábitos não ocupam o Calendário automaticamente.
 
-Com Google Calendar conectado, eventos criados no Axis são sincronizados automaticamente e mantêm cache local. Eventos criados ou alterados no Google aparecem no Axis. Tarefas e notas permanecem dados do Axis e são apenas sobrepostas à linha temporal. Falhas de integração nunca bloqueiam o calendário local.
+Com Google Calendar conectado, eventos criados no Bon são sincronizados automaticamente e mantêm cache local. Eventos criados ou alterados no Google aparecem no Bon. Tarefas e notas permanecem dados do Bon e são apenas sobrepostas à linha temporal. Falhas de integração nunca bloqueiam o calendário local.
 
 ### Habits
 
@@ -110,7 +110,7 @@ Um hábito é um comportamento recorrente, não uma tarefa repetida nem um event
 
 ### Focus
 
-Foco é a etapa de execução, não um timer isolado. O usuário pode iniciar imediatamente com o último modo utilizado, sem preencher uma intenção obrigatória. Quando a sessão parte de uma tarefa, evento ou hábito, o Axis preenche esse contexto; quando parte diretamente de Foco ou de um atalho, a intenção permanece opcional. Pomodoro é uma técnica configurável dentro desse modo, não a identidade do produto.
+Foco é a etapa de execução, não um timer isolado. O usuário pode iniciar imediatamente com o último modo utilizado, sem preencher uma intenção obrigatória. Quando a sessão parte de uma tarefa, evento ou hábito, o Bon preenche esse contexto; quando parte diretamente de Foco ou de um atalho, a intenção permanece opcional. Pomodoro é uma técnica configurável dentro desse modo, não a identidade do produto.
 
 ### Analysis and Buddy
 
@@ -124,7 +124,7 @@ O buddy é um pet-companheiro exigente e justo. Ele reage emocionalmente aos dad
 
 ## Daily Closure and Reminders
 
-Ao encerrar o dia, o Axis resume o que aconteceu e antecipa amanhã. Se o usuário não executar o encerramento até um horário configurado, um lembrete automático pode atuar como segurança enquanto o Axis estiver ativo ou na bandeja.
+Ao encerrar o dia, o Bon resume o que aconteceu e antecipa amanhã. Se o usuário não executar o encerramento até um horário configurado, um lembrete automático pode atuar como segurança enquanto o Bon estiver ativo ou na bandeja.
 
 Compromissos podem gerar notificações nativas antecipadas. Eventos importados do Google não duplicam notificações do Google por padrão. Preferências de lembrete devem ser compreensíveis, reversíveis e respeitar as permissões do sistema operacional.
 
@@ -172,12 +172,12 @@ Cada camada depende da anterior. Companion e monitoramento não devem ser constr
 
 ## Context Monitoring Contract
 
-O monitoramento futuro é uma capacidade opcional e explícita do Axis. Ele funciona somente durante sessões de foco e usa aplicativo e título da janela por melhor esforço. Nenhuma instalação ou extensão separada é exigida.
+O monitoramento futuro é uma capacidade opcional e explícita do Bon. Ele funciona somente durante sessões de foco e usa aplicativo e título da janela por melhor esforço. Nenhuma instalação ou extensão separada é exigida.
 
 - O usuário entende e ativa a função conscientemente.
 - Um indicador visível informa quando ela está ativa.
 - O processamento e a classificação são locais.
-- Pesquisas, títulos e URLs completas não são persistidos pelo Axis.
+- Pesquisas, títulos e URLs completas não são persistidos pelo Bon.
 - Apenas categorias, duração, estado AFK e trocas de contexto alimentam Análise.
 - Navegação privada não é monitorada intencionalmente.
 - No macOS, permissões de Acessibilidade podem ser necessárias.
