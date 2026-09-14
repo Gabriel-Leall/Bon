@@ -1,18 +1,7 @@
-import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import './app-intro.css'
 
-const MINI_BONS = [
-  [-42, -42],
-  [0, -42],
-  [42, -42],
-  [-42, 0],
-  [0, 0],
-  [42, 0],
-  [-42, 42],
-  [0, 42],
-  [42, 42],
-] as const
+const MINI_BONS = Array.from({ length: 9 }, (_, index) => index + 1)
 
 export function AppIntro({
   exiting,
@@ -39,17 +28,10 @@ export function AppIntro({
             draggable={false}
             onAnimationIteration={onCycleComplete}
           />
-          {MINI_BONS.map(([x, y], index) => (
+          {MINI_BONS.map(position => (
             <span
-              className="app-intro__mini"
-              key={`${x}-${y}`}
-              style={
-                {
-                  '--mini-x': `${x}px`,
-                  '--mini-y': `${y}px`,
-                  '--mini-delay': `${index * -73}ms`,
-                } as CSSProperties
-              }
+              className={`app-intro__mini app-intro__mini--${position}`}
+              key={position}
             >
               <img src="/bon/bon-approved.png" alt="" draggable={false} />
             </span>

@@ -36,10 +36,10 @@ Removes Tauri commands not called from your frontend.
 ## Analyzing Bundle Size
 
 ```bash
-npm run build:analyze   # Build and analyze
+bun run build:analyze   # Build and analyze
 
 # Manual analysis
-npm run build
+bun run build
 du -sh dist/*           # Check output sizes
 ls -lah dist/assets/    # Examine chunks
 ```
@@ -97,23 +97,15 @@ const Settings = lazy(() => import('./Settings'))
 </Suspense>
 ```
 
-### Manual Chunking (Advanced)
+### Production chunks
 
-```typescript
-// vite.config.ts
-export default defineConfig({
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
-        },
-      },
-    },
-  },
-})
-```
+Keep Vite's automatic chunking unless a measured production problem requires a
+different strategy. Splitting every dependency into its own chunk can create a
+circular chunk graph. In a Tauri WebView, that can throw before React mounts and
+leave the static boot screen visible indefinitely.
+
+`bun run build` runs `scripts/check-production-chunks.mjs` after Vite and fails
+when the emitted JavaScript chunks contain a circular dependency.
 
 ## Tauri-Specific Optimizations
 
@@ -134,7 +126,7 @@ Only include permissions you use in `src-tauri/capabilities/desktop.json`.
 | Issue                    | Solution                                          |
 | ------------------------ | ------------------------------------------------- |
 | Large initial bundle     | Implement code splitting                          |
-| Duplicate dependencies   | `npm ls react` then `npm dedupe`                  |
+| Duplicate dependencies   | `bun pm ls react` and align the reported versions |
 | Unused shadcn components | Remove from `src/components/ui/`                  |
 | Heavy date library       | Use `date-fns` with tree shaking or native `Intl` |
 
@@ -146,7 +138,7 @@ cd src-tauri && cargo build --release
 ls -lah target/release/tauri-app
 
 # Frontend bundle
-npm run build && du -sh dist/
+bun run build && du -sh dist/
 ```
 
 **Remember**: Measure before optimizing. Don't over-optimize prematurely.
