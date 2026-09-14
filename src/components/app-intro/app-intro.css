@@ -1,0 +1,146 @@
+.app-intro {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--background);
+  color: var(--foreground);
+  opacity: 1;
+  transition: opacity 240ms var(--axis-ease-exit);
+}
+
+.app-intro[data-exiting='true'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-intro__content {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.4rem;
+  transform: translateY(-1.25rem);
+}
+
+.app-intro__stage {
+  position: relative;
+  width: 12rem;
+  height: 12rem;
+}
+
+.app-intro__bon {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: app-intro-bon 2700ms var(--axis-ease-enter) infinite;
+}
+
+.app-intro__mini {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: -0.75rem;
+  animation: app-intro-mini 2700ms var(--axis-ease-enter) infinite;
+  opacity: 0;
+}
+
+.app-intro__mini img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: app-intro-switch 540ms steps(1, end) var(--mini-delay) infinite;
+}
+
+.app-intro__name {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+@keyframes app-intro-bon {
+  0%,
+  15% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  24%,
+  69% {
+    opacity: 0;
+    transform: scale(0.58);
+  }
+
+  77% {
+    opacity: 0;
+    transform: scale(0.84);
+  }
+
+  89%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes app-intro-mini {
+  0%,
+  19% {
+    opacity: 0;
+    transform: translate(var(--mini-x), var(--mini-y)) scale(0.6);
+  }
+
+  28%,
+  58% {
+    opacity: 1;
+    transform: translate(var(--mini-x), var(--mini-y)) scale(1);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.7);
+  }
+
+  78%,
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+}
+
+@keyframes app-intro-switch {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  35%,
+  65% {
+    opacity: 0.15;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-intro,
+  .app-intro__bon,
+  .app-intro__mini,
+  .app-intro__mini img {
+    animation: none;
+    transition: none;
+  }
+
+  .app-intro__bon {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .app-intro__mini {
+    display: none;
+  }
+}

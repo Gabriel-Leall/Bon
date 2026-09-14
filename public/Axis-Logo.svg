@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 120" role="img" aria-labelledby="title">
+  <title id="title">Bon</title>
+  <g transform="translate(0 -2) scale(.37)">
+    <path fill="#6674E8" d="M78 137c-8-15-7-41 8-54 15-13 34-3 37 16l4 36Z"/>
+    <path fill="#6674E8" d="M180 133c-2-21 8-39 25-41 16-1 26 15 20 38Z"/>
+    <path fill="#6674E8" d="M39 181c0-48 38-69 111-69 72 0 111 23 111 71v34c0 47-36 70-111 70S39 264 39 217Z"/>
+    <rect width="13" height="38" x="106" y="171" fill="#171924" rx="6.5"/>
+    <rect width="12" height="34" x="183" y="174" fill="#171924" rx="6"/>
+    <circle cx="260" cy="210" r="7" fill="#5364E8"/>
+  </g>
+  <text x="128" y="82" fill="#171924" font-family="Inter, Arial, sans-serif" font-size="68" font-weight="600" letter-spacing="-3">Bon</text>
+</svg>

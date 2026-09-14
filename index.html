@@ -11,9 +11,39 @@
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bon</title>
+    <script>
+      try {
+        const storedTheme = localStorage.getItem('ui-theme')
+        const theme =
+          storedTheme === 'cream'
+            ? 'cream'
+            : storedTheme === 'dark' || storedTheme === 'entardecer'
+              ? 'dark'
+              : storedTheme === 'light'
+                ? 'light'
+                : matchMedia('(prefers-color-scheme: dark)').matches
+                  ? 'dark'
+                  : 'light'
+        document.documentElement.classList.add(theme)
+      } catch {
+        document.documentElement.classList.add('light')
+      }
+    </script>
     <style>
       :root {
-        background: oklch(0.985 0.006 230);
+        --boot-background: oklch(0.96 0.003 247.9);
+        --boot-foreground: oklch(0.176 0.005 248.1);
+        background: var(--boot-background);
+      }
+
+      :root.dark {
+        --boot-background: oklch(0.15 0 0);
+        --boot-foreground: oklch(0.95 0 0);
+      }
+
+      :root.cream {
+        --boot-background: oklch(0.985 0.014 88);
+        --boot-foreground: oklch(0.18 0.005 60);
       }
 
       html,
@@ -25,7 +55,7 @@
       }
 
       body {
-        background: oklch(0.985 0.006 230);
+        background: var(--boot-background);
       }
 
       .bon-boot {
@@ -34,17 +64,13 @@
         height: 100%;
         align-items: center;
         justify-content: center;
-        background: oklch(0.985 0.006 230);
+        background: var(--boot-background);
+        color: var(--boot-foreground);
         font-family:
-          'Noto Sans JP',
-          'Hiragino Kaku Gothic ProN',
-          'Yu Gothic UI',
-          'Yu Gothic',
-          'Meiryo',
+          'Inter',
           -apple-system,
+          BlinkMacSystemFont,
           'Segoe UI',
-          ui-sans-serif,
-          system-ui,
           sans-serif;
       }
 
@@ -52,68 +78,32 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 16px;
+        gap: 0.4rem;
+        transform: translateY(-1.25rem);
       }
 
       .bon-boot__mark {
         display: block;
-        width: 72px;
-        height: 72px;
+        width: 12rem;
+        height: 12rem;
         object-fit: contain;
       }
 
-      .bon-boot__track {
-        width: 160px;
-        height: 4px;
-        overflow: hidden;
-        border-radius: 999px;
-        background: oklch(0.93 0.014 230);
-      }
-
-      .bon-boot__bar {
-        width: 50%;
-        height: 100%;
-        border-radius: inherit;
-        background: oklch(0.46 0.035 230);
-        animation: bon-boot-pulse 900ms ease-in-out infinite alternate;
-      }
-
-      .bon-boot__text {
-        min-height: 20px;
+      .bon-boot__name {
         margin: 0;
-        color: oklch(0.36 0.025 230);
-        font-size: 14px;
-      }
-
-      @keyframes bon-boot-pulse {
-        from {
-          opacity: 0.45;
-          transform: translateX(-24px);
-        }
-
-        to {
-          opacity: 1;
-          transform: translateX(80px);
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .bon-boot__bar {
-          animation: none;
-        }
+        font-size: 1.125rem;
+        font-weight: 600;
+        letter-spacing: -0.025em;
       }
     </style>
   </head>
 
   <body>
     <div id="root">
-      <div class="bon-boot" aria-label="Carregando Bon">
+      <div class="bon-boot" aria-label="Bon">
         <div class="bon-boot__stack">
           <img class="bon-boot__mark" src="/bon/bon-approved.png" alt="Bon" />
-          <div class="bon-boot__track" aria-hidden="true">
-            <div class="bon-boot__bar"></div>
-          </div>
-          <p class="bon-boot__text">Verificando suas tasks</p>
+          <p class="bon-boot__name">Bon</p>
         </div>
       </div>
     </div>

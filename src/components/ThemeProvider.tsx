@@ -81,7 +81,6 @@ export function ThemeProvider({
       storageKey,
       accentStorageKey
     )
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time synchronization with persisted preferences
     setAppearance(nextAppearance)
     void emit(APPEARANCE_CHANGED_EVENT, nextAppearance)
   }, [accentStorageKey, preferences, storageKey])

@@ -1,0 +1,130 @@
+{
+  "regions": [
+    {
+      "id": "masthead",
+      "kind": "chrome",
+      "codeDrawn": true,
+      "grid": "B0:I0",
+      "note": "Code-drawn narrow navigation with wordmark, five links, and two compact actions"
+    },
+    {
+      "id": "hero-title",
+      "kind": "text",
+      "grid": "D0:G0",
+      "note": "Large centered two-line sans-serif headline"
+    },
+    {
+      "id": "hero-copy",
+      "kind": "text",
+      "grid": "D0:G0",
+      "note": "Centered muted two-line supporting copy beneath the headline"
+    },
+    {
+      "id": "hero-actions",
+      "kind": "control",
+      "codeDrawn": true,
+      "grid": "D0:G0",
+      "note": "Two quiet inline calls to action with electric-blue primary link"
+    },
+    {
+      "id": "hero-product-proof",
+      "kind": "chrome",
+      "codeDrawn": true,
+      "grid": "B1:I1",
+      "note": "Code-drawn product proof with event history, three stacked activity rows, trust markers, and command detail"
+    },
+    {
+      "id": "proof-divider",
+      "kind": "chrome",
+      "codeDrawn": true,
+      "grid": "B1:I1",
+      "note": "Hairline section divider with a centered label cut into it"
+    },
+    {
+      "id": "proof-marks",
+      "kind": "text",
+      "grid": "C2:H2",
+      "note": "Two-row field of eight subdued wordmarks"
+    },
+    {
+      "id": "analytics-title",
+      "kind": "text",
+      "grid": "D3:G3",
+      "note": "Centered analytics section title"
+    },
+    {
+      "id": "analytics-copy",
+      "kind": "text",
+      "grid": "D3:G3",
+      "note": "Muted two-line supporting copy and blue text link"
+    },
+    {
+      "id": "analytics-rings",
+      "kind": "chrome",
+      "codeDrawn": true,
+      "grid": "B3:I4",
+      "note": "Code-drawn concentric hairline arcs behind a dense dashboard collage"
+    },
+    {
+      "id": "analytics-dashboard",
+      "kind": "chrome",
+      "codeDrawn": true,
+      "grid": "B3:I4",
+      "note": "Code-drawn staggered dark analytics cards containing tables, bars, line charts, donut, and metrics"
+    },
+    {
+      "id": "capability-tracking",
+      "kind": "chrome",
+      "codeDrawn": true,
+      "grid": "B5:E5",
+      "note": "Top-left capability cell with title, dim table, and floating task card"
+    },
+    {
+      "id": "capability-filtering",
+      "kind": "chrome",
+      "codeDrawn": true,
+      "grid": "F5:I5",
+      "note": "Top-right capability cell with title, red grid, and compact chart"
+    },
+    {
+      "id": "capability-planning",
+      "kind": "chrome",
+      "codeDrawn": true,
+      "grid": "B6:E6",
+      "note": "Bottom-left capability cell with title and stacked form card"
+    },
+    {
+      "id": "capability-events",
+      "kind": "chrome",
+      "codeDrawn": true,
+      "grid": "F6:I6",
+      "note": "Bottom-right capability cell with title, dim event table, and floating live chart"
+    },
+    {
+      "id": "control-title",
+      "kind": "text",
+      "grid": "B7:E7",
+      "note": "Large left-aligned two-line control section statement and blue link"
+    },
+    {
+      "id": "control-copy",
+      "kind": "text",
+      "grid": "F7:I7",
+      "note": "Muted right-aligned supporting statement"
+    },
+    {
+      "id": "control-builder",
+      "kind": "chrome",
+      "codeDrawn": true,
+      "grid": "C8:H8",
+      "note": "Code-drawn centered dark creation dialog with fields, segmented controls, and secure action"
+    },
+    {
+      "id": "control-benefits",
+      "kind": "chrome",
+      "codeDrawn": true,
+      "grid": "B9:I9",
+      "note": "Three evenly spaced benefit columns with small line icons and muted descriptions"
+    }
+  ]
+}

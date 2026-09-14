@@ -2,7 +2,7 @@
   "name": "bon",
   "description": "Bon application",
   "private": true,
-  "version": "0.3.0",
+  "version": "1.0.0",
   "packageManager": "bun@1.4.2",
   "type": "module",
   "author": "Gabriel Leall",

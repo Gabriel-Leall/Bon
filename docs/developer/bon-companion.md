@@ -10,6 +10,8 @@ Bon is both the product's visual identity and its contextual companion. It is an
 - Eyes remain pupil-free and subtly asymmetric. The mouth is hidden at rest and appears for speech or laughter; its center stays fixed while only its opening changes.
 - The physical book, speech bubble, eye motion, and mouth opening are lightweight local presentation layers. The mouth stays centered: speech only opens and closes it.
 - Legacy Bon sprite assets and `src/lib/bon-chan.ts` are not part of this implementation.
+- The startup entrance in `src/components/app-intro/` uses the approved Bon image: nine small Bons alternate visibility, converge, and resolve into the full mascot. The sequence loops only until the application surface is ready, then completes its current cycle before revealing the app. Reduced-motion users see a static Bon instead.
+- `index.html` displays a static Bon before React mounts and reads the stored surface theme early, avoiding a light flash before the shared theme tokens load.
 
 The character concept came from [App Genie Icons](https://icons.appg.co/#icons), which states that its icons are free for personal and commercial use. Bon does not ship the Bible Strong animation package; companion motion is implemented locally with CSS and GSAP.
 

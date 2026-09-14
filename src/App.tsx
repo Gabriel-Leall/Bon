@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { check } from '@tauri-apps/plugin-updater'
 import { initializeCommandSystem } from './lib/commands'
 import { buildAppMenu, setupMenuLanguageListener } from './lib/menu'
@@ -19,14 +19,7 @@ import { useSquareCornersEffect } from './hooks/useSquareCornersEffect'
 import { Toaster } from './components/ui/sonner'
 import { notifications } from './lib/notifications'
 import { recordProductUsage } from './lib/product-usage'
-
-const LOADING_MESSAGES = [
-  'Verificando suas tasks',
-  'Organizando seu dashboard',
-  'Separando prioridades do dia',
-  'Preparando seus hábitos',
-  'Ajustando o foco da sessão',
-]
+import { AppIntro } from './components/app-intro/AppIntro'
 
 const MainWindow = lazy(() =>
   import('./components/layout/MainWindow').then(module => ({
@@ -39,44 +32,68 @@ const OnboardingPage = lazy(() =>
   }))
 )
 
-function AppLoadingFallback() {
-  const [messageIndex, setMessageIndex] = useState(0)
-
+function AppSurfaceReady({
+  children,
+  onReady,
+}: {
+  children: ReactNode
+  onReady: () => void
+}) {
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setMessageIndex(current => (current + 1) % LOADING_MESSAGES.length)
-    }, 1800)
+    onReady()
+  }, [onReady])
 
-    return () => window.clearInterval(timer)
-  }, [])
-
-  return (
-    <div className="flex h-screen w-full items-center justify-center bg-[oklch(0.985_0.006_230)]">
-      <div className="flex flex-col items-center gap-4">
-        <img
-          src="/bon/bon-approved.png"
-          alt="Bon"
-          className="size-[4.5rem] object-contain"
-        />
-        <div className="h-1 w-40 overflow-hidden rounded-full bg-[oklch(0.93_0.014_230)]">
-          <div className="h-full w-1/2 animate-pulse rounded-full bg-[oklch(0.46_0.035_230)]" />
-        </div>
-        <p className="min-h-5 text-sm text-[oklch(0.36_0.025_230)]">
-          {LOADING_MESSAGES[messageIndex]}
-        </p>
-      </div>
-    </div>
-  )
+  return children
 }
 
 function App() {
   useSquareCornersEffect()
+  const [surfaceReady, setSurfaceReady] = useState(false)
+  const [introExiting, setIntroExiting] = useState(false)
+  const [introDone, setIntroDone] = useState(false)
 
   const hasCompletedOnboarding = useOnboardingStore(state => state.hasCompleted)
   const initializeTodayPlan = useDailyPlanStore(
     state => state.initializeTodayPlan
   )
   const syncCurrentDate = useDailyPlanStore(state => state.syncCurrentDate)
+
+  useEffect(() => {
+    if (!surfaceReady || introExiting) return
+
+    const motionPreference = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    )
+    let reducedMotionTimer: number | undefined
+    const finishWithoutMotion = () => {
+      window.clearTimeout(reducedMotionTimer)
+      if (motionPreference.matches) {
+        reducedMotionTimer = window.setTimeout(() => setIntroExiting(true), 120)
+      }
+    }
+
+    finishWithoutMotion()
+    motionPreference.addEventListener?.('change', finishWithoutMotion)
+    const fallbackTimer = window.setTimeout(() => setIntroExiting(true), 6000)
+
+    return () => {
+      window.clearTimeout(reducedMotionTimer)
+      window.clearTimeout(fallbackTimer)
+      motionPreference.removeEventListener?.('change', finishWithoutMotion)
+    }
+  }, [introExiting, surfaceReady])
+
+  useEffect(() => {
+    if (!introExiting) return
+
+    const timer = window.setTimeout(() => setIntroDone(true), 240)
+    return () => window.clearTimeout(timer)
+  }, [introExiting])
+
+  useEffect(() => {
+    if (!introDone || hasCompletedOnboarding) return
+    document.getElementById('initial-focus-task')?.focus()
+  }, [hasCompletedOnboarding, introDone])
 
   // Initialize command system and cleanup on app startup
   useEffect(() => {
@@ -168,9 +185,25 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <TooltipProvider delayDuration={300}>
-          <Suspense fallback={<AppLoadingFallback />}>
-            {hasCompletedOnboarding ? <MainWindow /> : <OnboardingPage />}
-          </Suspense>
+          <div
+            aria-hidden={!introDone}
+            className="h-screen w-full"
+            inert={!introDone}
+          >
+            <Suspense fallback={null}>
+              <AppSurfaceReady onReady={() => setSurfaceReady(true)}>
+                {hasCompletedOnboarding ? <MainWindow /> : <OnboardingPage />}
+              </AppSurfaceReady>
+            </Suspense>
+          </div>
+          {!introDone && (
+            <AppIntro
+              exiting={introExiting}
+              onCycleComplete={() => {
+                if (surfaceReady) setIntroExiting(true)
+              }}
+            />
+          )}
           <Toaster position="bottom-right" closeButton />
         </TooltipProvider>
       </ThemeProvider>

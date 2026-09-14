@@ -70,7 +70,7 @@ function FocusSetupStep({
           onChange={event => onTaskTitleChange(event.target.value)}
           placeholder={t('onboarding.taskPlaceholder')}
           value={taskTitle}
-          className="h-14 border-2 border-border bg-popover px-4 text-base shadow-none transition-[border-color,box-shadow] duration-200 focus-visible:border-ring"
+          className="h-14 border border-border-strong bg-surface-sunken px-4 text-base shadow-neu-pressed transition-[border-color,box-shadow] duration-200 focus-visible:border-ring dark:bg-surface-sunken"
         />
       </div>
       <div className="flex flex-col gap-3">
@@ -80,7 +80,7 @@ function FocusSetupStep({
         <div className="flex flex-wrap gap-2">
           {examples.map(example => (
             <button
-              className="rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground transition-[background-color,color,transform] duration-200 hover:bg-accent hover:text-accent-foreground active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-muted-foreground shadow-neu-raised-sm transition-[background-color,color,transform] duration-200 hover:bg-accent hover:text-accent-foreground active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               key={example}
               onClick={() => onTaskTitleChange(example)}
               type="button"
@@ -151,11 +151,11 @@ function FocusSessionStep({
 
   return (
     <div className="flex flex-col items-center text-center">
-      <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground">
+      <div className="inline-flex items-center gap-2 rounded-full border border-border-strong bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-neu-raised-sm">
         <Target className="size-4" />
         <span>{taskTitle}</span>
       </div>
-      <div className="mt-8 flex size-64 items-center justify-center rounded-full border-8 border-primary motion-safe:animate-[onboarding-marker-in_360ms_cubic-bezier(0.22,1,0.36,1)] sm:size-80">
+      <div className="mt-8 flex size-64 items-center justify-center rounded-full border-[6px] border-primary bg-surface shadow-neu-raised motion-safe:animate-[onboarding-marker-in_360ms_cubic-bezier(0.22,1,0.36,1)] sm:size-80">
         <div>
           <p className="text-5xl font-semibold tabular-nums tracking-tight text-foreground sm:text-6xl">
             25:00
@@ -217,7 +217,7 @@ function QuickCaptureStep({
 
   return (
     <div className="flex flex-col items-center text-center">
-      <p className="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className="rounded-full border border-border-strong bg-surface px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground shadow-neu-raised-sm">
         {t('onboarding.screen4.eyebrow')}
       </p>
       <h1
@@ -231,7 +231,7 @@ function QuickCaptureStep({
       </p>
       <form
         aria-label={t('onboarding.quickPane.title')}
-        className="mt-8 w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-card text-left"
+        className="mt-8 w-full max-w-xl overflow-hidden rounded-2xl border border-border-strong bg-surface text-left shadow-neu-raised"
         onSubmit={onSubmit}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
@@ -253,7 +253,7 @@ function QuickCaptureStep({
           <label className="sr-only" htmlFor="onboarding-quick-capture">
             {t('onboarding.quickPane.inputLabel')}
           </label>
-          <div className="flex items-center gap-3 rounded-xl border-2 border-border bg-popover px-4 transition-[border-color] duration-200 focus-within:border-ring">
+          <div className="flex items-center gap-3 rounded-xl border border-border-strong bg-surface-sunken px-4 shadow-neu-pressed transition-[border-color] duration-200 focus-within:border-ring">
             <Plus className="size-5 shrink-0 text-muted-foreground" />
             <Input
               className="h-14 border-0 bg-transparent px-0 shadow-none dark:bg-transparent focus-visible:shadow-none focus-visible:ring-0"
@@ -271,7 +271,7 @@ function QuickCaptureStep({
                   className={cn(
                     'rounded-lg px-3 py-2 text-sm transition-colors',
                     captureKind === kind
-                      ? 'bg-secondary font-medium text-foreground'
+                      ? 'bg-accent font-medium text-accent-foreground shadow-neu-raised-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   )}
                   key={kind}
@@ -518,14 +518,14 @@ export function OnboardingPage() {
   }
 
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden bg-background">
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-background text-foreground">
       <TitleBar
         className="absolute top-0 z-50 w-full border-b-0 bg-transparent"
         showClock={false}
       />
 
       <div className="flex flex-1 overflow-hidden pt-8">
-        <aside className="hidden w-64 shrink-0 flex-col justify-between border-r border-border bg-card px-7 py-8 lg:flex">
+        <aside className="hidden w-64 shrink-0 flex-col justify-between border-r border-border bg-sidebar px-7 py-8 lg:flex">
           <div className="flex flex-col gap-12">
             <div className="flex items-center gap-3">
               <img
@@ -564,10 +564,10 @@ export function OnboardingPage() {
                         isCurrent &&
                           'border-primary bg-primary text-primary-foreground',
                         isComplete &&
-                          'border-primary/25 bg-primary/10 text-primary',
+                          'border-border-strong bg-accent text-accent-foreground',
                         !isCurrent &&
                           !isComplete &&
-                          'border-border bg-secondary text-muted-foreground'
+                          'border-border bg-surface-sunken text-muted-foreground'
                       )}
                     >
                       {isComplete ? (
@@ -617,7 +617,7 @@ export function OnboardingPage() {
           </section>
         </main>
 
-        <aside className="hidden w-72 shrink-0 border-l border-border bg-secondary p-8 xl:block">
+        <aside className="hidden w-72 shrink-0 border-l border-border bg-sidebar p-8 xl:block">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             {t('onboarding.today')}
           </p>
@@ -673,7 +673,7 @@ function OnboardingStepCard({ step }: { step: OnboardingStep }) {
 
   if (step === 1) {
     return (
-      <div className="flex flex-col gap-4 rounded-xl border border-border bg-secondary p-5 text-xs leading-relaxed text-muted-foreground">
+      <div className="flex flex-col gap-4 rounded-xl border border-border-strong bg-surface p-5 text-xs leading-relaxed text-muted-foreground shadow-neu-raised-sm">
         <Monitor className="size-4 text-foreground" />
         <p>{t('onboarding.stepCard.desktop')}</p>
       </div>
@@ -716,7 +716,7 @@ function FocusPreview({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 rounded-xl border border-border bg-card p-5',
+        'flex flex-col gap-4 rounded-xl border border-border-strong bg-surface p-5 shadow-neu-raised-sm',
         compact && 'mt-8'
       )}
     >

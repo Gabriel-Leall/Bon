@@ -1,5 +1,6 @@
 {
   "app.name": "Bon",
+  "app.opening": "Abrindo Bon",
   "onboarding.brandTagline": "seu espaço de foco",
   "onboarding.progressLabel": "Progresso do onboarding",
   "onboarding.step.now": "Agora",

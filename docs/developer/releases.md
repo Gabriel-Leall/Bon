@@ -101,6 +101,18 @@ All three files must have matching versions:
 - `src-tauri/Cargo.toml` → `version = "1.0.0"`
 - `src-tauri/tauri.conf.json` → `"version": "1.0.0"`
 
+### Tauri dependency compatibility
+
+The app version above is separate from the Tauri framework versions. The
+installed `@tauri-apps/api` and Rust `tauri` crate must share a major/minor
+release, as must each installed JavaScript plugin and its matching Rust crate.
+Patch versions may differ. Check the resolved versions in `bun.lock` and
+`src-tauri/Cargo.lock` when updating either side; a broad `"2"` Cargo range can
+leave the two lockfiles on different minor releases. Keep compatible Cargo
+ranges in `src-tauri/Cargo.toml`, then run `bun run tauri info` and
+`cargo check --locked` from `src-tauri` before releasing. CI installs JavaScript
+dependencies from `bun.lock` with Bun 1.4.2 and `--frozen-lockfile`.
+
 ## Auto-Update System
 
 ### Behavior
