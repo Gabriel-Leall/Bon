@@ -542,6 +542,10 @@ pub fn run() {
                         .await
                         .expect("Failed to create local product usage tables");
 
+                    commands::calendar::ensure_calendar_schema(&pool)
+                        .await
+                        .expect("Failed to create calendar events table");
+
                     // Notes
                     sqlx::query(
                         "CREATE TABLE IF NOT EXISTS notes (

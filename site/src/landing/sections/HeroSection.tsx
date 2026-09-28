@@ -49,7 +49,7 @@ export function HeroSection() {
         </h1>
         <p className="hero-subtitle">{t('landing.hero.subtitle')}</p>
         <div className="hero-actions">
-          <ReleaseDownloads />
+          <ReleaseDownloads id="downloads" />
           <a className="site-button site-button--quiet" href="#analise">
             <span>{t('landing.hero.secondaryCta')}</span>
             <ArrowDownRight aria-hidden="true" />

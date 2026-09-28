@@ -23,6 +23,7 @@ import type {
   SessionType,
 } from '@/store/pomodoro-types'
 import { cn } from '@/lib/utils'
+import { getPomodoroCycleProgress } from '@/lib/pomodoro-cycle-domain'
 import { LazyMotion, domAnimation, m } from 'motion/react'
 import {
   Dialog,
@@ -103,27 +104,40 @@ function AutoStartBadge({
   )
 }
 
+function findIncompleteTask<T extends { id: string; status: string }>(
+  tasks: readonly T[],
+  taskId: string | null | undefined
+): T | null {
+  if (!taskId) return null
+
+  return (
+    tasks.find(task => task.id === taskId && task.status !== 'done') ?? null
+  )
+}
+
 // ─── Cycle Dots Large ─────────────────────────────────────────────────────────
 
 function CycleDotsLarge({
+  currentType,
   completed,
   total,
 }: {
+  currentType: SessionType
   completed: number
   total: number
 }) {
   const { t } = useTranslation()
-  const cyclePos = completed % total
-  const dots = Array.from({ length: total }, (_, i) => ({
-    id: `cycle-dot-${total}-${i}`,
-    filled: i < cyclePos || (completed > 0 && cyclePos === 0 && i < total),
+  const cycleProgress = getPomodoroCycleProgress(currentType, completed, total)
+  const dots = Array.from({ length: cycleProgress.total }, (_, i) => ({
+    id: `cycle-dot-${cycleProgress.total}-${i}`,
+    filled: i < cycleProgress.completed,
   }))
 
   return (
     <div className="flex flex-col items-center gap-2">
       <div
         className="flex items-center gap-2"
-        aria-label={`${cyclePos || total} of ${total}`}
+        aria-label={`${cycleProgress.current} of ${cycleProgress.total}`}
       >
         {dots.map(dot => (
           <m.div
@@ -144,7 +158,10 @@ function CycleDotsLarge({
         ))}
       </div>
       <span className="text-xs text-muted-foreground">
-        {t('pomodoro.cycleLabel', { current: cyclePos || total, total })}
+        {t('pomodoro.cycleLabel', {
+          current: cycleProgress.current,
+          total: cycleProgress.total,
+        })}
       </span>
     </div>
   )
@@ -274,6 +291,7 @@ function CircularTimer({
 
           <div className="mt-6">
             <CycleDotsLarge
+              currentType={currentType}
               completed={cyclesCompleted}
               total={pomosUntilLongBreak}
             />
@@ -302,9 +320,11 @@ function TaskLinkSection() {
 
   const tasks = useTasksStore(state => state.tasks)
   const todayTasks = selectTodayTasks(tasks)
-  const linkedTask = linkedTaskId
+  const linkedTaskRecord = linkedTaskId
     ? tasks.find(task => task.id === linkedTaskId)
     : null
+  const linkedTask =
+    linkedTaskRecord?.status === 'done' ? null : linkedTaskRecord
 
   const [showPicker, setShowPicker] = useState(false)
   const [search, setSearch] = useState('')
@@ -332,14 +352,18 @@ function TaskLinkSection() {
 
   useEffect(() => {
     if (!linkedTaskId) return
-    if (linkedTask) return
+    if (linkedTaskRecord?.status === 'done') {
+      unlinkTask()
+      return
+    }
+    if (linkedTaskRecord) return
 
     unlinkTask()
     void notifications.info(
       t('pomodoro.linkedTask.removedTitle'),
       t('pomodoro.linkedTask.removedDescription')
     )
-  }, [linkedTaskId, linkedTask, unlinkTask, t])
+  }, [linkedTaskId, linkedTaskRecord, unlinkTask, t])
 
   return (
     <section className="rounded-2xl border border-border bg-surface p-5 shadow-neu-raised">
@@ -819,9 +843,7 @@ export function PomodoroPage() {
     else start()
   }
 
-  const promptTask = completionPrompt?.taskId
-    ? (tasks.find(task => task.id === completionPrompt.taskId) ?? null)
-    : null
+  const promptTask = findIncompleteTask(tasks, completionPrompt?.taskId)
 
   const handleCompletePromptTask = async () => {
     if (!promptTask) {

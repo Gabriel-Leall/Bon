@@ -649,14 +649,14 @@ svg {
 
 .release-downloads-trigger {
   display: inline-flex;
-  min-height: 40px;
+  min-height: 50px;
   align-items: center;
   justify-content: center;
   gap: 9px;
   border: 1px solid #ededed;
   border-radius: 8px;
   background: #ededed;
-  padding: 0 16px;
+  padding: 5px 16px;
   color: #0b0b0b;
   font-size: 14px;
   font-weight: 620;
@@ -664,6 +664,23 @@ svg {
   transition:
     border-color 160ms ease,
     background 160ms ease;
+}
+
+.release-downloads-copy {
+  display: grid;
+  gap: 2px;
+  text-align: start;
+}
+
+.release-downloads-copy strong {
+  font-size: 13px;
+  font-weight: 620;
+}
+
+.release-downloads-copy small {
+  color: #555;
+  font-size: 10px;
+  font-weight: 520;
 }
 
 .release-downloads-trigger:hover {
@@ -727,6 +744,14 @@ svg {
   background: #202020;
 }
 
+.release-platform.is-unavailable {
+  cursor: not-allowed;
+}
+
+.release-platform.is-unavailable:hover {
+  background: transparent;
+}
+
 .release-platform-icon {
   display: grid;
   width: 34px;
@@ -770,6 +795,12 @@ svg {
 
 .release-platform > svg {
   color: #656565;
+}
+
+.release-platform-unavailable-mark {
+  color: #656565;
+  font-size: 16px;
+  text-align: center;
 }
 
 .hero-product {
@@ -3427,7 +3458,7 @@ svg {
 }
 
 .release-downloads--footer .release-downloads-trigger {
-  min-height: 44px;
+  min-height: 50px;
   padding-inline: 19px;
 }
 

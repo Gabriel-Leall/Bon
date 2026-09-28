@@ -12,12 +12,12 @@ import {
 import { useTranslation } from 'react-i18next'
 
 const githubUrl = 'https://github.com/Gabriel-Leall/axis-desktop'
-const releasesUrl = `${githubUrl}/releases`
+const downloadsAnchor = '#downloads'
 
 const navigation = [
   { href: '#privacidade', labelKey: 'landing.nav.privacy', external: false },
   { href: githubUrl, labelKey: 'landing.nav.github', external: true },
-  { href: releasesUrl, labelKey: 'landing.nav.free', external: true },
+  { href: downloadsAnchor, labelKey: 'landing.nav.free', external: false },
 ] as const
 
 export function LandingHeader() {
@@ -97,9 +97,7 @@ export function LandingHeader() {
             </a>
             <a
               className="nav-resource-feature"
-              href={releasesUrl}
-              target="_blank"
-              rel="noreferrer"
+              href={downloadsAnchor}
             >
               <Download aria-hidden="true" />
               <strong>{t('landing.megaMenu.resources.releases.title')}</strong>
@@ -147,7 +145,7 @@ export function LandingHeader() {
           <GitFork aria-hidden="true" />
           <span>{t('landing.actions.github')}</span>
         </a>
-        <a className="site-button site-button--download" href={releasesUrl} target="_blank" rel="noreferrer">
+        <a className="site-button site-button--download" href={downloadsAnchor}>
           <Download aria-hidden="true" />
           <span>{t('landing.actions.download')}</span>
         </a>

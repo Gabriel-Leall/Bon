@@ -9,6 +9,15 @@ use specta::Type;
 use sqlx::{Pool, Row, Sqlite};
 use tauri::State;
 
+pub async fn ensure_calendar_schema(pool: &Pool<Sqlite>) -> Result<(), sqlx::Error> {
+    sqlx::raw_sql(include_str!(
+        "../../migrations/0006_create_calendar_events.sql"
+    ))
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
 #[derive(Debug, Serialize, Deserialize, Type, Clone)]
 pub struct CalendarEvent {
     pub id: String,
@@ -249,4 +258,48 @@ pub async fn delete_event(pool: State<'_, Pool<Sqlite>>, id: String) -> Result<(
 
     log::debug!("Calendar event deleted: {id}");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ensure_calendar_schema;
+    use sqlx::sqlite::SqlitePoolOptions;
+
+    #[test]
+    fn calendar_schema_migration_is_idempotent_and_allows_event_creation() {
+        tauri::async_runtime::block_on(async {
+            let pool = SqlitePoolOptions::new()
+                .max_connections(1)
+                .connect("sqlite::memory:")
+                .await
+                .expect("in-memory calendar database should open");
+
+            ensure_calendar_schema(&pool)
+                .await
+                .expect("calendar schema should be created");
+            ensure_calendar_schema(&pool)
+                .await
+                .expect("calendar schema should be safe to reapply");
+
+            let result = sqlx::query(
+                "INSERT INTO calendar_events
+                 (id, title, description, start_date, end_date, all_day, color, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            )
+            .bind("evt_calendar_schema_test")
+            .bind("Planning")
+            .bind(Option::<String>::None)
+            .bind("2026-09-28")
+            .bind("2026-09-29")
+            .bind(1_i64)
+            .bind(Option::<String>::None)
+            .bind("2026-09-28T12:00:00Z")
+            .bind("2026-09-28T12:00:00Z")
+            .execute(&pool)
+            .await
+            .expect("event insert should succeed after schema migration");
+
+            assert_eq!(result.rows_affected(), 1);
+        });
+    }
 }

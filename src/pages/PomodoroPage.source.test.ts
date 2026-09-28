@@ -36,4 +36,18 @@ describe('Focus page visual contract', () => {
     expect(source).not.toContain('shadow-2xl')
     expect(source).not.toContain('bg-card/')
   })
+
+  it('removes completed tasks from focus context while keeping active links', () => {
+    const source = readFileSync(resolve('src/pages/PomodoroPage.tsx'), 'utf8')
+
+    expect(source).toContain(
+      "linkedTaskRecord?.status === 'done' ? null : linkedTaskRecord"
+    )
+    expect(source).toContain("if (linkedTaskRecord?.status === 'done')")
+    expect(source).toContain('if (linkedTaskRecord) return')
+    expect(source).toContain(
+      'findIncompleteTask(tasks, completionPrompt?.taskId)'
+    )
+    expect(source).toContain("task.status !== 'done'")
+  })
 })

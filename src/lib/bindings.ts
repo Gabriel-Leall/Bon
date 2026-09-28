@@ -761,6 +761,14 @@ async getAnalyticsSummary(start: string, end: string, prevStart: string, prevEnd
     else return { status: "error", error: e  as any };
 }
 },
+async getHabitStreakSummaries() : Promise<Result<HabitStreakSummary[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_habit_streak_summaries") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async getFocusTimeByDay(start: string, end: string) : Promise<Result<FocusTimeByDay[], string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_focus_time_by_day", { start, end }) };
@@ -878,6 +886,7 @@ export type DailyPlan = { id: string; plan_date: string; focus_task_id: string |
 export type FocusTimeByDay = { day: string; total_seconds: number }
 export type Habit = { id: string; name: string; color: string; icon: string | null; frequency: string; frequency_days: string | null; active: boolean; sort_order: number; created_at: string; updated_at: string }
 export type HabitLog = { id: string; habit_id: string; completed_date: string; completed_at: string; state: string }
+export type HabitStreakSummary = { habit_id: string; current_streak: number; best_historical_streak: number }
 export type JsonValue = null | boolean | number | string | JsonValue[] | Partial<{ [key in string]: JsonValue }>
 export type MigrateNotesVaultInput = { source_path: string; mode: NoteVaultMigrationMode }
 export type MoveNotesTreeItemInput = { item: NotesTreeItemRef; destination_folder: string }

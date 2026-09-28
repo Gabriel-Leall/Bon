@@ -36,23 +36,37 @@ export function shouldDoOnDate(
 
 export function calculateStreakFromDates(
   completedDates: string[],
-  todayISO: string
+  todayISO: string,
+  frequency: HabitFrequency = 'daily',
+  frequencyDays: string | null = null
 ): number {
-  const completedSet = new Set(completedDates)
+  const validDates = [...new Set(completedDates)]
+    .filter(
+      date =>
+        date <= todayISO &&
+        Number.isFinite(new Date(`${date}T12:00:00`).getTime())
+    )
+    .sort()
+  if (validDates.length === 0) return 0
+
+  const completedSet = new Set(validDates)
+  const cursor = new Date(`${validDates[0]}T12:00:00`)
   const today = new Date(`${todayISO}T12:00:00`)
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-
-  const hasToday = completedSet.has(getLocalISODate(today))
-  const hasYesterday = completedSet.has(getLocalISODate(yesterday))
-  if (!hasToday && !hasYesterday) return 0
-
   let streak = 0
-  const cursor = hasToday ? new Date(today) : new Date(yesterday)
 
-  while (completedSet.has(getLocalISODate(cursor))) {
-    streak += 1
-    cursor.setDate(cursor.getDate() - 1)
+  while (cursor <= today) {
+    const dateISO = getLocalISODate(cursor)
+    if (
+      shouldDoOnDate(frequency, frequencyDays, dateISO) &&
+      !(dateISO === todayISO && !completedSet.has(dateISO))
+    ) {
+      if (completedSet.has(dateISO)) {
+        streak += 1
+      } else {
+        streak = 0
+      }
+    }
+    cursor.setDate(cursor.getDate() + 1)
   }
 
   return streak
@@ -104,25 +118,33 @@ export function getRecoverableHabitDates(
   return dates
 }
 
-export function bestHistoricalStreak(completedDates: string[]): number {
-  if (completedDates.length === 0) return 0
-  const uniqueSorted = [...new Set(completedDates)].sort()
-  let best = 1
-  let current = 1
+export function bestHistoricalStreak(
+  completedDates: string[],
+  frequency: HabitFrequency = 'daily',
+  frequencyDays: string | null = null
+): number {
+  const uniqueSorted = [...new Set(completedDates)]
+    .filter(date => Number.isFinite(new Date(`${date}T12:00:00`).getTime()))
+    .sort()
+  if (uniqueSorted.length === 0) return 0
 
-  for (let i = 1; i < uniqueSorted.length; i += 1) {
-    const prev = new Date(`${uniqueSorted[i - 1]}T12:00:00`)
-    const cur = new Date(`${uniqueSorted[i]}T12:00:00`)
-    const diffDays = Math.round(
-      (cur.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24)
-    )
+  const completedSet = new Set(uniqueSorted)
+  const cursor = new Date(`${uniqueSorted[0]}T12:00:00`)
+  const lastDate = new Date(`${uniqueSorted[uniqueSorted.length - 1]}T12:00:00`)
+  let best = 0
+  let current = 0
 
-    if (diffDays === 1) {
-      current += 1
-      if (current > best) best = current
-    } else {
-      current = 1
+  while (cursor <= lastDate) {
+    const dateISO = getLocalISODate(cursor)
+    if (shouldDoOnDate(frequency, frequencyDays, dateISO)) {
+      if (completedSet.has(dateISO)) {
+        current += 1
+        best = Math.max(best, current)
+      } else {
+        current = 0
+      }
     }
+    cursor.setDate(cursor.getDate() + 1)
   }
 
   return best

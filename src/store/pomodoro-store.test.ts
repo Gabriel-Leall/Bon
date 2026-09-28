@@ -99,4 +99,16 @@ describe('usePomodoroStore', () => {
       taskId: 'task-9',
     })
   })
+
+  it('keeps the linked task when the completion prompt is dismissed', () => {
+    usePomodoroStore.setState({
+      linkedTaskId: 'task-9',
+      completionPrompt: { sessionId: 'session-1', taskId: 'task-9' },
+    })
+
+    usePomodoroStore.getState().dismissCompletionPrompt()
+
+    expect(usePomodoroStore.getState().completionPrompt).toBeNull()
+    expect(usePomodoroStore.getState().linkedTaskId).toBe('task-9')
+  })
 })

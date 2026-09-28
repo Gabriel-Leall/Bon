@@ -1,16 +1,22 @@
-import { ChevronDown, Download, ExternalLink, Loader2 } from 'lucide-react'
+import {
+  ChevronDown,
+  Download,
+  ExternalLink,
+  Laptop2,
+  Loader2,
+} from 'lucide-react'
 import { useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { releasesApiUrl, releasesUrl } from '../data'
 
-type Platform = 'windows' | 'linux'
+type Platform = 'windows' | 'macos' | 'linux'
 
-type GitHubReleaseAsset = {
+interface GitHubReleaseAsset {
   name: string
   browser_download_url: string
 }
 
-type GitHubRelease = {
+interface GitHubRelease {
   id: number
   name: string | null
   tag_name: string
@@ -18,26 +24,30 @@ type GitHubRelease = {
   assets: GitHubReleaseAsset[]
 }
 
-type DownloadOption = {
+interface DownloadOption {
   platform: Platform
   label: string
-  href: string
+  href: string | null
   assetName?: string
 }
 
 const platformLabels: Record<Platform, string> = {
   windows: 'Windows',
+  macos: 'macOS',
   linux: 'Linux',
 }
 
 const assetMatchers: Record<Platform, RegExp[]> = {
-  windows: [/\.msi$/i, /\.exe$/i, /windows|win32|win64|x64-setup/i],
-  linux: [/\.appimage$/i, /\.deb$/i, /\.rpm$/i, /linux|amd64|x86_64/i],
+  windows: [/\.exe$/i, /\.msi$/i],
+  macos: [/\.dmg$/i, /\.pkg$/i, /\.app\.tar\.gz$/i, /\.app\.zip$/i],
+  linux: [/\.appimage$/i, /\.deb$/i, /\.rpm$/i],
 }
 
 let releaseCache: GitHubRelease | null = null
 let releaseRequest: Promise<GitHubRelease> | null = null
-type ReleaseSnapshot = {
+let releaseFetchedAt = 0
+const releaseCacheTtl = 5 * 60 * 1000
+interface ReleaseSnapshot {
   release: GitHubRelease | null
   status: 'loading' | 'ready' | 'error'
 }
@@ -45,20 +55,26 @@ let releaseSnapshot: ReleaseSnapshot = { release: null, status: 'loading' }
 const releaseListeners = new Set<() => void>()
 
 async function fetchLatestRelease() {
-  if (releaseCache) {
-    return releaseCache
+  if (releaseRequest) {
+    return releaseRequest
   }
 
-  releaseRequest ??= fetch(releasesApiUrl, {
+  releaseRequest = fetch(releasesApiUrl, {
+    cache: 'no-store',
     headers: { Accept: 'application/vnd.github+json' },
-  }).then(async response => {
-    if (!response.ok) {
-      throw new Error(`GitHub releases request failed: ${response.status}`)
-    }
-
-    releaseCache = (await response.json()) as GitHubRelease
-    return releaseCache
   })
+    .then(async response => {
+      if (!response.ok) {
+        throw new Error(`GitHub releases request failed: ${response.status}`)
+      }
+
+      releaseCache = (await response.json()) as GitHubRelease
+      releaseFetchedAt = Date.now()
+      return releaseCache
+    })
+    .finally(() => {
+      releaseRequest = null
+    })
 
   return releaseRequest
 }
@@ -69,21 +85,58 @@ function publishReleaseSnapshot(snapshot: ReleaseSnapshot) {
 }
 
 function loadLatestRelease() {
+  if (releaseRequest) {
+    return
+  }
+
+  if (releaseCache && Date.now() - releaseFetchedAt < releaseCacheTtl) {
+    return
+  }
+
+  if (!releaseCache) {
+    publishReleaseSnapshot({ release: null, status: 'loading' })
+  }
+
   void fetchLatestRelease()
     .then(release => publishReleaseSnapshot({ release, status: 'ready' }))
     .catch(error => {
-      releaseRequest = null
       console.error(error)
-      publishReleaseSnapshot({ release: null, status: 'error' })
+      if (releaseCache) {
+        publishReleaseSnapshot({ release: releaseCache, status: 'ready' })
+      } else {
+        publishReleaseSnapshot({ release: null, status: 'error' })
+      }
     })
+}
+
+function refreshLatestReleaseWhenVisible() {
+  if (document.visibilityState === 'visible') {
+    loadLatestRelease()
+  }
 }
 
 function subscribeToRelease(listener: () => void) {
   releaseListeners.add(listener)
-  if (releaseSnapshot.status === 'loading' && releaseRequest === null) {
-    loadLatestRelease()
+  if (releaseListeners.size === 1) {
+    window.addEventListener('focus', refreshLatestReleaseWhenVisible)
+    document.addEventListener(
+      'visibilitychange',
+      refreshLatestReleaseWhenVisible
+    )
   }
-  return () => releaseListeners.delete(listener)
+
+  loadLatestRelease()
+
+  return () => {
+    releaseListeners.delete(listener)
+    if (releaseListeners.size === 0) {
+      window.removeEventListener('focus', refreshLatestReleaseWhenVisible)
+      document.removeEventListener(
+        'visibilitychange',
+        refreshLatestReleaseWhenVisible
+      )
+    }
+  }
 }
 
 function getReleaseSnapshot() {
@@ -107,19 +160,24 @@ function LinuxIcon() {
 }
 
 function findAsset(release: GitHubRelease, platform: Platform) {
-  return release.assets.find(asset =>
-    assetMatchers[platform].some(matcher => matcher.test(asset.name))
-  )
+  for (const matcher of assetMatchers[platform]) {
+    const asset = release.assets.find(item => matcher.test(item.name))
+    if (asset) {
+      return asset
+    }
+  }
+
+  return undefined
 }
 
 function getDownloadOptions(release: GitHubRelease): DownloadOption[] {
-  return (['windows', 'linux'] as const).map(platform => {
+  return (['windows', 'macos', 'linux'] as const).map(platform => {
     const asset = findAsset(release, platform)
 
     return {
       platform,
       label: platformLabels[platform],
-      href: asset?.browser_download_url ?? release.html_url,
+      href: asset?.browser_download_url ?? null,
       assetName: asset?.name,
     }
   })
@@ -159,42 +217,86 @@ export function ReleaseDownloads({
         </a>
       ) : (
         <details className="release-downloads-menu">
-          <summary className="release-downloads-trigger">
+          <summary
+            className="release-downloads-trigger"
+            aria-label={t('landing.downloads.downloadLatestAria', {
+              version: release.tag_name,
+            })}
+          >
             <Download aria-hidden="true" />
-            <span>{t('landing.downloads.trigger')}</span>
+            <span className="release-downloads-copy">
+              <strong>{t('landing.downloads.trigger')}</strong>
+              <small>
+                {t('landing.downloads.latestVersion', {
+                  version: release.tag_name,
+                })}
+              </small>
+            </span>
             <ChevronDown
               className="release-downloads-chevron"
               aria-hidden="true"
             />
           </summary>
           <div className="release-downloads-options">
-            {getDownloadOptions(release).map(option => (
-              <a
-                key={option.platform}
-                className="release-platform"
-                href={option.href}
-                title={option.assetName ?? release.html_url}
-                aria-label={t('landing.downloads.downloadAria', {
-                  platform: option.label,
-                  release: release.name ?? release.tag_name,
-                })}
-              >
-                <span className="release-platform-icon">
-                  {option.platform === 'windows' ? (
-                    <WindowsIcon />
+            {getDownloadOptions(release).map(option => {
+              const content = (
+                <>
+                  <span className="release-platform-icon">
+                    {option.platform === 'windows' ? (
+                      <WindowsIcon />
+                    ) : option.platform === 'macos' ? (
+                      <Laptop2 aria-hidden="true" />
+                    ) : (
+                      <LinuxIcon />
+                    )}
+                  </span>
+                  <span>
+                    <strong>{option.label}</strong>
+                    <small>
+                      {option.href
+                        ? t(`landing.downloads.platforms.${option.platform}`)
+                        : t('landing.downloads.unavailable', {
+                            platform: option.label,
+                          })}
+                    </small>
+                  </span>
+                  {option.href ? (
+                    <Download aria-hidden="true" />
                   ) : (
-                    <LinuxIcon />
+                    <span className="release-platform-unavailable-mark" aria-hidden="true">
+                      —
+                    </span>
                   )}
-                </span>
-                <span>
-                  <strong>{option.label}</strong>
-                  <small>
-                    {t(`landing.downloads.platforms.${option.platform}`)}
-                  </small>
-                </span>
-                <Download aria-hidden="true" />
-              </a>
-            ))}
+                </>
+              )
+
+              return option.href ? (
+                <a
+                  key={option.platform}
+                  className="release-platform"
+                  href={option.href}
+                  title={option.assetName}
+                  aria-label={t('landing.downloads.downloadAria', {
+                    platform: option.label,
+                    release: release.tag_name,
+                  })}
+                >
+                  {content}
+                </a>
+              ) : (
+                <div
+                  key={option.platform}
+                  className="release-platform is-unavailable"
+                  title={t('landing.downloads.unavailable', {
+                    platform: option.label,
+                  })}
+                  role="group"
+                  aria-disabled="true"
+                >
+                  {content}
+                </div>
+              )
+            })}
           </div>
         </details>
       )}

@@ -97,6 +97,7 @@ pub fn generate_bindings() -> Builder<tauri::Wry> {
         notes::open_notes_vault_folder,
         // Analytics
         analytics::get_analytics_summary,
+        analytics::get_habit_streak_summaries,
         analytics::get_focus_time_by_day,
         analytics::get_task_counts_by_day,
         analytics::get_pomodoro_summary,

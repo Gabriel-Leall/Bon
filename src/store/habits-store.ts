@@ -44,12 +44,18 @@ export interface HabitInput {
   frequency_days?: string
 }
 
+export interface HabitStreakSummary {
+  currentStreak: number
+  bestHistoricalStreak: number
+}
+
 type HabitsTab = 'today' | 'overview' | 'stats'
 
 interface HabitsState {
   habits: Habit[]
   todayLogs: HabitLog[]
   monthLogs: HabitLog[]
+  streakSummaries: Record<string, HabitStreakSummary>
   selectedHabitId: string | null
   activeTab: HabitsTab
   isLoading: boolean
@@ -58,6 +64,7 @@ interface HabitsState {
   loadHabits: () => Promise<void>
   loadTodayLogs: () => Promise<void>
   loadMonthLogs: () => Promise<void>
+  loadStreakSummaries: () => Promise<void>
   toggleHabit: (habitId: string) => Promise<void>
   setHabitLogState: (
     habitId: string,
@@ -88,6 +95,7 @@ export const useHabitsStore = create<HabitsState>()(
       habits: [],
       todayLogs: [],
       monthLogs: [],
+      streakSummaries: {},
       selectedHabitId: null,
       activeTab: 'today',
       isLoading: false,
@@ -170,6 +178,38 @@ export const useHabitsStore = create<HabitsState>()(
             { error: 'Failed to load month logs.' },
             undefined,
             'loadMonthLogs/error'
+          )
+        }
+      },
+
+      loadStreakSummaries: async () => {
+        try {
+          const result = await commands.getHabitStreakSummaries()
+          if (result.status !== 'ok') throw result.error
+
+          const streakSummaries = Object.fromEntries(
+            result.data.map(summary => [
+              summary.habit_id,
+              {
+                currentStreak: summary.current_streak,
+                bestHistoricalStreak: summary.best_historical_streak,
+              },
+            ])
+          )
+
+          set(
+            { streakSummaries, error: null },
+            undefined,
+            'loadStreakSummaries/done'
+          )
+        } catch (error) {
+          logger.error(
+            `Failed to load habit streak summaries: ${String(error)}`
+          )
+          set(
+            { error: 'Failed to load habit streak summaries.' },
+            undefined,
+            'loadStreakSummaries/error'
           )
         }
       },
@@ -322,12 +362,14 @@ export const useHabitsStore = create<HabitsState>()(
             undefined,
             'setHabitLogState/done'
           )
+          await get().loadStreakSummaries()
         } catch (error) {
           logger.error(`Failed to set habit log state: ${String(error)}`)
           if (dateISO === getLocalISODate()) {
             await get().loadTodayLogs()
           }
           await get().loadMonthLogs()
+          await get().loadStreakSummaries()
           set(
             { error: 'Failed to update habit progress.' },
             undefined,
@@ -427,6 +469,7 @@ export const useHabitsStore = create<HabitsState>()(
             sort_order: null,
             updated_at: now,
           })
+          await get().loadStreakSummaries()
         } catch (error) {
           logger.error(`Failed to update habit: ${String(error)}`)
           await get().loadHabits()
@@ -545,13 +588,18 @@ export function selectSortedTodayHabits(
 
 export function selectStreakByHabit(
   logs: HabitLog[],
-  habitId: string,
+  habit: Pick<Habit, 'id' | 'frequency' | 'frequency_days'>,
   todayISO = getLocalISODate()
 ): number {
   const dates = logs.flatMap(log =>
-    log.habit_id === habitId ? [log.completed_date] : []
+    log.habit_id === habit.id ? [log.completed_date] : []
   )
-  return calculateStreakFromDates(dates, todayISO)
+  return calculateStreakFromDates(
+    dates,
+    todayISO,
+    habit.frequency,
+    habit.frequency_days ?? null
+  )
 }
 
 export function selectLastNDates(days: number, endDate = new Date()): string[] {
@@ -617,15 +665,30 @@ export function selectHabitStats(
   habits: Habit[],
   monthLogs: HabitLog[],
   days = 30,
-  todayISO = getLocalISODate()
+  todayISO = getLocalISODate(),
+  streakSummaries?: Record<string, HabitStreakSummary>
 ): HabitStats {
   const perHabitCurrent = habits.map(habit => {
     const dates = selectHabitCompletionDates(monthLogs, habit.id)
+    const summary = streakSummaries?.[habit.id]
     return {
       habitId: habit.id,
       name: habit.name,
-      current: calculateStreakFromDates(dates, todayISO),
-      best: bestHistoricalStreak(dates),
+      current: streakSummaries
+        ? (summary?.currentStreak ?? 0)
+        : calculateStreakFromDates(
+            dates,
+            todayISO,
+            habit.frequency,
+            habit.frequency_days ?? null
+          ),
+      best: streakSummaries
+        ? (summary?.bestHistoricalStreak ?? 0)
+        : bestHistoricalStreak(
+            dates,
+            habit.frequency,
+            habit.frequency_days ?? null
+          ),
     }
   })
 

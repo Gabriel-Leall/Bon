@@ -178,6 +178,9 @@ vi.mock('@/lib/tauri-bindings', () => ({
       data: { id: 'habit-1' },
     }),
     getHabits: vi.fn().mockResolvedValue({ status: 'ok', data: [] }),
+    getHabitStreakSummaries: vi
+      .fn()
+      .mockResolvedValue({ status: 'ok', data: [] }),
     setHabitLogState: vi.fn().mockResolvedValue({
       status: 'ok',
       data: null,

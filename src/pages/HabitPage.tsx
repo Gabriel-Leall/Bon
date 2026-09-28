@@ -60,13 +60,13 @@ import {
   selectRecoverableDatesForHabit,
   selectHabitStats,
   selectSortedTodayHabits,
-  selectStreakByHabit,
   selectTodayLogMap,
   selectTodayProgress,
   useHabitsStore,
   type Habit,
   type HabitInput,
   type HabitLog,
+  type HabitStreakSummary,
 } from '@/store/habits-store'
 
 // HABIT_COLORS: user-facing accent swatches — intentionally not design-system tokens
@@ -750,6 +750,7 @@ interface HabitPanelContext {
   isLoading: boolean
   locale: string
   monthLogs: HabitLog[]
+  streakSummaries: Record<string, HabitStreakSummary>
   reduceMotion: boolean
   stats: HabitStats
   t: TFunction
@@ -771,6 +772,7 @@ function HabitTodayPanel({ context }: { context: HabitPanelContext }) {
     isLoading,
     locale,
     monthLogs,
+    streakSummaries,
     reduceMotion,
     t,
     todayHabits,
@@ -829,7 +831,7 @@ function HabitTodayPanel({ context }: { context: HabitPanelContext }) {
               const todayLog = todayLogMap.get(habit.id) ?? null
               const todayState = todayLog?.state ?? null
               const isFocused = focusedHabit?.id === habit.id
-              const streak = selectStreakByHabit(monthLogs, habit.id)
+              const streak = streakSummaries[habit.id]?.currentStreak ?? 0
               const completionDates = selectHabitCompletionDates(
                 monthLogs,
                 habit.id
@@ -1130,6 +1132,7 @@ function HabitOverviewPanel({ context }: { context: HabitPanelContext }) {
     heatMapStateLabels,
     locale,
     monthLogs,
+    streakSummaries,
     t,
     todayLogMap,
     onEditHabit,
@@ -1169,7 +1172,7 @@ function HabitOverviewPanel({ context }: { context: HabitPanelContext }) {
               habit.id
             )
             const stateMap = selectHabitLogStateMap(monthLogs, habit.id)
-            const streak = selectStreakByHabit(monthLogs, habit.id)
+            const streak = streakSummaries[habit.id]?.currentStreak ?? 0
             const todayState = todayLogMap.get(habit.id)?.state ?? null
 
             return (
@@ -1600,6 +1603,7 @@ function buildHabitPageViewModel({
   habits,
   todayLogs,
   monthLogs,
+  streakSummaries,
   selectedHabitId,
   isLoading,
   locale,
@@ -1613,6 +1617,7 @@ function buildHabitPageViewModel({
   habits: Habit[]
   todayLogs: HabitLog[]
   monthLogs: HabitLog[]
+  streakSummaries: Record<string, HabitStreakSummary>
   selectedHabitId: string | null
   isLoading: boolean
   locale: string
@@ -1626,7 +1631,13 @@ function buildHabitPageViewModel({
   const todayHabits = selectSortedTodayHabits(habits, todayLogs)
   const todayLogMap = selectTodayLogMap(todayLogs)
   const progress = selectTodayProgress(habits, todayLogs)
-  const stats = selectHabitStats(habits, monthLogs)
+  const stats = selectHabitStats(
+    habits,
+    monthLogs,
+    30,
+    undefined,
+    streakSummaries
+  )
   const focusedHabit =
     habits.find(habit => habit.id === selectedHabitId) ??
     todayHabits[0] ??
@@ -1650,7 +1661,7 @@ function buildHabitPageViewModel({
       ? selectHabitLogStateMap(monthLogs, focusedHabit.id)
       : {},
     focusStreak: focusedHabit
-      ? selectStreakByHabit(monthLogs, focusedHabit.id)
+      ? (streakSummaries[focusedHabit.id]?.currentStreak ?? 0)
       : 0,
     habits,
     heatMapStateLabels: {
@@ -1663,6 +1674,7 @@ function buildHabitPageViewModel({
     isLoading,
     locale,
     monthLogs,
+    streakSummaries,
     reduceMotion,
     stats,
     t,
@@ -1700,6 +1712,7 @@ export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
   const habits = useHabitsStore(state => state.habits)
   const todayLogs = useHabitsStore(state => state.todayLogs)
   const monthLogs = useHabitsStore(state => state.monthLogs)
+  const streakSummaries = useHabitsStore(state => state.streakSummaries)
   const activeTab = useHabitsStore(state => state.activeTab)
   const selectedHabitId = useHabitsStore(state => state.selectedHabitId)
   const isLoading = useHabitsStore(state => state.isLoading)
@@ -1708,6 +1721,7 @@ export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
   const loadHabits = useHabitsStore(state => state.loadHabits)
   const loadTodayLogs = useHabitsStore(state => state.loadTodayLogs)
   const loadMonthLogs = useHabitsStore(state => state.loadMonthLogs)
+  const loadStreakSummaries = useHabitsStore(state => state.loadStreakSummaries)
   const setSelectedHabit = useHabitsStore(state => state.setSelectedHabit)
   const setActiveTab = useHabitsStore(state => state.setActiveTab)
   const addHabit = useHabitsStore(state => state.addHabit)
@@ -1725,8 +1739,13 @@ export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
   }, [initialSelectedHabitId, setSelectedHabit])
 
   useEffect(() => {
-    void Promise.all([loadHabits(), loadTodayLogs(), loadMonthLogs()])
-  }, [loadHabits, loadMonthLogs, loadTodayLogs])
+    void Promise.all([
+      loadHabits(),
+      loadTodayLogs(),
+      loadMonthLogs(),
+      loadStreakSummaries(),
+    ])
+  }, [loadHabits, loadMonthLogs, loadStreakSummaries, loadTodayLogs])
 
   const canSubmit =
     form.name.trim().length > 0 &&
@@ -1752,6 +1771,7 @@ export function HabitPage({ initialSelectedHabitId }: HabitPageProps) {
     habits,
     todayLogs,
     monthLogs,
+    streakSummaries,
     selectedHabitId,
     isLoading,
     locale,

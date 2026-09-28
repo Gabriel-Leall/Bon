@@ -439,10 +439,14 @@
       "trigger": "Baixar Bon",
       "loading": "Buscando versões…",
       "fallback": "Ver versões disponíveis",
+      "latestVersion": "Versão mais recente {{version}}",
+      "downloadLatestAria": "Baixar a versão mais recente do Bon, {{version}}",
       "downloadAria": "Baixar Bon {{release}} para {{platform}}",
+      "unavailable": "Indisponível nesta versão",
       "platforms": {
         "windows": "Instalador para Windows",
-        "linux": "AppImage ou pacote Linux"
+        "macos": "Instalador para macOS",
+        "linux": "AppImage para Linux"
       }
     },
     "footer": {
